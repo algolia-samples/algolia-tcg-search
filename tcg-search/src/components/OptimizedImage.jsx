@@ -45,8 +45,9 @@ export default function OptimizedImage({
 
   // Lazy load the main image when visible
   useEffect(() => {
-    if (eager) {
-      // Eager mode: load immediately
+    // Feature detection: fallback to eager loading if IntersectionObserver not supported
+    if (eager || typeof IntersectionObserver === 'undefined') {
+      // Eager mode or no IntersectionObserver: load immediately
       const img = new Image();
       img.onload = () => setImageSrc(src);
       img.onerror = () => console.warn('Failed to load image:', src);
