@@ -1943,10 +1943,12 @@ article {
 .image-modal-content {
   position: relative;
   animation: zoomIn 0.25s ease-out forwards;
+  will-change: transform;
 }
 
 .image-modal-content.closing {
   animation: zoomOut 0.25s ease-out forwards;
+  will-change: transform;
 }
 
 .image-modal-img {
