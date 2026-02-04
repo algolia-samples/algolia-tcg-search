@@ -2135,14 +2135,27 @@ article {
 }
 
 .carousel-nav-left {
-  left: 0;
+  left: 6px;
 }
 
 .carousel-nav-right {
-  right: 0;
+  right: 6px;
 }
 
 @media (max-width: 768px) {
+  .carousel-wrapper {
+    margin: 1rem -0.75rem 2rem -0.75rem;
+    padding: 0 0.75rem;
+  }
+
+  .carousel-container {
+    padding: 0 50px 0.35rem 50px;
+  }
+
+  .carousel-scroll {
+    padding: 0 calc((100vw - 100px - 200px) / 2);
+  }
+
   .carousel-nav {
     width: 40px;
     height: 40px;
@@ -2150,14 +2163,14 @@ article {
   }
 
   .carousel-nav-left {
-    left: -20px;
+    left: 6px;
   }
 
   .carousel-nav-right {
-    right: -20px;
+    right: 6px;
   }
 
   .carousel-item {
-    width: 150px;
+    width: 200px;
   }
 }

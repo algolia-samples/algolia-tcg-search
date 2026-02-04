@@ -55,7 +55,9 @@ function CarouselContent() {
 
   const scroll = (direction) => {
     if (scrollRef.current) {
-      const scrollAmount = scrollRef.current.clientWidth * 0.8;
+      // Get the first carousel item to determine exact card width + gap
+      const firstItem = scrollRef.current.querySelector('.carousel-item');
+      const scrollAmount = firstItem ? firstItem.offsetWidth + 12 : scrollRef.current.clientWidth * 0.8;
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
