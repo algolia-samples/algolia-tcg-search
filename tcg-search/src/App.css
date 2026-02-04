@@ -84,10 +84,10 @@ em {
 }
 
 .header-search-button {
-  background: #ffffff;
+  background: #ffffff !important;
   border: none;
   border-radius: 50%;
-  color: #3B4CCA;
+  color: #3B4CCA !important;
   cursor: pointer;
   padding: 0.6rem;
   display: flex;
@@ -100,7 +100,7 @@ em {
 }
 
 .header-search-button:hover {
-  background: #FFCB05;
+  background: #FFCB05 !important;
   transform: scale(1.05);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
