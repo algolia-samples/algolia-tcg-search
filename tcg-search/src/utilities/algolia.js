@@ -6,7 +6,7 @@ export const indexName = process.env.REACT_APP_ALGOLIA_INDEX_NAME || ''
 export const userToken = process.env.REACT_APP_USER_TOKEN || ''
 
 // Replica index names for sorting - fallback to base index + suffix if not configured
-export const indexNameValueAsc = process.env.REACT_APP_ALGOLIA_INDEX_NAME_VALUE_ASC || `${indexName}_value_asc`
-export const indexNameValueDesc = process.env.REACT_APP_ALGOLIA_INDEX_NAME_VALUE_DESC || `${indexName}_value_desc`
+export const indexNamePriceAsc = process.env.REACT_APP_ALGOLIA_INDEX_NAME_PRICE_ASC || `${indexName}_price_asc`
+export const indexNamePriceDesc = process.env.REACT_APP_ALGOLIA_INDEX_NAME_PRICE_DESC || `${indexName}_price_desc`
 
 export const searchClient = algoliasearch(appId, appKey)

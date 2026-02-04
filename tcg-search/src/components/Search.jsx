@@ -1,5 +1,5 @@
 import React from 'react';
-import { searchClient, indexName, indexNameValueAsc, indexNameValueDesc } from '../utilities/algolia';
+import { searchClient, indexName, indexNamePriceAsc, indexNamePriceDesc } from '../utilities/algolia';
 import {
   Configure,
   Hits,
@@ -9,8 +9,7 @@ import {
   SearchBox,
   SortBy,
   ToggleRefinement,
-  RangeInput,
-  Panel
+  RangeInput
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import { userToken } from '../utilities/algolia';
@@ -19,6 +18,7 @@ import { userToken } from '../utilities/algolia';
 aa('setUserToken', userToken);
 import Header from './Header';
 import Hit from './Hit';
+import Panel from './Panel';
 
 export default function Search() {
   return (
@@ -27,7 +27,7 @@ export default function Search() {
       <div className="container">
         <InstantSearch
           searchClient={searchClient}
-          indexName={indexNameValueDesc}
+          indexName={indexNamePriceDesc}
           routing={true}
           insights={{
             insightsClient: aa,
@@ -46,8 +46,8 @@ export default function Search() {
               <SortBy
                 items={[
                   { label: 'Sort A-Z', value: indexName },
-                  { label: 'Sort Value ↑', value: indexNameValueAsc },
-                  { label: 'Sort Value ↓', value: indexNameValueDesc }
+                  { label: 'Sort Price ↑', value: indexNamePriceAsc },
+                  { label: 'Sort Price ↓', value: indexNamePriceDesc }
                 ]}
               />
             </div>
