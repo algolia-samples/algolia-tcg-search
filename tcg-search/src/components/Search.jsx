@@ -15,6 +15,7 @@ aa('setUserToken', userToken);
 import Header from './Header';
 import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
+import Carousel from './Carousel';
 
 export default function Search() {
   return (
@@ -50,6 +51,13 @@ export default function Search() {
               />
             </div>
           </div>
+
+          {/* Top 10 Carousel - separate InstantSearch instance */}
+          <Carousel
+            title="⭐ Top 10 Chase Cards"
+            filters="is_top_10_chase_card:true"
+            hitsPerPage={20}
+          />
 
           <div className="search-panel">
             <div className="search-panel__results">

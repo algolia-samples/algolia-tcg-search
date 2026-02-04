@@ -1,21 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Highlight,
-} from 'react-instantsearch';
-
-// Helper to get card type badge color
-function getCardTypeColor(cardType) {
-  const colors = {
-    'Full Art': '#e74c3c',
-    'Alternative Full Art': '#ff6b6b',
-    'Gold': '#f39c12',
-    'Secret Art': '#9b59b6',
-    'Holo': '#3498db',
-    'Reverse Holo': '#1abc9c'
-  };
-  return colors[cardType] || '#3B4CCA';
-}
+import { Highlight } from 'react-instantsearch';
 
 // Helper to format set name with line break after colon
 function formatSetName(setName) {
@@ -60,7 +45,7 @@ function getRotationFromMatrix(element) {
   }
 }
 
-export default function Hit({hit, sendEvent}) {
+export default function CarouselHit({ hit, sendEvent }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
@@ -151,14 +136,8 @@ export default function Hit({hit, sendEvent}) {
 
   return (
     <>
-      <article className="hit-card" aria-label={`${hit.pokemon_name} Pokemon card`}>
-        <div className="hit-name-header">
-          <h1><Highlight attribute="pokemon_name" hit={hit} /></h1>
-          {hit.number && (
-            <span className="hit-card-number">#{hit.number}</span>
-          )}
-        </div>
-        <div className="hit-card-image-wrapper">
+      <article className="carousel-hit-card" aria-label={`${hit.pokemon_name} Pokemon card`}>
+        <div className="carousel-hit-image-wrapper">
           {hit.image_small ? (
             <img
               ref={imgRef}
@@ -188,101 +167,53 @@ export default function Hit({hit, sendEvent}) {
             </div>
           )}
         </div>
-      <div className="search__desc">
-        <div className="hit-price-prominent">
-          {formattedPrice}
-        </div>
-
-        {hit.card_type && (
-          <div className="hit-variants-row">
-            <span className="hit-label">Type:</span>
-            <div className="variant-badges" role="list" aria-label="Card type">
-              <span
-                className="variant-badge"
-                style={{ backgroundColor: getCardTypeColor(hit.card_type) }}
-                role="listitem"
-                aria-label={`${hit.card_type} card`}
-              >
-                {hit.card_type}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="hit-details">
-          <div className="hit-detail-row">
-            <span className="hit-label">Set:</span>
-            <span className="hit-value">{formatSetName(hit.set_name)}</span>
-          </div>
-          {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
-            <div className="hit-detail-row">
-              <span className="hit-label">In Stock:</span>
-              <span className="hit-value">{hit.machine_quantity}</span>
-            </div>
+        <div className="carousel-hit-details">
+          <h3 className="carousel-hit-name">
+            <Highlight attribute="pokemon_name" hit={hit} />
+          </h3>
+          <div className="carousel-hit-price">{formattedPrice}</div>
+          {hit.set_name && (
+            <div className="carousel-hit-set">{formatSetName(hit.set_name)}</div>
           )}
         </div>
+      </article>
 
-        {/* Special badges 2x2 grid */}
-        <div className="hit-special-badges">
-          <span className={`special-badge badge-top-10 ${hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
-            ⭐ Top 10!
-          </span>
-          <span className={`special-badge badge-chase ${hit.is_chase_card && !hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
-            🏁 Chase Card
-          </span>
-          <span className={`special-badge badge-full-art ${hit.is_full_art ? 'active' : 'inactive'}`}>
-            🎨 Full Art
-          </span>
-          <span className={`special-badge badge-gen1 ${hit.is_classic_pokemon ? 'active' : 'inactive'}`}>
-            ✓ Gen 1
-          </span>
-        </div>
-      </div>
-    </article>
-
-    {/* Image Modal */}
-    {isModalOpen && (
-      <div
-        className={`image-modal-overlay ${isClosing ? 'closing' : ''}`}
-        onClick={handleCloseModal}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Enlarged card image"
-      >
+      {/* Image Modal */}
+      {isModalOpen && (
         <div
-          className={`image-modal-content ${isClosing ? 'closing' : ''}`}
-          style={{
-            '--origin-x': `${origin.x}px`,
-            '--origin-y': `${origin.y}px`,
-            '--rotation': `${rotation}deg`
-          }}
+          className={`image-modal-overlay ${isClosing ? 'closing' : ''}`}
+          onClick={handleCloseModal}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enlarged card image"
         >
-          <img
-            src={hit.image_large || hit.image_small}
-            alt={`${hit.pokemon_name} Pokemon card - enlarged`}
-            className="image-modal-img"
-          />
+          <div
+            className={`image-modal-content ${isClosing ? 'closing' : ''}`}
+            style={{
+              '--origin-x': `${origin.x}px`,
+              '--origin-y': `${origin.y}px`,
+              '--rotation': `${rotation}deg`
+            }}
+          >
+            <img
+              src={hit.image_large || hit.image_small}
+              alt={`${hit.pokemon_name} Pokemon card - enlarged`}
+              className="image-modal-img"
+            />
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
 
-Hit.propTypes = {
+CarouselHit.propTypes = {
   hit: PropTypes.shape({
     pokemon_name: PropTypes.string.isRequired,
     image_small: PropTypes.string,
     image_large: PropTypes.string,
     estimated_value: PropTypes.number,
-    card_type: PropTypes.string,
     set_name: PropTypes.string,
-    number: PropTypes.string,
-    machine_quantity: PropTypes.number,
-    is_top_10_chase_card: PropTypes.bool,
-    is_chase_card: PropTypes.bool,
-    is_full_art: PropTypes.bool,
-    is_classic_pokemon: PropTypes.bool,
   }).isRequired,
   sendEvent: PropTypes.func.isRequired,
 };
