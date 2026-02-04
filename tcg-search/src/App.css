@@ -1307,6 +1307,11 @@ article {
     font-size: 1.15rem;
   }
 
+  /* Tighter spacing for search button on mobile */
+  .header-search-button {
+    margin-right: 0.5rem;
+  }
+
   /* Reduce carousel title on mobile */
   .carousel-title {
     font-size: 1rem;
