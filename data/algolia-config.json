@@ -1,0 +1,32 @@
+{
+  "searchableAttributes": [
+    "pokemon_name",
+    "number",
+    "card_type",
+    "set_name"
+  ],
+  "attributesForFaceting": [
+    "card_type",
+    "is_chase_card",
+    "filterOnly(is_top_10_chase_card)",
+    "filterOnly(is_classic_pokemon)",
+    "is_full_art",
+    "searchable(set_name)"
+  ],
+  "numericAttributesForFiltering": [
+    "estimated_value",
+    "machine_quantity"
+  ],
+  "customRanking": [
+    "desc(is_top_10_chase_card)",
+    "desc(is_chase_card)",
+    "desc(estimated_value)"
+  ],
+  "queryType": "prefixAll",
+  "typoTolerance": true,
+  "minWordSizefor1Typo": 4,
+  "minWordSizefor2Typos": 8,
+  "hitsPerPage": 20,
+  "maxValuesPerFacet": 100,
+  "paginationLimitedTo": 1000
+}
