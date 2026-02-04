@@ -30,7 +30,7 @@ em {
 .header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   padding: 0.75rem 1rem;
   background-image: linear-gradient(to right, #3B4CCA, #00aeff);
   color: #fff;
@@ -39,6 +39,14 @@ em {
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 0;
 }
 
 .header a {
@@ -73,6 +81,29 @@ em {
     1px -1px 0 #e74c3c,
     -1px 1px 0 #e74c3c,
     1px 1px 0 #e74c3c;
+}
+
+.header-search-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.header-search-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.header-search-button:active {
+  transform: scale(0.95);
 }
 
 .container {
