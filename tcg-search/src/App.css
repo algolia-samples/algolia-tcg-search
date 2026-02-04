@@ -1924,3 +1924,60 @@ article {
     margin-top: 0.5rem;
   }
 }
+
+/* Image Modal Styles */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  cursor: pointer;
+}
+
+.image-modal-content {
+  position: relative;
+  animation: zoomIn 0.25s ease-out forwards;
+}
+
+.image-modal-content.closing {
+  animation: zoomOut 0.25s ease-out forwards;
+}
+
+.image-modal-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: translate(
+      calc(var(--origin-x) - 50vw),
+      calc(var(--origin-y) - 50vh)
+    ) scale(0.4) rotate(var(--rotation));
+  }
+  to {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  to {
+    transform: translate(
+      calc(var(--origin-x) - 50vw),
+      calc(var(--origin-y) - 50vh)
+    ) scale(0.4) rotate(var(--rotation));
+  }
+}
