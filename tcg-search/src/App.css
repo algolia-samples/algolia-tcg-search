@@ -376,6 +376,7 @@ em {
   align-items: stretch;
   gap: 1rem;
   margin-bottom: 2rem;
+  scroll-margin-top: 1.5rem;
 }
 
 .search-controls-row {
