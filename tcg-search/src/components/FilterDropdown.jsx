@@ -8,11 +8,18 @@ export default function FilterDropdown({ attribute, placeholder }) {
     limit: 100,
   });
 
-  const selectedCount = items.filter(item => item.isRefined).length;
-  const label = selectedCount > 0 ? `${selectedCount} ${placeholder}${selectedCount > 1 ? 's' : ''}` : placeholder;
+  const selectedItem = items.find(item => item.isRefined);
+  const selectedValue = selectedItem ? selectedItem.value : '';
 
   const handleChange = (event) => {
     const value = event.target.value;
+
+    // Clear current selection if one exists
+    if (selectedItem) {
+      refine(selectedItem.value);
+    }
+
+    // Apply new selection if not empty
     if (value) {
       refine(value);
     }
@@ -22,13 +29,13 @@ export default function FilterDropdown({ attribute, placeholder }) {
     <select
       className="filter-dropdown"
       onChange={handleChange}
-      value=""
+      value={selectedValue}
       aria-label={`Filter by ${placeholder}`}
     >
-      <option value="">{label}</option>
+      <option value="">{placeholder}</option>
       {items.map((item) => (
         <option key={item.value} value={item.value}>
-          {item.isRefined ? '✓ ' : ''}{item.label} ({item.count})
+          {item.label} ({item.count})
         </option>
       ))}
     </select>

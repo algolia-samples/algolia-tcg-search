@@ -40,8 +40,8 @@ export default function Search() {
           <div className="search-header">
             <div className="search-controls-row">
               <SearchBox placeholder="Search for cards" className="searchbox" />
-              <FilterDropdown attribute="set_name" placeholder="Set" />
-              <FilterDropdown attribute="card_type" placeholder="Type" />
+              <FilterDropdown attribute="set_name" placeholder="All Sets" />
+              <FilterDropdown attribute="card_type" placeholder="All Types" />
               <SortBy
                 items={[
                   { label: 'Relevance', value: indexName },
