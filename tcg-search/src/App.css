@@ -308,14 +308,25 @@ em {
   min-width: 200px;
 }
 
+.ais-SearchBox {
+  position: relative;
+}
+
+.ais-SearchBox-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .ais-SearchBox-input {
   font-family: 'Righteous', cursive;
   font-size: 1.25rem;
   border: 2px solid #3B4CCA !important;
   border-radius: 8px !important;
-  padding: 0.75rem 1rem !important;
+  padding: 0.75rem 1rem 0.75rem 3rem !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.2s ease !important;
+  width: 100%;
 }
 
 .ais-SearchBox-input::placeholder {
@@ -331,6 +342,53 @@ em {
 
 .ais-SearchBox-input:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12) !important;
+}
+
+.ais-SearchBox-submit {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.ais-SearchBox-submitIcon {
+  width: 20px;
+  height: 20px;
+  fill: #3B4CCA;
+}
+
+.ais-SearchBox-reset {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: none;
+}
+
+.ais-SearchBox-reset[hidden] {
+  display: none;
+}
+
+.ais-SearchBox-input:not(:placeholder-shown) ~ .ais-SearchBox-reset {
+  display: block;
+}
+
+.ais-SearchBox-resetIcon {
+  width: 16px;
+  height: 16px;
+  fill: #718096;
 }
 
 /* Smaller font for searchboxes inside filter panels */
