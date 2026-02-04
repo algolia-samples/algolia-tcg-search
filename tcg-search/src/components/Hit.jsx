@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Highlight,
 } from 'react-instantsearch';
+import OptimizedImage from './OptimizedImage';
 
 // Helper to get card type badge color
 function getCardTypeColor(cardType) {
@@ -66,45 +67,7 @@ export default function Hit({hit, sendEvent}) {
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
-  const observerRef = useRef(null);
   const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
-
-  // Preload large image only when card is visible in viewport
-  useEffect(() => {
-    if (!hit.image_large || !imgRef.current) return;
-
-    const element = imgRef.current;
-
-    // Clean up any previous observer before creating a new one
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries, obs) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const img = new Image();
-            img.src = hit.image_large;
-            obs.disconnect();
-          }
-        });
-      },
-      { rootMargin: '50px' } // Start loading 50px before visible
-    );
-
-    observerRef.current = observer;
-    observer.observe(element);
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.unobserve(element);
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
-  }, [hit.image_large]);
 
   // Handle Escape key to close modal
   useEffect(() => {
@@ -122,8 +85,12 @@ export default function Hit({hit, sendEvent}) {
 
   const handleImageClick = (e) => {
     if (hit.image_large || hit.image_small) {
-      const rect = e.target.getBoundingClientRect();
-      const currentRotation = getRotationFromMatrix(e.target);
+      // Find the actual image element
+      const imgElement = e.target.tagName === 'IMG' ? e.target : e.target.querySelector('img');
+      if (!imgElement) return;
+
+      const rect = imgElement.getBoundingClientRect();
+      const currentRotation = getRotationFromMatrix(imgElement);
 
       setOrigin({
         x: rect.left + rect.width / 2,
@@ -138,8 +105,11 @@ export default function Hit({hit, sendEvent}) {
   const handleCloseModal = () => {
     // Capture current rotation state of the card before closing
     if (imgRef.current) {
-      const currentRotation = getRotationFromMatrix(imgRef.current);
-      setRotation(currentRotation);
+      const imgElement = imgRef.current.querySelector('img');
+      if (imgElement) {
+        const currentRotation = getRotationFromMatrix(imgElement);
+        setRotation(currentRotation);
+      }
     }
 
     setIsClosing(true);
@@ -158,16 +128,18 @@ export default function Hit({hit, sendEvent}) {
             <span className="hit-card-number">#{hit.number}</span>
           )}
         </div>
-        <div className="hit-card-image-wrapper">
+        <div className="hit-card-image-wrapper" ref={imgRef}>
           {hit.image_small ? (
-            <img
-              ref={imgRef}
+            <OptimizedImage
               className="card"
               src={hit.image_small}
+              largeSrc={hit.image_large}
               alt={`${hit.pokemon_name} Pokemon card`}
-              loading="lazy"
+              preloadLarge={true}
               onClick={handleImageClick}
               style={{ cursor: 'pointer' }}
+              width={245}
+              height={342}
             />
           ) : (
             <div className="card" style={{

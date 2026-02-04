@@ -14,14 +14,34 @@ function CarouselContent() {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [visibleIndices, setVisibleIndices] = useState(new Set([0, 1, 2, 3])); // Preload first 4
   const scrollTimeoutRef = useRef(null);
 
-  // Check scroll position to show/hide navigation arrows
+  // Check scroll position to show/hide navigation arrows and preload nearby images
   const checkScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+
+      // Calculate which items are visible or close to being visible
+      const items = scrollRef.current.querySelectorAll('.carousel-item');
+      const newVisibleIndices = new Set();
+
+      items.forEach((item, index) => {
+        const rect = item.getBoundingClientRect();
+        const containerRect = scrollRef.current.getBoundingClientRect();
+
+        // Check if item is visible or within 2 card widths (preload buffer)
+        const isNearViewport = rect.left < containerRect.right + (rect.width * 2) &&
+                               rect.right > containerRect.left - (rect.width * 2);
+
+        if (isNearViewport) {
+          newVisibleIndices.add(index);
+        }
+      });
+
+      setVisibleIndices(newVisibleIndices);
     }
   };
 
@@ -93,9 +113,13 @@ function CarouselContent() {
       )}
       <div className="carousel-scroll" ref={scrollRef}>
         <div className="carousel-track">
-          {hits.map((hit) => (
+          {hits.map((hit, index) => (
             <div key={hit.objectID} className="carousel-item">
-              <CarouselHit hit={hit} sendEvent={() => {}} />
+              <CarouselHit
+                hit={hit}
+                sendEvent={() => {}}
+                eager={visibleIndices.has(index)}
+              />
             </div>
           ))}
         </div>
@@ -114,7 +138,7 @@ function CarouselContent() {
 }
 
 // Main carousel component with separate InstantSearch instance
-export default function Carousel({ title, filters, hitsPerPage = 20 }) {
+export default function Carousel({ title, filters, hitsPerPage = 10 }) {
   return (
     <div className="carousel-wrapper">
       <h2 className="carousel-title">{title}</h2>

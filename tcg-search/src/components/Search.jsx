@@ -56,7 +56,7 @@ export default function Search() {
           <Carousel
             title="⭐ Top 10 Chase Cards"
             filters="is_top_10_chase_card:true"
-            hitsPerPage={20}
+            hitsPerPage={10}
           />
 
           <div className="search-panel">

@@ -37,6 +37,7 @@
     "@typescript-eslint/parser": "^5.54.0",
     "eslint": "^8.35.0",
     "eslint-plugin-react": "^7.32.2",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "source-map-explorer": "^2.5.3"
   }
 }
