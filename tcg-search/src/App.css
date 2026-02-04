@@ -1264,6 +1264,20 @@ article {
     height: 70px;
   }
 
+  /* Reduce header text sizes on mobile */
+  .header-title {
+    font-size: 1rem;
+  }
+
+  .header-subtitle {
+    font-size: 1.15rem;
+  }
+
+  /* Reduce carousel title on mobile */
+  .carousel-title {
+    font-size: 1rem;
+  }
+
   /* Reduce container padding on mobile for consistent margins */
   .container {
     padding: 0.75rem;
