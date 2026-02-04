@@ -47,7 +47,6 @@ Each card in Algolia gets:
 **From TCGdex:**
 - `set_id` (e.g., `sv08`)
 - `image_small` and `image_large` (webp URLs)
-- `artist` (when available)
 
 **Generated:**
 - `objectID` format: `{set_id}-{card_number}` (e.g., `sv08-102`)

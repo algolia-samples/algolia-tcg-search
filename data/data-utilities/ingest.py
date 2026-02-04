@@ -126,7 +126,7 @@ def parse_boolean(value: str) -> bool:
 def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, debug: bool = False) -> dict:
     """
     Find matching card from TCGdex cards list by card number.
-    Returns dict with enriched fields: image_small, image_large, artist
+    Returns dict with enriched fields: image_small, image_large
     Note: All data is extracted from the cards list, no additional API calls needed.
     """
     enriched = {}
@@ -145,10 +145,6 @@ def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, debug: bool = 
             if base_image_url:
                 enriched["image_small"] = f"{base_image_url}/low.webp"
                 enriched["image_large"] = f"{base_image_url}/high.webp"
-
-            # Artist - note: may not be in summary, will be None if not present
-            if card.get("illustrator"):
-                enriched["artist"] = card["illustrator"]
 
             return enriched
 
@@ -246,7 +242,7 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
             if set_id:
                 record["set_id"] = set_id
 
-            # Enrich with TCGdex card data (adds image_small, image_large, artist)
+            # Enrich with TCGdex card data (adds image_small, image_large)
             if enrich and tcgdex_cards:
                 debug = (idx < 5)  # Debug first 5 cards
                 enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, debug=debug)
