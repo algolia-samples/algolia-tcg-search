@@ -57,11 +57,21 @@ function CarouselContent() {
     if (scrollRef.current) {
       // Get the first carousel item to determine exact card width + gap
       const firstItem = scrollRef.current.querySelector('.carousel-item');
-      const scrollAmount = firstItem ? firstItem.offsetWidth + 12 : scrollRef.current.clientWidth * 0.8;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
+      if (firstItem) {
+        const track = scrollRef.current.querySelector('.carousel-track');
+        const gap = track ? parseFloat(window.getComputedStyle(track).gap) : 0;
+        const scrollAmount = firstItem.offsetWidth + gap;
+        scrollRef.current.scrollBy({
+          left: direction === 'left' ? -scrollAmount : scrollAmount,
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback if items aren't ready yet
+        scrollRef.current.scrollBy({
+          left: direction === 'left' ? -scrollRef.current.clientWidth * 0.8 : scrollRef.current.clientWidth * 0.8,
+          behavior: 'smooth'
+        });
+      }
     }
   };
 
