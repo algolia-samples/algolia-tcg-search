@@ -1938,6 +1938,11 @@ article {
   justify-content: center;
   z-index: 10000;
   cursor: pointer;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.image-modal-overlay.closing {
+  animation: fadeOut 0.25s ease-out forwards;
 }
 
 .image-modal-content {
@@ -1958,6 +1963,24 @@ article {
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes zoomIn {
@@ -2028,7 +2051,7 @@ article {
 
 .carousel-item {
   flex: 0 0 auto;
-  width: 200px;
+  width: 240px;
 }
 
 /* Simplified carousel card styling */
@@ -2139,6 +2162,6 @@ article {
   }
 
   .carousel-item {
-    width: 240px;
+    width: 180px;
   }
 }

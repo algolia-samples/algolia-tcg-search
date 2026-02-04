@@ -14,6 +14,7 @@ function CarouselContent() {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const scrollTimeoutRef = useRef(null);
 
   // Check scroll position to show/hide navigation arrows
   const checkScroll = () => {
@@ -24,16 +25,30 @@ function CarouselContent() {
     }
   };
 
+  // Throttled scroll handler
+  const handleScroll = () => {
+    if (scrollTimeoutRef.current) {
+      return;
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      checkScroll();
+      scrollTimeoutRef.current = null;
+    }, 100);
+  };
+
   useEffect(() => {
     // Use setTimeout to ensure DOM is ready
     setTimeout(checkScroll, 100);
     const scrollElement = scrollRef.current;
     if (scrollElement) {
-      scrollElement.addEventListener('scroll', checkScroll);
+      scrollElement.addEventListener('scroll', handleScroll);
       window.addEventListener('resize', checkScroll);
       return () => {
-        scrollElement.removeEventListener('scroll', checkScroll);
+        scrollElement.removeEventListener('scroll', handleScroll);
         window.removeEventListener('resize', checkScroll);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
       };
     }
   }, [hits]);

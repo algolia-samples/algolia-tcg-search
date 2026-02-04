@@ -270,6 +270,19 @@ export default function Hit({hit, sendEvent}) {
 }
 
 Hit.propTypes = {
-  hit: PropTypes.object.isRequired,
+  hit: PropTypes.shape({
+    pokemon_name: PropTypes.string.isRequired,
+    image_small: PropTypes.string,
+    image_large: PropTypes.string,
+    estimated_value: PropTypes.number,
+    card_type: PropTypes.string,
+    set_name: PropTypes.string,
+    number: PropTypes.string,
+    machine_quantity: PropTypes.number,
+    is_top_10_chase_card: PropTypes.bool,
+    is_chase_card: PropTypes.bool,
+    is_full_art: PropTypes.bool,
+    is_classic_pokemon: PropTypes.bool,
+  }).isRequired,
   sendEvent: PropTypes.func.isRequired,
 };

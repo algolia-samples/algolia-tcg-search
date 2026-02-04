@@ -16,49 +16,99 @@ function formatSetName(setName) {
   return setName;
 }
 
+// Helper to extract rotation from transform matrix
+function getRotationFromMatrix(element) {
+  try {
+    const computedStyle = window.getComputedStyle(element);
+    const matrix = computedStyle.transform;
+
+    if (!matrix || matrix === 'none') {
+      return 0;
+    }
+
+    const values = matrix.split('(')[1]?.split(')')[0]?.split(',');
+    if (!values || values.length < 2) {
+      return 0;
+    }
+
+    const a = parseFloat(values[0]);
+    const b = parseFloat(values[1]);
+
+    if (isNaN(a) || isNaN(b)) {
+      return 0;
+    }
+
+    return Math.round(Math.atan2(b, a) * (180 / Math.PI));
+  } catch (error) {
+    console.warn('Failed to extract rotation from matrix:', error);
+    return 0;
+  }
+}
+
 export default function CarouselHit({ hit, sendEvent }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
+  const observerRef = useRef(null);
   const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
 
   // Preload large image only when card is visible in viewport
   useEffect(() => {
     if (!hit.image_large || !imgRef.current) return;
 
+    const element = imgRef.current;
+
+    // Clean up any previous observer before creating a new one
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
     const observer = new IntersectionObserver(
-      (entries) => {
+      (entries, obs) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const img = new Image();
             img.src = hit.image_large;
-            observer.disconnect();
+            obs.disconnect();
           }
         });
       },
-      { rootMargin: '50px' }
+      { rootMargin: '50px' } // Start loading 50px before visible
     );
 
-    observer.observe(imgRef.current);
+    observerRef.current = observer;
+    observer.observe(element);
 
-    return () => observer.disconnect();
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.unobserve(element);
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
   }, [hit.image_large]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape') {
+        handleCloseModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [isModalOpen]);
 
   const handleImageClick = (e) => {
     if (hit.image_large || hit.image_small) {
       const rect = e.target.getBoundingClientRect();
-      const computedStyle = window.getComputedStyle(e.target);
-      const matrix = computedStyle.transform;
-
-      let currentRotation = 0;
-      if (matrix && matrix !== 'none') {
-        const values = matrix.split('(')[1].split(')')[0].split(',');
-        const a = values[0];
-        const b = values[1];
-        currentRotation = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-      }
+      const currentRotation = getRotationFromMatrix(e.target);
 
       setOrigin({
         x: rect.left + rect.width / 2,
@@ -71,18 +121,9 @@ export default function CarouselHit({ hit, sendEvent }) {
   };
 
   const handleCloseModal = () => {
+    // Capture current rotation state of the card before closing
     if (imgRef.current) {
-      const computedStyle = window.getComputedStyle(imgRef.current);
-      const matrix = computedStyle.transform;
-
-      let currentRotation = 0;
-      if (matrix && matrix !== 'none') {
-        const values = matrix.split('(')[1].split(')')[0].split(',');
-        const a = values[0];
-        const b = values[1];
-        currentRotation = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-      }
-
+      const currentRotation = getRotationFromMatrix(imgRef.current);
       setRotation(currentRotation);
     }
 
@@ -90,7 +131,7 @@ export default function CarouselHit({ hit, sendEvent }) {
     setTimeout(() => {
       setIsModalOpen(false);
       setIsClosing(false);
-    }, 250);
+    }, 250); // Match animation duration
   };
 
   return (
@@ -167,6 +208,12 @@ export default function CarouselHit({ hit, sendEvent }) {
 }
 
 CarouselHit.propTypes = {
-  hit: PropTypes.object.isRequired,
+  hit: PropTypes.shape({
+    pokemon_name: PropTypes.string.isRequired,
+    image_small: PropTypes.string,
+    image_large: PropTypes.string,
+    estimated_value: PropTypes.number,
+    set_name: PropTypes.string,
+  }).isRequired,
   sendEvent: PropTypes.func.isRequired,
 };
