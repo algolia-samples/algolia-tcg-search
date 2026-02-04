@@ -15,3 +15,12 @@ When starting a new conversation with a defined scope:
 4. When ready, create a PR for review
 
 This keeps the main branch clean and allows for better collaboration and code review.
+
+## Pull Request Guidelines
+
+Keep PR descriptions short, factual, and non-redundant:
+- Brief summary of what changed (bullet points)
+- Key technical details if relevant
+- Do NOT include test plans or checklist items unless tests were actually written
+- Do NOT repeat information already in commit messages
+- Be concise - avoid verbose explanations
