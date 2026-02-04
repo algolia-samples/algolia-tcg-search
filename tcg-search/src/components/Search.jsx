@@ -1,4 +1,3 @@
-import React from 'react';
 import { searchClient, indexName, indexNamePriceAsc, indexNamePriceDesc } from '../utilities/algolia';
 import {
   Configure,

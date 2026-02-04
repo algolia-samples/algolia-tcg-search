@@ -1,4 +1,3 @@
-import React from 'react';
 import logo from '../assets/tcg-search-logo.svg';
 
 export default function Header() {
