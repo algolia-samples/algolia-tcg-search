@@ -17,6 +17,20 @@ function getCardTypeColor(cardType) {
   return colors[cardType] || '#3B4CCA';
 }
 
+// Helper to format set name with line break after colon
+function formatSetName(setName) {
+  if (!setName) return null;
+  const parts = setName.split(':');
+  if (parts.length > 1) {
+    return (
+      <>
+        {parts[0]}:<br />{parts.slice(1).join(':').trim()}
+      </>
+    );
+  }
+  return setName;
+}
+
 export default function Hit({hit, sendEvent}) {
   const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : null;
 
@@ -81,7 +95,7 @@ export default function Hit({hit, sendEvent}) {
         <div className="hit-details">
           <div className="hit-detail-row">
             <span className="hit-label">Set:</span>
-            <span className="hit-value"><Highlight attribute="set_name" hit={hit} /></span>
+            <span className="hit-value">{formatSetName(hit.set_name)}</span>
           </div>
           {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
             <div className="hit-detail-row">

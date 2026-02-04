@@ -8,8 +8,7 @@ import {
   RefinementList,
   SearchBox,
   SortBy,
-  ToggleRefinement,
-  RangeInput
+  ToggleRefinement
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import { userToken } from '../utilities/algolia';
@@ -75,10 +74,6 @@ export default function Search() {
                   showMore={true}
                   showMoreLimit={50}
                 />
-              </Panel>
-
-              <Panel header="Estimated Value">
-                <RangeInput attribute="estimated_value" />
               </Panel>
 
               <Panel header="Special Cards">
