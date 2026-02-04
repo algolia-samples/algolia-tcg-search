@@ -67,7 +67,7 @@ em {
 .header-subtitle {
   font-size: 1.5rem;
   font-family: 'Righteous', cursive;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-shadow:
     -1px -1px 0 #e74c3c,
     1px -1px 0 #e74c3c,
@@ -322,7 +322,7 @@ em {
 .ais-Hits-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3rem;
+  gap: 1.5rem;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -1381,7 +1381,7 @@ article {
   /* Mobile grid: 1 column */
   .ais-Hits-list {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 1.5rem;
     padding: 0;
     width: 100%;
   }
@@ -1546,7 +1546,7 @@ article {
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
   .ais-Hits-list {
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
+    gap: 1.25rem;
   }
 
   article.hit-card {
@@ -1845,20 +1845,24 @@ article {
   }
 
   .ais-Hits-list {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
   }
 
   /* Desktop: vertical layout */
   article.hit-card {
     flex-direction: column;
-    width: 245px;
+    width: 100%;
+    max-width: 245px;
     gap: 0;
+    margin: 0 auto;
   }
 
   .hit-card .card {
-    width: 245px;
-    height: 342px;
+    width: 100%;
+    max-width: 245px;
+    height: auto;
+    aspect-ratio: 245 / 342;
     margin: 0 auto;
   }
 
@@ -1867,7 +1871,7 @@ article {
   }
 
   .hit-card .search__desc {
-    width: 245px;
+    width: 100%;
     margin-top: 0.5rem;
   }
 }
