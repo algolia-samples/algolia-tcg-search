@@ -18,6 +18,8 @@ h1 {
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  margin: 0;
+  padding: 0;
 }
 
 em {
@@ -28,20 +30,27 @@ em {
 .header {
   display: flex;
   align-items: center;
-  min-height: 50px;
-  padding: 0.25rem 1rem;
+  justify-content: center;
+  padding: 0.75rem 1rem;
   background-image: linear-gradient(to right, #3B4CCA, #00aeff);
   color: #fff;
   margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .header a {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   color: #fff;
   text-decoration: none;
 }
 
 .header-logo {
-  height: 100px;
+  height: 90px;
 }
 
 .header-title {
@@ -56,8 +65,14 @@ em {
 }
 
 .header-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-family: 'Righteous', cursive;
+  letter-spacing: 0.1em;
+  text-shadow:
+    -1px -1px 0 #e74c3c,
+    1px -1px 0 #e74c3c,
+    -1px 1px 0 #e74c3c,
+    1px 1px 0 #e74c3c;
 }
 
 .container {
@@ -238,6 +253,40 @@ em {
 
 .search-controls-row .ais-SortBy {
   flex: 1;
+  min-width: 120px;
+  max-width: 160px;
+}
+
+.filter-dropdown {
+  flex: 1;
+  min-width: 90px;
+  max-width: 150px;
+  padding: 0.75rem 2rem 0.75rem 0.875rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233B4CCA' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem;
+  border: 2px solid #3B4CCA;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  appearance: none;
+  transition: all 0.2s ease;
+}
+
+.filter-dropdown:hover {
+  border-color: #00aeff;
+  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border-color: #00aeff;
+  box-shadow: 0 0 0 3px rgba(59, 76, 202, 0.1);
 }
 
 .ais-SortBy-select {
@@ -304,7 +353,7 @@ em {
 }
 
 .searchbox {
-  flex: 1;
+  flex: 6;
   min-width: 200px;
 }
 
@@ -1756,7 +1805,7 @@ article {
 @media (min-width: 1025px) {
   /* Larger subtitle on desktop */
   .header-subtitle {
-    font-size: 1.4rem;
+    font-size: 2.5rem;
   }
 
   .container {

@@ -103,12 +103,6 @@ export default function Hit({hit, sendEvent}) {
               <span className="hit-value">{hit.machine_quantity}</span>
             </div>
           )}
-          {hit.number && (
-            <div className="hit-detail-row">
-              <span className="hit-label">Card #:</span>
-              <span className="hit-value">{hit.number}</span>
-            </div>
-          )}
           {hit.is_chase_card && (
             <div className="hit-detail-row">
               <span className="hit-label">Chase Card:</span>
