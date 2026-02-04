@@ -37,6 +37,14 @@ export default function Search() {
             hitsPerPage={12}
             clickAnalytics={true}
           />
+
+          {/* Top 10 Carousel - separate InstantSearch instance */}
+          <Carousel
+            title="⭐ Top 10 Chase Cards"
+            filters="is_top_10_chase_card:true"
+            hitsPerPage={10}
+          />
+
           <div className="search-header">
             <div className="search-controls-row">
               <SearchBox placeholder="Search for cards" className="searchbox" />
@@ -51,13 +59,6 @@ export default function Search() {
               />
             </div>
           </div>
-
-          {/* Top 10 Carousel - separate InstantSearch instance */}
-          <Carousel
-            title="⭐ Top 10 Chase Cards"
-            filters="is_top_10_chase_card:true"
-            hitsPerPage={10}
-          />
 
           <div className="search-panel">
             <div className="search-panel__results">
