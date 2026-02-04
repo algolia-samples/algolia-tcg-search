@@ -23,6 +23,7 @@ export default function OptimizedImage({
   preloadLarge = false, // Set true to preload large version for modals
   width = 245,
   height = 342,
+  fill = false, // Set true to fill container instead of fixed dimensions
 }) {
   const [imageSrc, setImageSrc] = useState(null); // null = placeholder, src = loaded
   const imgRef = useRef(null);
@@ -130,23 +131,36 @@ export default function OptimizedImage({
   // Simple gray placeholder - clean and visible while loading
   const placeholder = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width} ${height}'%3E%3Crect width='100%25' height='100%25' fill='%23e5e5e5'/%3E%3C/svg%3E`;
 
-  return (
-    <div
-      ref={imgRef}
-      style={{
+  // Wrapper style - either fixed dimensions or fill container
+  const wrapperStyle = fill
+    ? {
+        position: 'relative',
+        width: '100%',
+        display: 'block',
+      }
+    : {
         position: 'relative',
         width: `${width}px`,
         height: `${height}px`,
         display: 'inline-block',
-      }}
+      };
+
+  return (
+    <div
+      ref={imgRef}
+      style={wrapperStyle}
       onClick={onClick}
     >
-      {/* Gray placeholder - always visible */}
+      {/* Gray placeholder - establishes aspect ratio */}
       <img
         src={placeholder}
         alt=""
         aria-hidden="true"
-        style={{
+        style={fill ? {
+          width: '100%',
+          height: 'auto',
+          display: 'block',
+        } : {
           position: 'absolute',
           top: 0,
           left: 0,
@@ -157,13 +171,21 @@ export default function OptimizedImage({
         className={className}
       />
 
-      {/* Real image - replaces placeholder when loaded */}
+      {/* Real image - overlays placeholder when loaded */}
       {imageSrc && (
         <img
           className={className}
           src={imageSrc}
           alt={alt}
-          style={{
+          style={fill ? {
+            ...style,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+          } : {
             ...style,
             position: 'absolute',
             top: 0,
@@ -189,4 +211,5 @@ OptimizedImage.propTypes = {
   preloadLarge: PropTypes.bool,
   width: PropTypes.number,
   height: PropTypes.number,
+  fill: PropTypes.bool,
 };

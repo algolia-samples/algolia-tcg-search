@@ -120,6 +120,7 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
               width={245}
               height={342}
               eager={eager}
+              fill={true}
             />
           ) : (
             <div className="card" style={{
