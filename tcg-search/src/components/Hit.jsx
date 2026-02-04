@@ -32,7 +32,7 @@ function formatSetName(setName) {
 }
 
 export default function Hit({hit, sendEvent}) {
-  const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : null;
+  const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
 
   return (
     <article className="hit-card" aria-label={`${hit.pokemon_name} Pokemon card`}>
@@ -70,11 +70,9 @@ export default function Hit({hit, sendEvent}) {
         )}
       </div>
       <div className="search__desc">
-        {formattedPrice && (
-          <div className="hit-price-prominent">
-            {formattedPrice}
-          </div>
-        )}
+        <div className="hit-price-prominent">
+          {formattedPrice}
+        </div>
 
         {hit.card_type && (
           <div className="hit-variants-row">
@@ -103,20 +101,22 @@ export default function Hit({hit, sendEvent}) {
               <span className="hit-value">{hit.machine_quantity}</span>
             </div>
           )}
-          {hit.is_chase_card && (
-            <div className="hit-detail-row">
-              <span className="hit-label">Chase Card:</span>
-              <span className="hit-value" style={{ color: '#e74c3c', fontWeight: 'bold' }}>
-                {hit.is_top_10_chase_card ? '⭐ Top 10!' : '✓ Yes'}
-              </span>
-            </div>
-          )}
-          {hit.is_classic_pokemon && (
-            <div className="hit-detail-row">
-              <span className="hit-label">Classic:</span>
-              <span className="hit-value" style={{ color: '#f39c12', fontWeight: 'bold' }}>✓ Gen 1</span>
-            </div>
-          )}
+        </div>
+
+        {/* Special badges 2x2 grid */}
+        <div className="hit-special-badges">
+          <span className={`special-badge badge-top-10 ${hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
+            ⭐ Top 10!
+          </span>
+          <span className={`special-badge badge-chase ${hit.is_chase_card && !hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
+            🏁 Chase Card
+          </span>
+          <span className={`special-badge badge-full-art ${hit.is_full_art ? 'active' : 'inactive'}`}>
+            🎨 Full Art
+          </span>
+          <span className={`special-badge badge-gen1 ${hit.is_classic_pokemon ? 'active' : 'inactive'}`}>
+            ✓ Gen 1
+          </span>
         </div>
       </div>
     </article>

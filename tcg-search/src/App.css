@@ -378,6 +378,17 @@ em {
   width: 100%;
 }
 
+/* Hide native browser clear button */
+.ais-SearchBox-input::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.ais-SearchBox-input::-webkit-search-decoration {
+  display: none;
+  -webkit-appearance: none;
+}
+
 .ais-SearchBox-input::placeholder {
   font-family: 'Righteous', cursive;
   opacity: 0.6;
@@ -423,15 +434,10 @@ em {
   width: 24px;
   height: 24px;
   cursor: pointer;
-  display: none;
 }
 
 .ais-SearchBox-reset[hidden] {
-  display: none;
-}
-
-.ais-SearchBox-input:not(:placeholder-shown) ~ .ais-SearchBox-reset {
-  display: block;
+  display: none !important;
 }
 
 .ais-SearchBox-resetIcon {
@@ -1201,6 +1207,49 @@ article {
 .hit-value-emphasized {
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+/* Special badges 2x2 grid */
+.hit-special-badges {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+}
+
+.special-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 0.4rem 0.25rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.special-badge.inactive {
+  color: #4a5568;
+  background-color: #e2e8f0;
+  opacity: 0.4;
+}
+
+.special-badge.active.badge-top-10 {
+  color: #e74c3c;
+}
+
+.special-badge.active.badge-chase {
+  color: #e74c3c;
+}
+
+.special-badge.active.badge-gen1 {
+  color: #e67e22;
+}
+
+.special-badge.active.badge-full-art {
+  color: #9b59b6;
 }
 
 /* Mobile Quick Filters - hidden by default, shown on mobile */
