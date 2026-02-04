@@ -376,7 +376,6 @@ em {
   align-items: stretch;
   gap: 1rem;
   margin-bottom: 2rem;
-  scroll-margin-top: 1.5rem;
 }
 
 .search-controls-row {
@@ -411,6 +410,7 @@ em {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.2s ease !important;
   width: 100%;
+  scroll-margin-top: 1.5rem;
 }
 
 /* Hide native browser clear button */
