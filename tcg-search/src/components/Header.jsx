@@ -5,7 +5,7 @@ export default function Header() {
   const scrollToSearch = () => {
     const searchBox = document.querySelector('.ais-SearchBox-input');
     if (searchBox) {
-      searchBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      searchBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
       searchBox.focus();
     }
   };
