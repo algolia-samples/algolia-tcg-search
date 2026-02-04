@@ -1,0 +1,356 @@
+#!/usr/bin/env python3
+"""
+Ingest Pokemon TCG card data into Algolia index.
+Reads CSV files, enriches with TCGdex API data, and uploads to Algolia.
+"""
+
+import os
+import re
+import time
+import argparse
+from pathlib import Path
+from typing import Optional
+from dotenv import load_dotenv
+import pandas as pd
+import requests
+from algoliasearch.search.client import SearchClientSync
+
+# Load environment variables
+load_dotenv(Path(__file__).parent.parent / ".env")
+
+# Configuration
+DATA_DIR = Path(__file__).parent.parent / "data-files"
+ALGOLIA_APP_ID = os.getenv("ALGOLIA_APP_ID")
+ALGOLIA_API_KEY = os.getenv("ALGOLIA_API_KEY")
+ALGOLIA_INDEX_NAME = os.getenv("ALGOLIA_INDEX_NAME", "pokemon_tcg_cards")
+TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
+
+# File name pattern to extract card set
+FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
+
+
+def extract_card_set_from_filename(filename: str) -> str:
+    """
+    Extract card set name from filename.
+    Example: "TCG Search Website - Raw List - Mega Evolution (132).csv" -> "Mega Evolution"
+    """
+    match = re.match(FILE_PATTERN, filename)
+    if match:
+        card_set = match.group(1)
+        # Clean up underscores - replace with colon for sub-sets
+        card_set = card_set.replace("_", ": ")
+        # Clean up multiple spaces
+        card_set = " ".join(card_set.split())
+        return card_set.strip()
+    return filename
+
+
+def fetch_tcgdex_set_info(set_name: str) -> Optional[dict]:
+    """
+    Fetch set information from TCGdex API based on set name.
+    Returns full set data if found, None otherwise.
+    Implements retry logic for transient failures.
+    """
+    max_retries = 3
+    retry_delay = 1  # seconds
+
+    for attempt in range(max_retries):
+        try:
+            print(f"  Fetching TCGdex set list...")
+            response = requests.get(f"{TCGDEX_BASE_URL}/sets", timeout=10)
+            response.raise_for_status()
+            sets = response.json()
+
+            # Try exact match first
+            for s in sets:
+                if s.get("name", "").lower() == set_name.lower():
+                    set_id = s.get("id")
+                    # Fetch full set details
+                    set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
+                    set_response.raise_for_status()
+                    return set_response.json()
+
+            # Try without series prefix (e.g., "Surging Sparks" from "Scarlet & Violet: Surging Sparks")
+            if ":" in set_name:
+                set_name_without_prefix = set_name.split(":", 1)[1].strip()
+                for s in sets:
+                    if s.get("name", "").lower() == set_name_without_prefix.lower():
+                        set_id = s.get("id")
+                        set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
+                        set_response.raise_for_status()
+                        print(f"  Matched TCGdex set using name without prefix: '{set_name_without_prefix}'")
+                        return set_response.json()
+
+            # Try partial match as last resort
+            set_name_lower = set_name.lower()
+            for s in sets:
+                if set_name_lower in s.get("name", "").lower():
+                    set_id = s.get("id")
+                    set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
+                    set_response.raise_for_status()
+                    return set_response.json()
+
+            return None
+
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                print(f"  ⚠ API error (attempt {attempt + 1}/{max_retries}): {e}")
+                print(f"  Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print(f"  ✗ Failed after {max_retries} attempts: {e}")
+                return None
+        except Exception as e:
+            print(f"  ✗ Unexpected error fetching TCGdex set info: {e}")
+            return None
+
+
+def parse_estimated_value(value: str) -> Optional[float]:
+    """Parse estimated value from string format like "$20.60" to float."""
+    if pd.isna(value) or value == "":
+        return None
+    try:
+        return float(value.replace("$", "").strip())
+    except (ValueError, AttributeError):
+        return None
+
+
+def parse_boolean(value: str) -> bool:
+    """Parse TRUE/FALSE strings to boolean."""
+    if pd.isna(value):
+        return False
+    return str(value).strip().upper() == "TRUE"
+
+
+def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, debug: bool = False) -> dict:
+    """
+    Find matching card from TCGdex cards list by card number.
+    Returns dict with enriched fields: image_small, image_large, artist
+    Note: All data is extracted from the cards list, no additional API calls needed.
+    """
+    enriched = {}
+
+    # Normalize card number - try both with and without leading zeros
+    card_number_normalized = str(card_number).strip()
+    card_number_padded = card_number_normalized.zfill(3)  # Pad to 3 digits
+
+    for card in tcgdex_cards:
+        local_id = str(card.get("localId", ""))
+
+        # Try matching both formats
+        if local_id == card_number_normalized or local_id == card_number_padded:
+            # Image URLs - already available in the cards list
+            base_image_url = card.get("image")
+            if base_image_url:
+                enriched["image_small"] = f"{base_image_url}/low.webp"
+                enriched["image_large"] = f"{base_image_url}/high.webp"
+
+            # Artist - note: may not be in summary, will be None if not present
+            if card.get("illustrator"):
+                enriched["artist"] = card["illustrator"]
+
+            return enriched
+
+    if debug:
+        print(f"    Debug: No match for card number '{card_number_normalized}' (tried '{card_number_padded}')")
+
+    return enriched
+
+
+def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str, enrich: bool = True):
+    """
+    Process a single CSV file and upload records to Algolia.
+
+    Args:
+        file_path: Path to CSV file
+        client: Algolia SearchClientSync instance
+        index_name: Name of the Algolia index
+        enrich: Whether to enrich with TCGdex API data
+    """
+    print(f"\nProcessing: {file_path.name}")
+
+    # Extract set name from filename
+    set_name = extract_card_set_from_filename(file_path.name)
+    print(f"  Set Name: {set_name}")
+
+    # Get set info from TCGdex
+    set_id = None
+    tcgdex_cards = []
+
+    if enrich:
+        set_info = fetch_tcgdex_set_info(set_name)
+        if set_info:
+            set_id = set_info.get("id")
+            tcgdex_cards = set_info.get("cards", [])
+            print(f"  Found TCGdex set ID: {set_id}")
+            print(f"  TCGdex cards available: {len(tcgdex_cards)}")
+        else:
+            print(f"  ✗ Could not find TCGdex set for '{set_name}'")
+            print(f"  Continuing without enrichment...")
+
+    # Read CSV with error handling
+    try:
+        df = pd.read_csv(file_path)
+        # Strip column names to handle trailing spaces
+        df.columns = df.columns.str.strip()
+        print(f"  CSV records: {len(df)}")
+    except Exception as e:
+        print(f"  ✗ Error reading CSV file: {e}")
+        return
+
+    # Process records
+    records = []
+    enriched_count = 0
+
+    for idx, row in df.iterrows():
+        try:
+            # Validate and extract required fields
+            # Handle card numbers that may be read as floats (e.g., 172.0)
+            raw_number = row["Number"]
+            if pd.isna(raw_number):
+                continue  # Skip rows with no card number
+            if isinstance(raw_number, float):
+                card_number = str(int(raw_number)).strip()
+            else:
+                card_number = str(raw_number).strip()
+
+            pokemon_name = str(row["Pokemon Name"]).strip()
+
+            # Skip empty rows
+            if not pokemon_name or pokemon_name.lower() == 'nan':
+                continue
+
+            # Create objectID using set_id-card_number pattern (like Supabase)
+            if set_id:
+                object_id = f"{set_id}-{card_number}"
+            else:
+                # Fallback if no set_id available
+                object_id = f"{set_name.replace(' ', '-').replace(':', '').lower()}-{card_number}"
+
+            record = {
+                "objectID": object_id,
+                "pokemon_name": pokemon_name,
+                "number": card_number,
+                "card_type": str(row["Card Type"]).strip(),
+                "machine_quantity": int(row["# in Machine"]),
+                "estimated_value": parse_estimated_value(row["Estimated Value"]),
+                "is_chase_card": parse_boolean(row["Is Chase Card?"]),
+                "is_top_10_chase_card": parse_boolean(row["Is top 10 chase card?"]),
+                "is_classic_pokemon": parse_boolean(row["Is classic Pokemon?"]),
+                "is_full_art": parse_boolean(row["Is Full Art?"]),
+                "set_name": set_name,
+            }
+
+            # Add set_id if available
+            if set_id:
+                record["set_id"] = set_id
+
+            # Enrich with TCGdex card data (adds image_small, image_large, artist)
+            if enrich and tcgdex_cards:
+                debug = (idx < 5)  # Debug first 5 cards
+                enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, debug=debug)
+                record.update(enriched_data)  # Safe even if empty dict
+                if enriched_data.get("image_small"):
+                    enriched_count += 1
+
+            records.append(record)
+
+            # Progress logging (every 25 cards)
+            if (idx + 1) % 25 == 0:
+                print(f"  Progress: {idx + 1}/{len(df)} cards processed ({enriched_count} enriched)")
+
+        except KeyError as e:
+            print(f"  ⚠ Row {idx + 1}: Missing column {e}")
+            continue
+        except ValueError as e:
+            print(f"  ⚠ Row {idx + 1}: Invalid data format - {e}")
+            continue
+        except Exception as e:
+            print(f"  ⚠ Row {idx + 1}: Unexpected error - {e}")
+            continue
+
+    # Final progress report
+    print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
+
+    # Upload to Algolia
+    if records:
+        print(f"  Uploading {len(records)} records to Algolia...")
+        try:
+            response = client.save_objects(index_name=index_name, objects=records)
+            print(f"  ✓ Successfully uploaded {len(records)} records")
+        except Exception as e:
+            print(f"  ✗ Error uploading to Algolia: {e}")
+    else:
+        print(f"  ⚠ No valid records to upload")
+
+
+def main():
+    """Main execution."""
+    parser = argparse.ArgumentParser(
+        description="Pokemon TCG card data ingestion for Algolia"
+    )
+    parser.add_argument(
+        "--no-enrich",
+        action="store_true",
+        help="Skip enrichment with TCGdex API data"
+    )
+    parser.add_argument(
+        "--file",
+        type=str,
+        help="Process only a specific CSV file"
+    )
+
+    args = parser.parse_args()
+
+    # Validate environment
+    if not ALGOLIA_APP_ID or not ALGOLIA_API_KEY:
+        print("=" * 60)
+        print("ERROR: Missing Algolia credentials")
+        print("=" * 60)
+        print("\nSet these in your .env file:")
+        print("  ALGOLIA_APP_ID=your-app-id")
+        print("  ALGOLIA_API_KEY=your-admin-api-key")
+        print("  ALGOLIA_INDEX_NAME=your-index-name (optional)")
+        print("=" * 60)
+        return
+
+    if not DATA_DIR.exists():
+        print(f"Error: Data directory {DATA_DIR} does not exist")
+        return
+
+    # Initialize Algolia
+    print("Connecting to Algolia...")
+    client = SearchClientSync(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
+    print(f"✓ Connected to Algolia")
+    print(f"✓ Target index: {ALGOLIA_INDEX_NAME}\n")
+
+    enrich = not args.no_enrich
+
+    # Process files
+    if args.file:
+        # Process single file
+        file_path = DATA_DIR / args.file
+        if not file_path.exists():
+            print(f"Error: File not found: {file_path}")
+            return
+        process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+    else:
+        # Process all CSV files
+        csv_files = list(DATA_DIR.glob("*.csv"))
+        if not csv_files:
+            print(f"No CSV files found in {DATA_DIR}")
+            return
+
+        print(f"Found {len(csv_files)} CSV files")
+
+        for csv_file in csv_files:
+            process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+
+    print("\n" + "=" * 60)
+    print("Ingestion complete!")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()
