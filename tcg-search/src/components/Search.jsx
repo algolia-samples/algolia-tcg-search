@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { searchClient, indexName, indexNamePriceAsc, indexNamePriceDesc } from '../utilities/algolia';
 import {
   Configure,
@@ -5,7 +6,9 @@ import {
   InstantSearch,
   Pagination,
   SearchBox,
-  SortBy
+  SortBy,
+  NoResultsBoundary,
+  NoResults
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import { userToken } from '../utilities/algolia';
@@ -18,6 +21,21 @@ import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
 
 export default function Search() {
+  // Override mobile browser's default scroll-to-center behavior on input focus
+  useEffect(() => {
+    const handleFocus = (e) => {
+      if (e.target.matches('.ais-SearchBox-input')) {
+        // Small delay to override browser's default scroll
+        setTimeout(() => {
+          e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    };
+
+    document.addEventListener('focus', handleFocus, true);
+    return () => document.removeEventListener('focus', handleFocus, true);
+  }, []);
+
   return (
     <div>
       <Header />
@@ -62,10 +80,12 @@ export default function Search() {
 
           <div className="search-panel">
             <div className="search-panel__results">
-              <Hits hitComponent={Hit} />
-              <div className="pagination">
-                <Pagination />
-              </div>
+              <NoResultsBoundary fallback={<NoResults />}>
+                <Hits hitComponent={Hit} />
+                <div className="pagination">
+                  <Pagination />
+                </div>
+              </NoResultsBoundary>
             </div>
           </div>
         </InstantSearch>
