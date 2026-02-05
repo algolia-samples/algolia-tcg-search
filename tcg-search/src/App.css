@@ -30,7 +30,7 @@ em {
 .header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   padding: 0.75rem 1rem;
   background-image: linear-gradient(to right, #3B4CCA, #00aeff);
   color: #fff;
@@ -39,6 +39,14 @@ em {
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 0;
 }
 
 .header a {
@@ -73,6 +81,32 @@ em {
     1px -1px 0 #e74c3c,
     -1px 1px 0 #e74c3c,
     1px 1px 0 #e74c3c;
+}
+
+.header-search-button {
+  background: #ffffff;
+  border: none;
+  border-radius: 50%;
+  color: #3B4CCA;
+  cursor: pointer;
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-right: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-search-button:hover {
+  background: #FFCB05;
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.header-search-button:active {
+  transform: scale(0.95);
 }
 
 .container {
@@ -376,6 +410,7 @@ em {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.2s ease !important;
   width: 100%;
+  scroll-margin-top: 1.5rem;
 }
 
 /* Hide native browser clear button */
@@ -577,7 +612,7 @@ em {
   padding: 10px;
 }
 
-button:not([class*="ais-"]) {
+button:not([class*="ais-"]):not(.header-search-button) {
   border: none;
   cursor: pointer;
   appearance: none;
@@ -1271,6 +1306,11 @@ article {
 
   .header-subtitle {
     font-size: 1.15rem;
+  }
+
+  /* Tighter spacing for search button on mobile */
+  .header-search-button {
+    margin-right: 0.5rem;
   }
 
   /* Reduce carousel title on mobile */
