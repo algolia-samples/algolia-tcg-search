@@ -7,8 +7,7 @@ import {
   Pagination,
   SearchBox,
   SortBy,
-  NoResultsBoundary,
-  NoResults
+  useHits
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import { userToken } from '../utilities/algolia';
@@ -19,6 +18,31 @@ import Header from './Header';
 import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
+
+function HitsWithNoResults() {
+  const { results } = useHits();
+  const hasResults = results && results.hits.length > 0;
+
+  if (!hasResults) {
+    return (
+      <div className="no-results">
+        <h2 className="no-results-title">No cards found</h2>
+        <p className="no-results-description">
+          Try adjusting your search or filters to find what you're looking for.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Hits hitComponent={Hit} />
+      <div className="pagination">
+        <Pagination />
+      </div>
+    </>
+  );
+}
 
 export default function Search() {
   // Override mobile browser's default scroll-to-center behavior on input focus
@@ -80,12 +104,7 @@ export default function Search() {
 
           <div className="search-panel">
             <div className="search-panel__results">
-              <NoResultsBoundary fallback={<NoResults />}>
-                <Hits hitComponent={Hit} />
-                <div className="pagination">
-                  <Pagination />
-                </div>
-              </NoResultsBoundary>
+              <HitsWithNoResults />
             </div>
           </div>
         </InstantSearch>
