@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { searchClient, indexName, indexNamePriceAsc, indexNamePriceDesc } from '../utilities/algolia';
 import {
   Configure,
@@ -5,7 +6,8 @@ import {
   InstantSearch,
   Pagination,
   SearchBox,
-  SortBy
+  SortBy,
+  useHits
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import { userToken } from '../utilities/algolia';
@@ -17,7 +19,47 @@ import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
 
+function HitsWithNoResults() {
+  const { results } = useHits();
+  const hasResults = results && results.hits.length > 0;
+
+  if (!hasResults) {
+    return (
+      <div className="no-results">
+        <h2 className="no-results-title">No cards found</h2>
+        <p className="no-results-description">
+          Try adjusting your search or filters to find what you're looking for.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Hits hitComponent={Hit} />
+      <div className="pagination">
+        <Pagination />
+      </div>
+    </>
+  );
+}
+
 export default function Search() {
+  // Override mobile browser's default scroll-to-center behavior on input focus
+  useEffect(() => {
+    const handleFocus = (e) => {
+      if (e.target.matches('.ais-SearchBox-input')) {
+        // Small delay to override browser's default scroll
+        setTimeout(() => {
+          e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    };
+
+    document.addEventListener('focus', handleFocus, true);
+    return () => document.removeEventListener('focus', handleFocus, true);
+  }, []);
+
   return (
     <div>
       <Header />
@@ -62,10 +104,7 @@ export default function Search() {
 
           <div className="search-panel">
             <div className="search-panel__results">
-              <Hits hitComponent={Hit} />
-              <div className="pagination">
-                <Pagination />
-              </div>
+              <HitsWithNoResults />
             </div>
           </div>
         </InstantSearch>

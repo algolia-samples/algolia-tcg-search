@@ -283,6 +283,31 @@ em {
 
 .search-panel__results {
   flex: 3;
+  min-height: 800px;
+}
+
+/* No results message */
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.no-results-title {
+  font-family: 'Righteous', cursive;
+  font-size: 1.5rem;
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+.no-results-description {
+  font-size: 1rem;
+  color: #718096;
+  max-width: 500px;
 }
 
 .search-controls-row .ais-SortBy {
