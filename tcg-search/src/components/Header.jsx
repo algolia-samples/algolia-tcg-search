@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import logo from '../assets/tcg-search-logo.svg';
 
 export default function Header() {
-  const scrollToSearch = () => {
+  const scrollToSearch = useCallback(() => {
     const searchBox = document.querySelector('.ais-SearchBox-input');
     if (searchBox) {
       searchBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
       searchBox.focus();
     }
-  };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -21,7 +21,7 @@ export default function Header() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [scrollToSearch]);
 
   return (
     <header className="header">
