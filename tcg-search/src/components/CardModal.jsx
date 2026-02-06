@@ -126,6 +126,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
               onClick={onClose}
               aria-label="Close modal"
             >
+              <span className="close-icon">✕</span>
               Close
             </button>
           </div>

@@ -2028,12 +2028,12 @@ article {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: rgba(26, 26, 26, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 16px;
   overflow: hidden;
   animation: zoomIn 0.25s ease-out forwards;
   will-change: transform;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   max-width: 90vw;
   max-height: 90vh;
 }
@@ -2047,9 +2047,10 @@ article {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+  padding: 2rem 2rem 1rem 2rem;
   flex: 1;
   overflow: hidden;
+  background: linear-gradient(to bottom, rgba(245, 245, 245, 0.5), rgba(250, 250, 250, 0.5));
 }
 
 .image-modal-img {
@@ -2057,7 +2058,9 @@ article {
   max-height: 70vh;
   object-fit: contain;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2),
+              0 2px 8px rgba(0, 0, 0, 0.1),
+              0 0 0 1px rgba(0, 0, 0, 0.05);
   display: block;
 }
 
@@ -2108,8 +2111,8 @@ article {
   display: flex;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(26, 26, 26, 0.95));
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(to top, rgba(248, 248, 248, 1), rgba(255, 255, 255, 0.98));
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   justify-content: center;
   flex-shrink: 0;
 }
@@ -2182,22 +2185,30 @@ article {
 }
 
 .modal-btn-close {
-  background: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
   color: #333;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.15);
   flex: 0.8;
   max-width: 180px;
 }
 
 .modal-btn-close:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 1);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #e8e8e8 0%, #d8d8d8 100%);
+  border-color: rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .modal-btn-close:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.modal-btn-close .close-icon {
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
 }
 
 /* Modal Form Styles */
