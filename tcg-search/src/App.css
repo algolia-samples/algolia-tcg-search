@@ -2028,7 +2028,7 @@ article {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.98);
+  background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
   animation: zoomIn 0.25s ease-out forwards;
@@ -2111,7 +2111,7 @@ article {
   display: flex;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  background: linear-gradient(to top, rgba(248, 248, 248, 1), rgba(255, 255, 255, 0.98));
+  background: #ffffff;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   justify-content: center;
   flex-shrink: 0;
