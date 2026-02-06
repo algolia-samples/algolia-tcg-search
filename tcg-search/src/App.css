@@ -2026,8 +2026,16 @@ article {
 
 .image-modal-content {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(26, 26, 26, 0.95);
+  border-radius: 16px;
+  overflow: hidden;
   animation: zoomIn 0.25s ease-out forwards;
   will-change: transform;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  max-width: 90vw;
+  max-height: 90vh;
 }
 
 .image-modal-content.closing {
@@ -2035,12 +2043,21 @@ article {
   will-change: transform;
 }
 
+.modal-image-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+  flex: 1;
+  overflow: hidden;
+}
+
 .image-modal-img {
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 100%;
+  max-height: 70vh;
   object-fit: contain;
   border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   display: block;
 }
 
@@ -2086,29 +2103,34 @@ article {
   }
 }
 
-/* Modal Button Styles */
-.modal-button-container {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
+/* Modal Button Bar */
+.modal-button-bar {
   display: flex;
   gap: 1rem;
-  z-index: 1001;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(26, 26, 26, 0.95));
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .modal-btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 700;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-family: inherit;
+  gap: 0.625rem;
+  font-family: 'Righteous', cursive;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
 .modal-btn:disabled {
@@ -2116,33 +2138,66 @@ article {
   cursor: not-allowed;
 }
 
+.modal-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.modal-btn:hover:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
+}
+
 .modal-btn-claim {
-  background-color: #FF1C1C;
+  background: linear-gradient(135deg, #FF1C1C 0%, #CC0000 100%);
   color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex: 1.2;
+  max-width: 250px;
 }
 
 .modal-btn-claim:hover:not(:disabled) {
-  background-color: #E01818;
+  background: linear-gradient(135deg, #E01818 0%, #AA0000 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(255, 28, 28, 0.4);
+}
+
+.modal-btn-claim:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .modal-btn-claim .pokeball-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  position: relative;
+  z-index: 1;
 }
 
 .modal-btn-close {
-  background-color: white;
+  background: rgba(255, 255, 255, 0.95);
   color: #333;
-  border: 2px solid #ddd;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex: 0.8;
+  max-width: 180px;
 }
 
 .modal-btn-close:hover:not(:disabled) {
-  background-color: #f5f5f5;
-  border-color: #bbb;
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.3);
+}
+
+.modal-btn-close:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 /* Modal Form Styles */
@@ -2215,27 +2270,41 @@ article {
 
 .modal-btn-back {
   flex: 1;
-  background-color: #f5f5f5;
+  background: rgba(245, 245, 245, 1);
   color: #333;
   border: 2px solid #ddd;
+  font-size: 1rem;
+  padding: 0.875rem 1.5rem;
 }
 
 .modal-btn-back:hover:not(:disabled) {
-  background-color: #e8e8e8;
+  background: rgba(232, 232, 232, 1);
   border-color: #bbb;
 }
 
 .modal-btn-submit {
   flex: 2;
-  background-color: #3B4CCA;
+  background: linear-gradient(135deg, #3B4CCA 0%, #2C3A9E 100%);
   color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(59, 76, 202, 0.3);
+  font-size: 1rem;
+  padding: 0.875rem 1.5rem;
 }
 
 .modal-btn-submit:hover:not(:disabled) {
-  background-color: #2f3da8;
+  background: linear-gradient(135deg, #2f3da8 0%, #232E7E 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(59, 76, 202, 0.4);
+}
+
+.modal-btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Ensure button text appears above ripple effect */
+.modal-btn > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Carousel Styles */

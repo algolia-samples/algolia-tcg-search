@@ -103,13 +103,16 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
             '--origin-y': `${origin.y}px`,
             '--rotation': `${rotation}deg`
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <img
-            src={hit.image_large || hit.image_small}
-            alt={`${hit.pokemon_name} Pokemon card - enlarged`}
-            className="image-modal-img"
-          />
-          <div className="modal-button-container">
+          <div className="modal-image-wrapper">
+            <img
+              src={hit.image_large || hit.image_small}
+              alt={`${hit.pokemon_name} Pokemon card - enlarged`}
+              className="image-modal-img"
+            />
+          </div>
+          <div className="modal-button-bar">
             <button
               className="modal-btn modal-btn-claim"
               onClick={handleClaimClick}
