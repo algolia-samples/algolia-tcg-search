@@ -73,25 +73,48 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
     }
 
     setIsSubmitting(true);
+    setFormErrors({});
 
-    // Phase 1: Placeholder functionality
-    console.log('Claim form submitted:', {
-      cardId: hit.objectID,
-      pokemonName: hit.pokemon_name,
-      cardNumber: hit.number,
-      setName: hit.set_name,
-      cardValue: hit.estimated_value,
-      imageUrl: hit.image_large || hit.image_small,
-      claimerName: claimerName.trim(),
-      claimerEmail: claimerEmail.trim(),
-    });
+    try {
+      // Call the API to save the claim
+      const response = await fetch('/api/claims/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cardId: hit.objectID,
+          pokemonName: hit.pokemon_name,
+          cardNumber: hit.number,
+          setName: hit.set_name,
+          cardValue: hit.estimated_value,
+          imageUrl: hit.image_large || hit.image_small,
+          claimerName: claimerName.trim(),
+          claimerEmail: claimerEmail.trim(),
+        }),
+      });
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert('Claim submitted successfully! (Placeholder - no backend yet)');
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle error from API
+        setFormErrors({ submit: data.error || 'Failed to submit claim' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success!
+      alert(`Successfully claimed ${hit.pokemon_name}!`);
       onClose();
-    }, 500);
+
+      // Reload page to show updated data (simple MVP approach)
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Error submitting claim:', error);
+      setFormErrors({ submit: 'Network error. Please try again.' });
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -183,6 +206,12 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
                 <span id="email-error" className="form-error">{formErrors.email}</span>
               )}
             </div>
+
+            {formErrors.submit && (
+              <div className="form-error" style={{ marginTop: '1rem', textAlign: 'center' }}>
+                {formErrors.submit}
+              </div>
+            )}
 
             <div className="modal-form-actions">
               <button
