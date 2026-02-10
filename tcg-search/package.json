@@ -12,6 +12,7 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "algoliasearch": "^4.15.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
