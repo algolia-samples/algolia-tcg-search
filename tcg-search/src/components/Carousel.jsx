@@ -9,7 +9,7 @@ import BaseCarousel from './BaseCarousel';
 import CarouselHit from './CarouselHit';
 
 // Inner component that uses InstantSearch hooks and renders BaseCarousel
-function CarouselContent({ title, hitsPerPage }) {
+function CarouselContent({ title }) {
   const { hits } = useInfiniteHits();
 
   return (
@@ -37,7 +37,6 @@ function CarouselContent({ title, hitsPerPage }) {
 
 CarouselContent.propTypes = {
   title: PropTypes.string.isRequired,
-  hitsPerPage: PropTypes.number,
 };
 
 // Main carousel component with separate InstantSearch instance
@@ -51,7 +50,7 @@ export default function Carousel({ title, filters, hitsPerPage = 10 }) {
         hitsPerPage={hitsPerPage}
         filters={filters}
       />
-      <CarouselContent title={title} hitsPerPage={hitsPerPage} />
+      <CarouselContent title={title} />
     </InstantSearch>
   );
 }
