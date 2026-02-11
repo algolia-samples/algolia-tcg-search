@@ -1,7 +1,6 @@
 {
-  "buildCommand": "cd tcg-search && npm run build",
-  "devCommand": "cd tcg-search && npm start",
-  "installCommand": "cd tcg-search && npm install",
-  "framework": null,
+  "buildCommand": "npm --prefix tcg-search run build",
+  "installCommand": "npm --prefix tcg-search install",
+  "devCommand": "npm --prefix tcg-search start",
   "outputDirectory": "tcg-search/build"
 }
