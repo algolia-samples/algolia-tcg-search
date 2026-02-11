@@ -64,6 +64,7 @@ export default function BaseCarousel({
       if (wrapperRef.current) {
         observer.unobserve(wrapperRef.current);
       }
+      observer.disconnect();
     };
   }, [enableLazyLoading, lazyLoadMargin]);
 
