@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import pokeballIcon from '../assets/pokeball_icon.svg';
 
@@ -8,6 +8,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
   const [claimerEmail, setClaimerEmail] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const successTimeoutRef = useRef(null);
 
   // Reset to image view when modal opens
   useEffect(() => {
@@ -18,6 +19,21 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
       setFormErrors({});
       setIsSubmitting(false);
     }
+  }, [isOpen]);
+
+  // Cleanup success timeout when modal closes or unmounts
+  useEffect(() => {
+    if (!isOpen && successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
   }, [isOpen]);
 
   // Handle Escape key to close modal
@@ -125,7 +141,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
       setIsSubmitting(false);
 
       // Auto-close and reload after 2 seconds
-      setTimeout(() => {
+      successTimeoutRef.current = setTimeout(() => {
         onClose();
         window.location.reload();
       }, 2000);

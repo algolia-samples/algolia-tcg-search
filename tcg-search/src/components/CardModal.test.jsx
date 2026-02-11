@@ -468,4 +468,59 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     expect(await screen.findByText(/Server error. Please try again later./i)).toBeInTheDocument();
   });
+
+  it('clears success timeout when modal closes early', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      headers: {
+        get: (header) => header === 'content-type' ? 'application/json' : null
+      },
+      json: async () => ({ success: true, claim: { id: 1 } }),
+    });
+
+    const { rerender } = render(
+      <CardModal
+        isOpen={true}
+        onClose={mockOnClose}
+        hit={mockHit}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+      />
+    );
+
+    // Go to form view and submit (use fireEvent.change to avoid timer conflicts)
+    fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
+    fireEvent.change(screen.getByLabelText(/Your Name/i), { target: { value: 'Ash Ketchum' } });
+    fireEvent.change(screen.getByLabelText(/Your Email/i), { target: { value: 'ash@pokemon.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
+
+    // Wait for success view to appear
+    await waitFor(() => {
+      expect(screen.getByText('Successfully Claimed!')).toBeInTheDocument();
+    });
+
+    // Switch to fake timers after async operations complete
+    jest.useFakeTimers();
+
+    // Close modal before 2 seconds elapse
+    rerender(
+      <CardModal
+        isOpen={false}
+        onClose={mockOnClose}
+        hit={mockHit}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+      />
+    );
+
+    // Advance time past the timeout
+    jest.advanceTimersByTime(2500);
+
+    // Verify reload was NOT called (timeout was cleared)
+    expect(window.location.reload).not.toHaveBeenCalled();
+
+    jest.useRealTimers();
+  });
 });
