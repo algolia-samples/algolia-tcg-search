@@ -2601,11 +2601,11 @@ button.carousel-nav-right {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   border: 2px solid #FF1C1C;
   position: relative;
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 .claimed-card:hover {
-  opacity: 0.65;
+  opacity: 0.8;
 }
 
 .claimed-card-badge {
@@ -2714,12 +2714,12 @@ button.carousel-nav-right {
 /* Reduced opacity for claimed cards */
 .hit-card-image-wrapper.claimed,
 .carousel-hit-card.claimed {
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 .hit-card-image-wrapper.claimed:hover,
 .carousel-hit-card.claimed:hover {
-  opacity: 0.65;
+  opacity: 0.8;
 }
 
 /* Position wrapper for badge */
