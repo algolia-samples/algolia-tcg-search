@@ -693,14 +693,14 @@ button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
 
 .card:hover {
   filter: drop-shadow(2px 5px 5px rgba(0,0,0,0.15));
-  transform: rotate(2deg);
+  /* transform moved to wrapper to include badge */
 }
 
 /* Make wrappers tilt on hover (includes badge) */
 .hit-card-image-wrapper:hover,
 .carousel-hit-image-wrapper:hover,
 .claimed-card-image-wrapper:hover {
-  transform: rotate(2deg);
+  transform: rotate(4deg);
   filter: drop-shadow(2px 5px 5px rgba(0,0,0,0.15));
 }
 
