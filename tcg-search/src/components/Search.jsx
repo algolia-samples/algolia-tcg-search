@@ -18,6 +18,7 @@ import Header from './Header';
 import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
+import ClaimedCarousel from './ClaimedCarousel';
 
 function HitsWithNoResults() {
   const { results } = useHits();
@@ -86,6 +87,9 @@ export default function Search() {
             filters="is_top_10_chase_card:true"
             hitsPerPage={10}
           />
+
+          {/* Recently Claimed Carousel */}
+          <ClaimedCarousel />
 
           <div className="search-header">
             <div className="search-controls-row">
