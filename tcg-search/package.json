@@ -4,6 +4,9 @@
   "description": "Pokemon TCG vending machine search application with React InstantSearch v7",
   "private": true,
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "lint": "eslint",

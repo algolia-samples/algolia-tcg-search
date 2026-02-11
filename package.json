@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Pokemon TCG vending machine search application with card claiming",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel",

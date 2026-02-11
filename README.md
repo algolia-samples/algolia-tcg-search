@@ -24,9 +24,14 @@ Search and claim cards from the TCG vending machine inventory.
 
 ### Prerequisites
 
-- Node.js 18+
+- **Node.js 20+** (required by @supabase/supabase-js)
 - Vercel CLI: `npm i -g vercel`
 - Supabase account (for claims backend)
+
+Check your Node version:
+```bash
+node --version  # Should be v20.0.0 or higher
+```
 
 ### Local Development
 
