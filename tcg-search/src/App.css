@@ -692,8 +692,15 @@ button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
 }
 
 .card:hover {
+  /* All hover effects (filter, transform) now handled by wrapper - no styles needed here */
+}
+
+/* Make wrappers tilt on hover (includes badge) */
+.hit-card-image-wrapper:hover,
+.carousel-hit-image-wrapper:hover,
+.claimed-card-image-wrapper:hover {
+  transform: rotate(4deg);
   filter: drop-shadow(2px 5px 5px rgba(0,0,0,0.15));
-  transform: rotate(2deg);
 }
 
 /* Hit component article container */
@@ -2173,6 +2180,13 @@ article {
   transform: translateY(0);
 }
 
+.modal-btn-claim:disabled,
+.modal-btn-claim.disabled {
+  background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .modal-btn-claim .pokeball-icon {
   width: 24px;
   height: 24px;
@@ -2586,6 +2600,11 @@ button.carousel-nav-right {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   border: 2px solid #FF1C1C;
   position: relative;
+  opacity: 0.75;
+}
+
+.claimed-card:hover {
+  opacity: 0.8;
 }
 
 .claimed-card-badge {
@@ -2666,4 +2685,46 @@ button.carousel-nav-right {
   .claimed-card {
     width: 200px;
   }
+}
+
+/* Claimed badges for Hit and CarouselHit components */
+.hit-claimed-badge,
+.carousel-claimed-badge {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  background: rgba(255, 255, 255, 0.3);
+  color: #FF1C1C;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 900;
+  border: 4px solid #FF1C1C;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(255, 28, 28, 0.3);
+  z-index: 10;
+  font-family: 'Righteous', cursive;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+/* Reduced opacity for claimed cards (applied to image wrapper only for subtle fade) */
+.hit-card-image-wrapper.claimed,
+.carousel-hit-image-wrapper.claimed {
+  opacity: 0.75;
+}
+
+.hit-card-image-wrapper.claimed:hover,
+.carousel-hit-image-wrapper.claimed:hover {
+  opacity: 0.8;
+}
+
+/* Position wrapper for badge */
+.hit-card-image-wrapper,
+.carousel-hit-image-wrapper,
+.claimed-card-image-wrapper {
+  position: relative;
+  transition: filter 0.3s ease-in-out, transform 0.7s ease-in-out;
 }
