@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import algoliasearch from 'algoliasearch';
 
 // Initialize Supabase client with secret key for server-side operations
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
   process.env.SUPABASE_SECRET_KEY
+);
+
+// Initialize Algolia client with admin API key for server-side operations
+const algoliaClient = algoliasearch(
+  process.env.REACT_APP_ALGOLIA_APP_ID,
+  process.env.ALGOLIA_ADMIN_API_KEY
 );
 
 // Simple in-memory rate limiting
@@ -105,6 +112,23 @@ export default async function handler(req, res) {
       return res.status(500).json({
         error: 'Failed to save claim'
       });
+    }
+
+    // Decrement inventory in Algolia atomically
+    try {
+      await algoliaClient.partialUpdateObject({
+        indexName: process.env.REACT_APP_ALGOLIA_INDEX_NAME,
+        objectID: cardId,
+        attributesToUpdate: {
+          machine_quantity: {
+            _operation: 'Decrement',
+            value: 1
+          }
+        }
+      });
+    } catch (algoliaError) {
+      // Log the error but don't fail the claim since it's already saved to Supabase
+      console.error('Failed to update Algolia inventory:', algoliaError);
     }
 
     // Return success with the created claim
