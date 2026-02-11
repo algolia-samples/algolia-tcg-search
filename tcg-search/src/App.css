@@ -2710,14 +2710,14 @@ button.carousel-nav-right {
   pointer-events: none;
 }
 
-/* Reduced opacity for claimed cards */
+/* Reduced opacity for claimed cards (applied to image wrapper only for subtle fade) */
 .hit-card-image-wrapper.claimed,
-.carousel-hit-card.claimed {
+.carousel-hit-image-wrapper.claimed {
   opacity: 0.75;
 }
 
 .hit-card-image-wrapper.claimed:hover,
-.carousel-hit-card.claimed:hover {
+.carousel-hit-image-wrapper.claimed:hover {
   opacity: 0.8;
 }
 

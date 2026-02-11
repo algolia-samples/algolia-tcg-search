@@ -92,8 +92,8 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
 
   return (
     <>
-      <article className={`carousel-hit-card ${isClaimed ? 'claimed' : ''}`} aria-label={`${hit.pokemon_name} Pokemon card`}>
-        <div className="carousel-hit-image-wrapper" ref={wrapperRef}>
+      <article className="carousel-hit-card" aria-label={`${hit.pokemon_name} Pokemon card`}>
+        <div className={`carousel-hit-image-wrapper ${isClaimed ? 'claimed' : ''}`} ref={wrapperRef}>
           {isClaimed && <div className="carousel-claimed-badge">CLAIMED</div>}
           {hit.image_small ? (
             <OptimizedImage
