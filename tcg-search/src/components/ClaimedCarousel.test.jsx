@@ -35,6 +35,7 @@ describe('ClaimedCarousel', () => {
   let mockFrom;
   let mockSubscribe;
   let insertCallback;
+  let subscribeCallback;
 
   beforeEach(() => {
     // Clear localStorage
@@ -42,8 +43,18 @@ describe('ClaimedCarousel', () => {
     jest.clearAllMocks();
 
     // Mock Supabase channel subscription
-    mockSubscribe = jest.fn(() => mockChannel); // Return the channel for proper assignment
     insertCallback = null;
+    subscribeCallback = null;
+    mockSubscribe = jest.fn((callback) => {
+      subscribeCallback = callback;
+      // Simulate SUBSCRIBED status after a tick
+      setTimeout(() => {
+        if (subscribeCallback) {
+          subscribeCallback('SUBSCRIBED');
+        }
+      }, 0);
+      return mockChannel;
+    });
     mockChannel = {
       on: jest.fn((event, config, callback) => {
         if (config.event === 'INSERT') {

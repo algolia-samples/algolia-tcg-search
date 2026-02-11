@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utilities/supabase';
 import BaseCarousel from './BaseCarousel';
 import ClaimedCard from './ClaimedCard';
@@ -53,6 +53,7 @@ function setCachedClaims(data) {
 export default function ClaimedCarousel() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const subscriptionEstablished = useRef(false);
 
   // Fetch claims from Supabase
   const fetchClaims = async (showStaleWhileRevalidate = false) => {
@@ -83,6 +84,7 @@ export default function ClaimedCarousel() {
   // Initialize data and set up real-time subscription
   useEffect(() => {
     let channel;
+    let mounted = true;
 
     const initializeData = async () => {
       // Check cache first (stale-while-revalidate)
@@ -90,17 +92,24 @@ export default function ClaimedCarousel() {
 
       if (cached && !cached.stale) {
         // Fresh cache - use it, skip fetch
-        setClaims(cached);
-        setLoading(false);
+        if (mounted) {
+          setClaims(cached);
+          setLoading(false);
+        }
       } else if (cached && cached.stale) {
         // Stale cache - show immediately, fetch in background
-        setClaims(cached.data);
-        setLoading(false);
+        if (mounted) {
+          setClaims(cached.data);
+          setLoading(false);
+        }
         await fetchClaims(true);
       } else {
         // No cache - fetch fresh data
         await fetchClaims(false);
       }
+
+      // Only set up subscription if still mounted
+      if (!mounted) return;
 
       // Always set up real-time subscription (regardless of cache state)
       channel = supabase
@@ -117,15 +126,23 @@ export default function ClaimedCarousel() {
             return updated;
           });
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            subscriptionEstablished.current = true;
+            console.log('Claims subscription established');
+          }
+        });
     };
 
     initializeData();
 
     // Cleanup subscription on unmount
     return () => {
-      if (channel) {
+      mounted = false;
+      // Only remove channel if subscription was established (prevents StrictMode issues)
+      if (channel && subscriptionEstablished.current) {
         supabase.removeChannel(channel);
+        subscriptionEstablished.current = false;
       }
     };
   }, []);
