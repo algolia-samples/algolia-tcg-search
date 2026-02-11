@@ -68,7 +68,7 @@ export default function Hit({hit, sendEvent}) {
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
-  const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
+  const formattedPrice = hit.estimated_value != null ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
 
   const handleImageClick = (e) => {
     if (hit.image_large || hit.image_small) {

@@ -59,7 +59,7 @@ export default function ClaimedCard({ claim, eager = false }) {
       <div className="claimed-card-details">
         <h3 className="claimed-card-name">{claim.pokemon_name}</h3>
         <div className="claimed-card-value">
-          {claim.card_value ? `$${claim.card_value.toFixed(2)}` : '\u00A0'}
+          {claim.card_value != null ? `$${claim.card_value.toFixed(2)}` : '\u00A0'}
         </div>
         <div className="claimed-card-claimer">
           by {claim.claimer_name} • {formatTimeAgo(claim.claimed_at)}
