@@ -2468,11 +2468,11 @@ article {
   line-height: 1.2;
 }
 
-.carousel-nav {
+button.carousel-nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: white;
+  background-color: white;
   border: 2px solid #cbd5e0;
   border-radius: 50%;
   width: 48px;
@@ -2488,18 +2488,18 @@ article {
   transition: all 0.2s ease;
 }
 
-.carousel-nav:hover {
-  background: #3B4CCA !important;
+button.carousel-nav:hover {
+  background-color: #3B4CCA !important;
   color: white !important;
   border-color: #3B4CCA !important;
   transform: translateY(-50%) scale(1.1);
 }
 
-.carousel-nav-left {
+button.carousel-nav-left {
   left: 6px;
 }
 
-.carousel-nav-right {
+button.carousel-nav-right {
   right: 6px;
 }
 
@@ -2517,17 +2517,17 @@ article {
     padding: 0 calc((100vw - 100px - 200px) / 2);
   }
 
-  .carousel-nav {
+  button.carousel-nav {
     width: 40px;
     height: 40px;
     font-size: 1.5rem;
   }
 
-  .carousel-nav-left {
+  button.carousel-nav-left {
     left: 6px;
   }
 
-  .carousel-nav-right {
+  button.carousel-nav-right {
     right: 6px;
   }
 
@@ -2544,6 +2544,16 @@ article {
 
 .claimed-carousel-wrapper .carousel-container {
   border-bottom: 4px solid #FF1C1C;
+}
+
+.claimed-carousel-wrapper button.carousel-nav {
+  color: #FF1C1C;
+}
+
+.claimed-carousel-wrapper button.carousel-nav:hover {
+  background-color: #FF1C1C !important;
+  border-color: #FF1C1C !important;
+  color: white !important;
 }
 
 .claimed-carousel-title {
