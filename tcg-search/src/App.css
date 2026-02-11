@@ -2315,6 +2315,58 @@ article {
   z-index: 1;
 }
 
+/* Success View Styles */
+.modal-success-container {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-size: 3rem;
+  color: white;
+  font-weight: bold;
+  animation: successPop 0.5s ease-out;
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-message {
+  font-size: 1.125rem;
+  color: #333;
+  margin: 1rem 0 0.5rem;
+}
+
+.success-message strong {
+  color: #3B4CCA;
+  font-weight: 700;
+}
+
+.success-submessage {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 1rem;
+}
+
 /* Carousel Styles */
 .carousel-wrapper {
   margin: 1rem 0 2rem 0;

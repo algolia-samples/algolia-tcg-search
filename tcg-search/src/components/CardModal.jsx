@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import pokeballIcon from '../assets/pokeball_icon.svg';
 
 export default function CardModal({ isOpen, onClose, hit, origin, rotation, isClosing }) {
-  const [modalView, setModalView] = useState('image'); // 'image' | 'form'
+  const [modalView, setModalView] = useState('image'); // 'image' | 'form' | 'success'
   const [claimerName, setClaimerName] = useState('');
   const [claimerEmail, setClaimerEmail] = useState('');
   const [formErrors, setFormErrors] = useState({});
@@ -103,12 +103,15 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
         return;
       }
 
-      // Success!
-      alert(`Successfully claimed ${hit.pokemon_name}!`);
-      onClose();
+      // Success! Show success view
+      setModalView('success');
+      setIsSubmitting(false);
 
-      // Reload page to show updated data (simple MVP approach)
-      window.location.reload();
+      // Auto-close and reload after 2 seconds
+      setTimeout(() => {
+        onClose();
+        window.location.reload();
+      }, 2000);
 
     } catch (error) {
       console.error('Error submitting claim:', error);
@@ -129,9 +132,19 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
       }}
       role="dialog"
       aria-modal="true"
-      aria-label={modalView === 'image' ? 'Enlarged card image' : 'Claim card form'}
+      aria-label={modalView === 'image' ? 'Enlarged card image' : modalView === 'success' ? 'Claim success' : 'Claim card form'}
     >
-      {modalView === 'image' ? (
+      {modalView === 'success' ? (
+        // Success view
+        <div className="modal-form-container modal-success-container">
+          <div className="success-icon">✓</div>
+          <h2 className="modal-form-title">Successfully Claimed!</h2>
+          <p className="success-message">
+            You've claimed <strong>{hit.pokemon_name}</strong>!
+          </p>
+          <p className="success-submessage">Refreshing page...</p>
+        </div>
+      ) : modalView === 'image' ? (
         // Image view with buttons
         <div
           className={`image-modal-content ${isClosing ? 'closing' : ''}`}
