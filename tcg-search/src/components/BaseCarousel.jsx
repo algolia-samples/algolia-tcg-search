@@ -110,12 +110,13 @@ export default function BaseCarousel({
     if (!isVisible) return;
 
     // Check scroll position when data updates
-    setTimeout(checkScroll, 100);
+    const initialCheckTimeout = setTimeout(checkScroll, 100);
     const scrollElement = scrollRef.current;
     if (scrollElement) {
       scrollElement.addEventListener('scroll', handleScroll);
       window.addEventListener('resize', checkScroll);
       return () => {
+        clearTimeout(initialCheckTimeout);
         scrollElement.removeEventListener('scroll', handleScroll);
         window.removeEventListener('resize', checkScroll);
         if (scrollTimeoutRef.current) {
@@ -123,6 +124,11 @@ export default function BaseCarousel({
         }
       };
     }
+
+    // If scrollElement doesn't exist, still cleanup the timeout
+    return () => {
+      clearTimeout(initialCheckTimeout);
+    };
   }, [data, isVisible]);
 
   const scroll = (direction) => {
