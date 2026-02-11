@@ -2,13 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CardModal from './CardModal';
 
-// Mock fetch for API calls
-global.fetch = jest.fn();
-
-// Mock window.location.reload
-delete window.location;
-window.location = { reload: jest.fn() };
-
 const mockHit = {
   objectID: 'card-123',
   pokemon_name: 'Pikachu',
@@ -23,9 +16,21 @@ const mockOrigin = { x: 500, y: 500 };
 const mockOnClose = jest.fn();
 
 describe('CardModal - Phase 1 UI', () => {
+  let fetchSpy;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    fetch.mockClear();
+    // Mock fetch for API calls
+    fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true })
+      })
+    );
+  });
+
+  afterEach(() => {
+    // Restore original implementations
+    fetchSpy.mockRestore();
   });
 
   it('renders image view with Claim and Close buttons', () => {
@@ -233,14 +238,28 @@ describe('CardModal - Phase 1 UI', () => {
 });
 
 describe('CardModal - Phase 2 API Integration', () => {
+  let fetchSpy;
+  let reloadSpy;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    fetch.mockClear();
-    window.alert = jest.fn();
+    // Mock fetch
+    fetchSpy = jest.spyOn(global, 'fetch');
+
+    // Mock window.location.reload
+    reloadSpy = jest.fn();
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { reload: reloadSpy }
+    });
+  });
+
+  afterEach(() => {
+    // Restore mocks
+    fetchSpy.mockRestore();
   });
 
   it('submits claim successfully', async () => {
-    fetch.mockResolvedValueOnce({
+    fetchSpy.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, claim: { id: 1 } }),
     });
@@ -266,8 +285,9 @@ describe('CardModal - Phase 2 API Integration', () => {
     // Submit
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
+    // Verify API call
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/claims/create', {
+      expect(fetchSpy).toHaveBeenCalledWith('/api/claims/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -283,16 +303,22 @@ describe('CardModal - Phase 2 API Integration', () => {
       });
     });
 
+    // Verify success view is shown
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith('Successfully claimed Pikachu!');
+      expect(screen.getByText('Successfully Claimed!')).toBeInTheDocument();
+      expect(screen.getByText(/You've claimed/i)).toBeInTheDocument();
+      expect(screen.getByText('Pikachu')).toBeInTheDocument();
     });
 
-    expect(mockOnClose).toHaveBeenCalled();
-    expect(window.location.reload).toHaveBeenCalled();
+    // Wait for auto-close to trigger (2 seconds + small buffer)
+    await waitFor(() => {
+      expect(mockOnClose).toHaveBeenCalled();
+      expect(window.location.reload).toHaveBeenCalled();
+    }, { timeout: 3000 });
   });
 
   it('displays API error message', async () => {
-    fetch.mockResolvedValueOnce({
+    fetchSpy.mockResolvedValueOnce({
       ok: false,
       json: async () => ({ error: 'Card already claimed' }),
     });
@@ -318,7 +344,7 @@ describe('CardModal - Phase 2 API Integration', () => {
   });
 
   it('displays network error message', async () => {
-    fetch.mockRejectedValueOnce(new Error('Network error'));
+    fetchSpy.mockRejectedValueOnce(new Error('Network error'));
 
     render(
       <CardModal
@@ -341,7 +367,7 @@ describe('CardModal - Phase 2 API Integration', () => {
   });
 
   it('disables submit button while submitting', async () => {
-    fetch.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+    fetchSpy.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
 
     render(
       <CardModal
