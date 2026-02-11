@@ -40,6 +40,12 @@ export default function BaseCarousel({
       return;
     }
 
+    // Feature detection: fall back to eager loading if IntersectionObserver unavailable
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
