@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import pokeballIcon from '../assets/pokeball_icon.svg';
 
-export default function CardModal({ isOpen, onClose, hit, origin, rotation, isClosing }) {
+export default function CardModal({ isOpen, onClose, hit, origin, rotation, isClosing, isClaimed = false }) {
   const [modalView, setModalView] = useState('image'); // 'image' | 'form' | 'success'
   const [claimerName, setClaimerName] = useState('');
   const [claimerEmail, setClaimerEmail] = useState('');
@@ -197,12 +197,13 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
           </div>
           <div className="modal-button-bar">
             <button
-              className="modal-btn modal-btn-claim"
-              onClick={handleClaimClick}
-              aria-label="Claim this card"
+              className={`modal-btn modal-btn-claim ${isClaimed ? 'disabled' : ''}`}
+              onClick={isClaimed ? undefined : handleClaimClick}
+              aria-label={isClaimed ? "Card already claimed" : "Claim this card"}
+              disabled={isClaimed}
             >
               <img src={pokeballIcon} alt="" className="pokeball-icon" />
-              Claim
+              {isClaimed ? 'Claimed' : 'Claim'}
             </button>
             <button
               className="modal-btn modal-btn-close"
@@ -301,4 +302,5 @@ CardModal.propTypes = {
   }).isRequired,
   rotation: PropTypes.number.isRequired,
   isClosing: PropTypes.bool.isRequired,
+  isClaimed: PropTypes.bool,
 };

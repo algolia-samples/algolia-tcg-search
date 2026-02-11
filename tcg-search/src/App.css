@@ -696,6 +696,14 @@ button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
   transform: rotate(2deg);
 }
 
+/* Make wrappers tilt on hover (includes badge) */
+.hit-card-image-wrapper:hover,
+.carousel-hit-image-wrapper:hover,
+.claimed-card-image-wrapper:hover {
+  transform: rotate(2deg);
+  filter: drop-shadow(2px 5px 5px rgba(0,0,0,0.15));
+}
+
 /* Hit component article container */
 article {
   display: flex;
@@ -2173,6 +2181,13 @@ article {
   transform: translateY(0);
 }
 
+.modal-btn-claim:disabled,
+.modal-btn-claim.disabled {
+  background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .modal-btn-claim .pokeball-icon {
   width: 24px;
   height: 24px;
@@ -2586,6 +2601,11 @@ button.carousel-nav-right {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   border: 2px solid #FF1C1C;
   position: relative;
+  opacity: 0.6;
+}
+
+.claimed-card:hover {
+  opacity: 0.65;
 }
 
 .claimed-card-badge {
