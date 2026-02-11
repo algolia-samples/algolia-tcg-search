@@ -62,10 +62,7 @@ export default function ClaimedCard({ claim, eager = false }) {
           {claim.card_value ? `$${claim.card_value.toFixed(2)}` : '\u00A0'}
         </div>
         <div className="claimed-card-claimer">
-          Claimed by {claim.claimer_name}
-        </div>
-        <div className="claimed-card-time">
-          {formatTimeAgo(claim.claimed_at)}
+          by {claim.claimer_name} • {formatTimeAgo(claim.claimed_at)}
         </div>
       </div>
     </div>
