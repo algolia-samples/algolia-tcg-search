@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import algoliaPackage from 'algoliasearch';
-const { algoliasearch } = algoliaPackage;
+const { createClient } = require('@supabase/supabase-js');
+const { algoliasearch } = require('algoliasearch');
 
 // Initialize Supabase client with secret key for server-side operations
 const supabase = createClient(
@@ -38,7 +37,7 @@ function checkRateLimit(email) {
   return true; // Within rate limit
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
