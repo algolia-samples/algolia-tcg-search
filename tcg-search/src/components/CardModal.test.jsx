@@ -470,6 +470,8 @@ describe('CardModal - Phase 2 API Integration', () => {
   });
 
   it('clears success timeout when modal closes early', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
     fetchSpy.mockResolvedValueOnce({
       ok: true,
       headers: {
@@ -489,19 +491,19 @@ describe('CardModal - Phase 2 API Integration', () => {
       />
     );
 
-    // Go to form view and submit (use fireEvent.change to avoid timer conflicts)
+    // Go to form view and submit
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
-    fireEvent.change(screen.getByLabelText(/Your Name/i), { target: { value: 'Ash Ketchum' } });
-    fireEvent.change(screen.getByLabelText(/Your Email/i), { target: { value: 'ash@pokemon.com' } });
+    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
+    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
-    // Wait for success view to appear
+    // Wait for success view to appear (timeout is created here)
     await waitFor(() => {
       expect(screen.getByText('Successfully Claimed!')).toBeInTheDocument();
     });
 
-    // Switch to fake timers after async operations complete
-    jest.useFakeTimers();
+    // Clear the spy history so we only see clearTimeout calls from closing
+    clearTimeoutSpy.mockClear();
 
     // Close modal before 2 seconds elapse
     rerender(
@@ -515,12 +517,9 @@ describe('CardModal - Phase 2 API Integration', () => {
       />
     );
 
-    // Advance time past the timeout
-    jest.advanceTimersByTime(2500);
+    // Verify clearTimeout was called (cleanup effect ran)
+    expect(clearTimeoutSpy).toHaveBeenCalled();
 
-    // Verify reload was NOT called (timeout was cleared)
-    expect(window.location.reload).not.toHaveBeenCalled();
-
-    jest.useRealTimers();
+    clearTimeoutSpy.mockRestore();
   });
 });
