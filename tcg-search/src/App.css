@@ -637,7 +637,7 @@ em {
   padding: 10px;
 }
 
-button:not([class*="ais-"]):not(.header-search-button) {
+button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
   border: none;
   cursor: pointer;
   appearance: none;
