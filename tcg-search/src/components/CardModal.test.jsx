@@ -523,3 +523,80 @@ describe('CardModal - Phase 2 API Integration', () => {
     clearTimeoutSpy.mockRestore();
   });
 });
+
+describe('CardModal - isClaimed behavior', () => {
+  let fetchSpy;
+
+  beforeEach(() => {
+    // Mock fetch for API calls
+    fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true })
+      })
+    );
+  });
+
+  afterEach(() => {
+    // Restore original implementations
+    fetchSpy.mockRestore();
+  });
+
+  it('should disable claim button when isClaimed is true', () => {
+    render(
+      <CardModal
+        isOpen={true}
+        onClose={mockOnClose}
+        hit={mockHit}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+        isClaimed={true}
+      />
+    );
+
+    const claimButton = screen.getByRole('button', { name: /claimed/i });
+    expect(claimButton).toBeDisabled();
+    expect(claimButton).toHaveTextContent('Claimed');
+    expect(claimButton).toHaveClass('disabled');
+  });
+
+  it('should show "Claim (X left)" when inventory available', () => {
+    render(
+      <CardModal
+        isOpen={true}
+        onClose={mockOnClose}
+        hit={{ ...mockHit, machine_quantity: 5 }}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+        isClaimed={false}
+      />
+    );
+
+    const claimButton = screen.getByRole('button', { name: /claim this card/i });
+    expect(claimButton).toHaveTextContent('Claim (5 left)');
+    expect(claimButton).not.toBeDisabled();
+  });
+
+  it('should not call handleClaimClick when button is disabled', () => {
+    render(
+      <CardModal
+        isOpen={true}
+        onClose={mockOnClose}
+        hit={mockHit}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+        isClaimed={true}
+      />
+    );
+
+    const claimButton = screen.getByRole('button', { name: /claimed/i });
+    fireEvent.click(claimButton);
+
+    // Should stay on image view, not transition to form
+    expect(screen.queryByText(/claim.*pikachu/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/your name/i)).not.toBeInTheDocument();
+  });
+});

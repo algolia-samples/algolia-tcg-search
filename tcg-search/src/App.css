@@ -692,8 +692,7 @@ button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
 }
 
 .card:hover {
-  filter: drop-shadow(2px 5px 5px rgba(0,0,0,0.15));
-  /* transform moved to wrapper to include badge */
+  /* All hover effects (filter, transform) now handled by wrapper - no styles needed here */
 }
 
 /* Make wrappers tilt on hover (includes badge) */

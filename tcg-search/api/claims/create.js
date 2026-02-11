@@ -124,7 +124,8 @@ module.exports = async function handler(req, res) {
             _operation: 'Decrement',
             value: 1
           }
-        }
+        },
+        createIfNotExists: false
       });
     } catch (algoliaError) {
       // Log the error but don't fail the claim since it's already saved to Supabase

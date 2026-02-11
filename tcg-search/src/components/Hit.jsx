@@ -68,8 +68,9 @@ export default function Hit({hit, sendEvent}) {
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
+  const wrapperRef = useRef(null);
   const formattedPrice = hit.estimated_value != null ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
-  const isClaimed = hit.machine_quantity === 0;
+  const isClaimed = !hit.machine_quantity || hit.machine_quantity <= 0;
 
   const handleImageClick = (e) => {
     if (hit.image_large || hit.image_small) {
@@ -78,7 +79,7 @@ export default function Hit({hit, sendEvent}) {
       if (!imgElement) return;
 
       const rect = imgElement.getBoundingClientRect();
-      const currentRotation = getRotationFromMatrix(imgElement);
+      const currentRotation = getRotationFromMatrix(wrapperRef.current);
 
       setOrigin({
         x: rect.left + rect.width / 2,
@@ -92,12 +93,9 @@ export default function Hit({hit, sendEvent}) {
 
   const handleCloseModal = () => {
     // Capture current rotation state of the card before closing
-    if (imgRef.current) {
-      const imgElement = imgRef.current.querySelector('img');
-      if (imgElement) {
-        const currentRotation = getRotationFromMatrix(imgElement);
-        setRotation(currentRotation);
-      }
+    if (wrapperRef.current) {
+      const currentRotation = getRotationFromMatrix(wrapperRef.current);
+      setRotation(currentRotation);
     }
 
     setIsClosing(true);
@@ -116,10 +114,11 @@ export default function Hit({hit, sendEvent}) {
             <span className="hit-card-number">#{hit.number}</span>
           )}
         </div>
-        <div className={`hit-card-image-wrapper ${isClaimed ? 'claimed' : ''}`} ref={imgRef}>
+        <div className={`hit-card-image-wrapper ${isClaimed ? 'claimed' : ''}`} ref={wrapperRef}>
           {isClaimed && <div className="hit-claimed-badge">CLAIMED</div>}
           {hit.image_small ? (
             <OptimizedImage
+              ref={imgRef}
               className="card"
               src={hit.image_small}
               largeSrc={hit.image_large}
