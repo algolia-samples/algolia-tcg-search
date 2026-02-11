@@ -64,7 +64,7 @@ export default function ClaimedCarousel() {
 
       const { data, error } = await supabase
         .from('claims')
-        .select('*')
+        .select('id, pokemon_name, image_url, card_value, claimer_name, claimed_at')
         .order('claimed_at', { ascending: false })
         .limit(CLAIMS_LIMIT);
 
