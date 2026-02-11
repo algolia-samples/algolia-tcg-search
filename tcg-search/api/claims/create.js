@@ -7,10 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SECRET_KEY
 );
 
-// Initialize Algolia client with admin API key for server-side operations
+// Initialize Algolia client with write API key for server-side operations
 const algoliaClient = algoliasearch(
   process.env.REACT_APP_ALGOLIA_APP_ID,
-  process.env.ALGOLIA_ADMIN_API_KEY
+  process.env.ALGOLIA_WRITE_API_KEY
 );
 
 // Simple in-memory rate limiting
