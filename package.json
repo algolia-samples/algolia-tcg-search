@@ -1,0 +1,18 @@
+{
+  "name": "etail-west-tcg-search",
+  "version": "1.0.0",
+  "description": "Pokemon TCG vending machine search application with card claiming",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel",
+    "deploy:prod": "vercel --prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/algolia-samples/etail-west-tcg-search"
+  }
+}

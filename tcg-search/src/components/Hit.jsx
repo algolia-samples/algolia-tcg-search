@@ -4,6 +4,7 @@ import {
   Highlight,
 } from 'react-instantsearch';
 import OptimizedImage from './OptimizedImage';
+import CardModal from './CardModal';
 
 // Helper to get card type badge color
 function getCardTypeColor(cardType) {
@@ -68,20 +69,6 @@ export default function Hit({hit, sendEvent}) {
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
   const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
-
-  // Handle Escape key to close modal
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const handleEscapeKey = (e) => {
-      if (e.key === 'Escape') {
-        handleCloseModal();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => document.removeEventListener('keydown', handleEscapeKey);
-  }, [isModalOpen]);
 
   const handleImageClick = (e) => {
     if (hit.image_large || hit.image_small) {
@@ -212,31 +199,15 @@ export default function Hit({hit, sendEvent}) {
       </div>
     </article>
 
-    {/* Image Modal */}
-    {isModalOpen && (
-      <div
-        className={`image-modal-overlay ${isClosing ? 'closing' : ''}`}
-        onClick={handleCloseModal}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Enlarged card image"
-      >
-        <div
-          className={`image-modal-content ${isClosing ? 'closing' : ''}`}
-          style={{
-            '--origin-x': `${origin.x}px`,
-            '--origin-y': `${origin.y}px`,
-            '--rotation': `${rotation}deg`
-          }}
-        >
-          <img
-            src={hit.image_large || hit.image_small}
-            alt={`${hit.pokemon_name} Pokemon card - enlarged`}
-            className="image-modal-img"
-          />
-        </div>
-      </div>
-    )}
+    {/* Card Modal with claim functionality */}
+    <CardModal
+      isOpen={isModalOpen}
+      onClose={handleCloseModal}
+      hit={hit}
+      origin={origin}
+      rotation={rotation}
+      isClosing={isClosing}
+    />
     </>
   );
 }

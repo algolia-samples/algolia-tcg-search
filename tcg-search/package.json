@@ -4,14 +4,19 @@
   "description": "Pokemon TCG vending machine search application with React InstantSearch v7",
   "private": true,
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "lint": "eslint",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:ci": "react-scripts test --watchAll=false --coverage",
     "eject": "react-scripts eject"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "algoliasearch": "^4.15.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
@@ -33,10 +38,14 @@
     ]
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
     "eslint": "^8.35.0",
     "eslint-plugin-react": "^7.32.2",
+    "node-mocks-http": "^1.17.2",
     "react-scripts": "^5.0.1",
     "source-map-explorer": "^2.5.3"
   }
