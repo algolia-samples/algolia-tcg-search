@@ -203,7 +203,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
               disabled={isClaimed}
             >
               <img src={pokeballIcon} alt="" className="pokeball-icon" />
-              {isClaimed ? 'Claimed' : hit.machine_quantity > 0 ? `Claim (${hit.machine_quantity} left!)` : 'Claim'}
+              {isClaimed ? 'Claimed' : hit.machine_quantity > 0 ? `Claim (${hit.machine_quantity} left)` : 'Claim'}
             </button>
             <button
               className="modal-btn modal-btn-close"
