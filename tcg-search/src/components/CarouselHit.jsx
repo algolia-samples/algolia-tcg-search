@@ -55,20 +55,6 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
   const imgRef = useRef(null);
   const formattedPrice = hit.estimated_value ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
 
-  // Handle Escape key to close modal
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const handleEscapeKey = (e) => {
-      if (e.key === 'Escape') {
-        handleCloseModal();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => document.removeEventListener('keydown', handleEscapeKey);
-  }, [isModalOpen]);
-
   const handleImageClick = (e) => {
     if (hit.image_large || hit.image_small) {
       // Find the actual image element
