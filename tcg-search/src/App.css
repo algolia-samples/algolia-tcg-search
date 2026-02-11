@@ -2059,6 +2059,22 @@ article {
   flex: 1;
   overflow: hidden;
   background: #ffffff;
+  position: relative;
+}
+
+.modal-inventory-badge {
+  position: absolute;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  background: rgba(59, 76, 202, 0.95);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-family: 'Righteous', cursive;
+  z-index: 10;
 }
 
 .image-modal-img {

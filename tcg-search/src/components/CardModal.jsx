@@ -194,6 +194,11 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
               alt={`${hit.pokemon_name} Pokemon card - enlarged`}
               className="image-modal-img"
             />
+            {!isClaimed && hit.machine_quantity > 0 && (
+              <div className="modal-inventory-badge">
+                {hit.machine_quantity} left!
+              </div>
+            )}
           </div>
           <div className="modal-button-bar">
             <button
@@ -295,6 +300,7 @@ CardModal.propTypes = {
     number: PropTypes.string,
     set_name: PropTypes.string,
     estimated_value: PropTypes.number,
+    machine_quantity: PropTypes.number,
   }).isRequired,
   origin: PropTypes.shape({
     x: PropTypes.number.isRequired,
