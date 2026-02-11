@@ -69,8 +69,12 @@ export default function Hit({hit, sendEvent}) {
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
   const formattedPrice = hit.estimated_value != null ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
+  const isClaimed = hit.machine_quantity === 0;
 
   const handleImageClick = (e) => {
+    // Don't open modal for claimed cards
+    if (isClaimed) return;
+
     if (hit.image_large || hit.image_small) {
       // Find the actual image element
       const imgElement = e.target.tagName === 'IMG' ? e.target : e.target.querySelector('img');
@@ -115,7 +119,8 @@ export default function Hit({hit, sendEvent}) {
             <span className="hit-card-number">#{hit.number}</span>
           )}
         </div>
-        <div className="hit-card-image-wrapper" ref={imgRef}>
+        <div className={`hit-card-image-wrapper ${isClaimed ? 'claimed' : ''}`} ref={imgRef}>
+          {isClaimed && <div className="hit-claimed-badge">CLAIMED</div>}
           {hit.image_small ? (
             <OptimizedImage
               className="card"
@@ -124,7 +129,7 @@ export default function Hit({hit, sendEvent}) {
               alt={`${hit.pokemon_name} Pokemon card`}
               preloadLarge={true}
               onClick={handleImageClick}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: isClaimed ? 'default' : 'pointer' }}
               width={245}
               height={342}
             />

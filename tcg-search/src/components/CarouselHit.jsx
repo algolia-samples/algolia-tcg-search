@@ -54,8 +54,12 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
   const [rotation, setRotation] = useState(0);
   const imgRef = useRef(null);
   const formattedPrice = hit.estimated_value != null ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
+  const isClaimed = hit.machine_quantity === 0;
 
   const handleImageClick = (e) => {
+    // Don't open modal for claimed cards
+    if (isClaimed) return;
+
     if (hit.image_large || hit.image_small) {
       // Find the actual image element
       const imgElement = e.target.tagName === 'IMG' ? e.target : e.target.querySelector('img');
@@ -93,8 +97,9 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
 
   return (
     <>
-      <article className="carousel-hit-card" aria-label={`${hit.pokemon_name} Pokemon card`}>
+      <article className={`carousel-hit-card ${isClaimed ? 'claimed' : ''}`} aria-label={`${hit.pokemon_name} Pokemon card`}>
         <div className="carousel-hit-image-wrapper" ref={imgRef}>
+          {isClaimed && <div className="carousel-claimed-badge">CLAIMED</div>}
           {hit.image_small ? (
             <OptimizedImage
               className="card"
@@ -103,7 +108,7 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
               alt={`${hit.pokemon_name} Pokemon card`}
               preloadLarge={true}
               onClick={handleImageClick}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: isClaimed ? 'default' : 'pointer' }}
               width={245}
               height={342}
               eager={eager}
