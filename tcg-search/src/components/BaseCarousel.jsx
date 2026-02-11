@@ -139,14 +139,14 @@ export default function BaseCarousel({
     }
   };
 
+  // If lazy loading enabled, render placeholder until visible
+  if (enableLazyLoading && !isVisible) {
+    return <div ref={wrapperRef} style={{ minHeight: '400px' }} />; // Placeholder
+  }
+
   // Don't render if loading or no data
   if (loading || !data || data.length === 0) {
     return null;
-  }
-
-  // Don't render until visible (if lazy loading enabled)
-  if (enableLazyLoading && !isVisible) {
-    return <div ref={wrapperRef} style={{ minHeight: '400px' }} />; // Placeholder
   }
 
   return (
