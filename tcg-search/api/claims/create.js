@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { algoliasearch } from 'algoliasearch';
+import algoliaPackage from 'algoliasearch';
+const { algoliasearch } = algoliaPackage;
 
 // Initialize Supabase client with secret key for server-side operations
 const supabase = createClient(
