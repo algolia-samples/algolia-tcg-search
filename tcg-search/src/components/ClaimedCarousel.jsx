@@ -2,6 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../utilities/supabase';
 import OptimizedImage from './OptimizedImage';
 
+const CACHE_KEY = 'tcg_recent_claims';
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CLAIMS_LIMIT = 10;
+
 // Helper to format time ago
 function formatTimeAgo(timestamp) {
   const now = new Date();
@@ -23,25 +27,69 @@ function formatTimeAgo(timestamp) {
   }
 }
 
+// Cache helpers
+function getCachedClaims() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+
+    const { data, timestamp } = JSON.parse(cached);
+    const age = Date.now() - timestamp;
+
+    // Return cached data if fresh (< 5 minutes)
+    if (age < CACHE_TTL) {
+      return data;
+    }
+
+    // Stale - return it anyway, but signal that we should refresh
+    return { data, stale: true };
+  } catch (error) {
+    console.warn('Error reading cache:', error);
+    return null;
+  }
+}
+
+function setCachedClaims(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('Error writing cache:', error);
+  }
+}
+
 export default function ClaimedCarousel() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const wrapperRef = useRef(null);
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollTimeoutRef = useRef(null);
+  const hasInitialized = useRef(false);
 
-  // Fetch initial claims
-  const fetchClaims = async () => {
+  // Fetch claims from Supabase
+  const fetchClaims = async (showStaleWhileRevalidate = false) => {
     try {
+      // If using stale-while-revalidate, don't show loading state
+      if (!showStaleWhileRevalidate) {
+        setLoading(true);
+      }
+
       const { data, error } = await supabase
         .from('claims')
         .select('*')
         .order('claimed_at', { ascending: false })
-        .limit(20);
+        .limit(CLAIMS_LIMIT);
 
       if (error) throw error;
-      setClaims(data || []);
+
+      const freshData = data || [];
+      setClaims(freshData);
+      setCachedClaims(freshData);
     } catch (error) {
       console.error('Error fetching claims:', error);
     } finally {
@@ -49,12 +97,54 @@ export default function ClaimedCarousel() {
     }
   };
 
-  // Set up real-time subscription
+  // IntersectionObserver for conditional loading
   useEffect(() => {
-    // Initial fetch
-    fetchClaims();
+    if (!wrapperRef.current) return;
 
-    // Real-time subscription
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasInitialized.current) {
+            setIsVisible(true);
+            hasInitialized.current = true;
+          }
+        });
+      },
+      { rootMargin: '100px' } // Start loading slightly before visible
+    );
+
+    observer.observe(wrapperRef.current);
+
+    return () => {
+      if (wrapperRef.current) {
+        observer.unobserve(wrapperRef.current);
+      }
+    };
+  }, []);
+
+  // Fetch claims and set up real-time subscription when visible
+  useEffect(() => {
+    if (!isVisible) return;
+
+    // Try to load from cache first (stale-while-revalidate)
+    const cached = getCachedClaims();
+    if (cached) {
+      if (cached.stale) {
+        // Show stale data immediately, fetch fresh in background
+        setClaims(cached.data);
+        setLoading(false);
+        fetchClaims(true); // Fetch fresh data in background
+      } else {
+        // Fresh cache - use it
+        setClaims(cached);
+        setLoading(false);
+      }
+    } else {
+      // No cache - fetch fresh data
+      fetchClaims();
+    }
+
+    // Set up real-time subscription
     const channel = supabase
       .channel('claims')
       .on('postgres_changes', {
@@ -62,8 +152,12 @@ export default function ClaimedCarousel() {
         schema: 'public',
         table: 'claims'
       }, (payload) => {
-        // Add new claim to the beginning, keep only 20
-        setClaims(prev => [payload.new, ...prev].slice(0, 20));
+        // Add new claim to the beginning, keep only CLAIMS_LIMIT
+        setClaims(prev => {
+          const updated = [payload.new, ...prev].slice(0, CLAIMS_LIMIT);
+          setCachedClaims(updated); // Update cache
+          return updated;
+        });
       })
       .subscribe();
 
@@ -71,7 +165,7 @@ export default function ClaimedCarousel() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isVisible]);
 
   // Check scroll position to show/hide navigation arrows
   const checkScroll = () => {
@@ -136,7 +230,7 @@ export default function ClaimedCarousel() {
   }
 
   return (
-    <div className="claimed-carousel-wrapper">
+    <div className="claimed-carousel-wrapper" ref={wrapperRef}>
       <h2 className="claimed-carousel-title">🎉 Recently Claimed</h2>
       <div className="carousel-container">
         {canScrollLeft && (
