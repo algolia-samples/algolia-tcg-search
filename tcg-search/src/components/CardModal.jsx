@@ -94,7 +94,24 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
         }),
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response from API:', response.status, response.statusText);
+        setFormErrors({ submit: 'Server error. Please try again later.' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', parseError);
+        setFormErrors({ submit: 'Server error. Please try again later.' });
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!response.ok) {
         // Handle error from API

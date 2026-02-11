@@ -261,6 +261,9 @@ describe('CardModal - Phase 2 API Integration', () => {
   it('submits claim successfully', async () => {
     fetchSpy.mockResolvedValueOnce({
       ok: true,
+      headers: {
+        get: (header) => header === 'content-type' ? 'application/json' : null
+      },
       json: async () => ({ success: true, claim: { id: 1 } }),
     });
 
@@ -320,6 +323,9 @@ describe('CardModal - Phase 2 API Integration', () => {
   it('displays API error message', async () => {
     fetchSpy.mockResolvedValueOnce({
       ok: false,
+      headers: {
+        get: (header) => header === 'content-type' ? 'application/json' : null
+      },
       json: async () => ({ error: 'Card already claimed' }),
     });
 
@@ -367,7 +373,17 @@ describe('CardModal - Phase 2 API Integration', () => {
   });
 
   it('disables submit button while submitting', async () => {
-    fetchSpy.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+    fetchSpy.mockImplementationOnce(() =>
+      new Promise(resolve =>
+        setTimeout(() => resolve({
+          ok: true,
+          headers: {
+            get: (header) => header === 'content-type' ? 'application/json' : null
+          },
+          json: async () => ({ success: true })
+        }), 100)
+      )
+    );
 
     render(
       <CardModal
@@ -390,5 +406,66 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     expect(submitButton).toBeDisabled();
     expect(screen.getByText(/Submitting.../i)).toBeInTheDocument();
+  });
+
+  it('handles non-JSON response (HTML error page)', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: {
+        get: (header) => header === 'content-type' ? 'text/html' : null
+      }
+    });
+
+    render(
+      <CardModal
+        isOpen={true}
+        onClose={mockOnClose}
+        hit={mockHit}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
+
+    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
+    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
+
+    expect(await screen.findByText(/Server error. Please try again later./i)).toBeInTheDocument();
+  });
+
+  it('handles invalid JSON response', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      headers: {
+        get: (header) => header === 'content-type' ? 'application/json' : null
+      },
+      json: async () => {
+        throw new SyntaxError('Unexpected token < in JSON');
+      }
+    });
+
+    render(
+      <CardModal
+        isOpen={true}
+        onClose={mockOnClose}
+        hit={mockHit}
+        origin={mockOrigin}
+        rotation={0}
+        isClosing={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
+
+    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
+    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
+
+    expect(await screen.findByText(/Server error. Please try again later./i)).toBeInTheDocument();
   });
 });
