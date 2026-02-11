@@ -53,7 +53,6 @@ function setCachedClaims(data) {
 export default function ClaimedCarousel() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [shouldFetch, setShouldFetch] = useState(false);
 
   // Fetch claims from Supabase
   const fetchClaims = async (showStaleWhileRevalidate = false) => {
@@ -81,38 +80,29 @@ export default function ClaimedCarousel() {
     }
   };
 
-  // Initialize data and real-time subscription when component becomes visible
+  // Initialize data and set up real-time subscription
   useEffect(() => {
-    // Try to load from cache first (stale-while-revalidate)
-    const cached = getCachedClaims();
-    if (cached) {
-      if (cached.stale) {
-        // Show stale data immediately, fetch fresh in background
-        setClaims(cached.data);
-        setLoading(false);
-        setShouldFetch(true);
-      } else {
-        // Fresh cache - use it
-        setClaims(cached);
-        setLoading(false);
-      }
-    } else {
-      // No cache - mark that we need to fetch
-      setShouldFetch(true);
-    }
-  }, []);
-
-  // Fetch data when needed
-  useEffect(() => {
-    if (!shouldFetch) return;
-
     let channel;
 
     const initializeData = async () => {
-      // Fetch initial data first to avoid race condition
-      await fetchClaims(claims.length > 0);
+      // Check cache first (stale-while-revalidate)
+      const cached = getCachedClaims();
 
-      // Then set up real-time subscription after fetch completes
+      if (cached && !cached.stale) {
+        // Fresh cache - use it, skip fetch
+        setClaims(cached);
+        setLoading(false);
+      } else if (cached && cached.stale) {
+        // Stale cache - show immediately, fetch in background
+        setClaims(cached.data);
+        setLoading(false);
+        await fetchClaims(true);
+      } else {
+        // No cache - fetch fresh data
+        await fetchClaims(false);
+      }
+
+      // Always set up real-time subscription (regardless of cache state)
       channel = supabase
         .channel('claims')
         .on('postgres_changes', {
@@ -138,7 +128,7 @@ export default function ClaimedCarousel() {
         supabase.removeChannel(channel);
       }
     };
-  }, [shouldFetch]);
+  }, []);
 
   return (
     <BaseCarousel
