@@ -2489,9 +2489,9 @@ button.carousel-nav {
 }
 
 button.carousel-nav:hover {
-  background-color: #3B4CCA !important;
-  color: white !important;
-  border-color: #3B4CCA !important;
+  background-color: #3B4CCA;
+  color: white;
+  border-color: #3B4CCA;
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -2551,9 +2551,9 @@ button.carousel-nav-right {
 }
 
 .claimed-carousel-wrapper button.carousel-nav:hover {
-  background-color: #FF1C1C !important;
-  border-color: #FF1C1C !important;
-  color: white !important;
+  background-color: #FF1C1C;
+  border-color: #FF1C1C;
+  color: white;
 }
 
 .claimed-carousel-title {
