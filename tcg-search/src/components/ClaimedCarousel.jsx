@@ -106,28 +106,37 @@ export default function ClaimedCarousel() {
   useEffect(() => {
     if (!shouldFetch) return;
 
-    fetchClaims(claims.length > 0); // If we have cached data, fetch in background
+    let channel;
 
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('claims')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'claims'
-      }, (payload) => {
-        // Add new claim to the beginning, keep only CLAIMS_LIMIT
-        setClaims(prev => {
-          const updated = [payload.new, ...prev].slice(0, CLAIMS_LIMIT);
-          setCachedClaims(updated); // Update cache
-          return updated;
-        });
-      })
-      .subscribe();
+    const initializeData = async () => {
+      // Fetch initial data first to avoid race condition
+      await fetchClaims(claims.length > 0);
+
+      // Then set up real-time subscription after fetch completes
+      channel = supabase
+        .channel('claims')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'claims'
+        }, (payload) => {
+          // Add new claim to the beginning, keep only CLAIMS_LIMIT
+          setClaims(prev => {
+            const updated = [payload.new, ...prev].slice(0, CLAIMS_LIMIT);
+            setCachedClaims(updated); // Update cache
+            return updated;
+          });
+        })
+        .subscribe();
+    };
+
+    initializeData();
 
     // Cleanup subscription on unmount
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [shouldFetch]);
 
