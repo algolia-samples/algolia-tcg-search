@@ -6,6 +6,30 @@ const supabase = createClient(
   process.env.SUPABASE_SECRET_KEY
 );
 
+// Simple in-memory rate limiting
+// Map of email -> array of timestamps
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_CLAIMS_PER_WINDOW = 5;
+
+function checkRateLimit(email) {
+  const now = Date.now();
+  const userClaims = rateLimitStore.get(email) || [];
+
+  // Remove claims outside the time window
+  const recentClaims = userClaims.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS);
+
+  if (recentClaims.length >= MAX_CLAIMS_PER_WINDOW) {
+    return false; // Rate limit exceeded
+  }
+
+  // Add current claim and update store
+  recentClaims.push(now);
+  rateLimitStore.set(email, recentClaims);
+
+  return true; // Within rate limit
+}
+
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -49,6 +73,13 @@ export default async function handler(req, res) {
     if (!emailRegex.test(claimerEmail)) {
       return res.status(400).json({
         error: 'Invalid email address'
+      });
+    }
+
+    // Check rate limit
+    if (!checkRateLimit(claimerEmail)) {
+      return res.status(429).json({
+        error: 'Too many claims. Please wait before claiming again.'
       });
     }
 
