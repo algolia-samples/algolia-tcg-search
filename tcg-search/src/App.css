@@ -2724,6 +2724,8 @@ button.carousel-nav-right {
 
 /* Position wrapper for badge */
 .hit-card-image-wrapper,
-.carousel-hit-image-wrapper {
+.carousel-hit-image-wrapper,
+.claimed-card-image-wrapper {
   position: relative;
+  transition: filter 0.3s ease-in-out, transform 0.7s ease-in-out;
 }
