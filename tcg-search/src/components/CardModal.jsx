@@ -194,11 +194,6 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
               alt={`${hit.pokemon_name} Pokemon card - enlarged`}
               className="image-modal-img"
             />
-            {!isClaimed && hit.machine_quantity > 0 && (
-              <div className="modal-inventory-badge">
-                {hit.machine_quantity} left!
-              </div>
-            )}
           </div>
           <div className="modal-button-bar">
             <button
@@ -208,7 +203,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
               disabled={isClaimed}
             >
               <img src={pokeballIcon} alt="" className="pokeball-icon" />
-              {isClaimed ? 'Claimed' : 'Claim'}
+              {isClaimed ? 'Claimed' : hit.machine_quantity > 0 ? `Claim (${hit.machine_quantity} left!)` : 'Claim'}
             </button>
             <button
               className="modal-btn modal-btn-close"
