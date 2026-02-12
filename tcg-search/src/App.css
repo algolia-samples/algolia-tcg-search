@@ -2685,6 +2685,12 @@ button.carousel-nav-right {
   .claimed-card {
     width: 200px;
   }
+
+  /* Smaller modal button text for mobile */
+  .modal-btn {
+    font-size: 0.875rem;
+    padding: 0.875rem 1.5rem;
+  }
 }
 
 /* Claimed badges for Hit and CarouselHit components */
