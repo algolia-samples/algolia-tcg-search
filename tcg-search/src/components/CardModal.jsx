@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import pokeballIcon from '../assets/pokeball_icon.svg';
 
@@ -155,7 +156,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
       className={`image-modal-overlay ${isClosing ? 'closing' : ''}`}
       onClick={(e) => {
@@ -282,6 +283,8 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
       )}
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 CardModal.propTypes = {

@@ -4,6 +4,7 @@ export const appId = process.env.REACT_APP_ALGOLIA_APP_ID || ''
 export const appKey = process.env.REACT_APP_ALGOLIA_API_KEY || ''
 export const indexName = process.env.REACT_APP_ALGOLIA_INDEX_NAME || ''
 export const userToken = process.env.REACT_APP_USER_TOKEN || ''
+export const chatAgentId = process.env.REACT_APP_ALGOLIA_CHAT_AGENT_ID || ''
 
 // Replica index names for sorting - fallback to base index + suffix if not configured
 export const indexNamePriceAsc = process.env.REACT_APP_ALGOLIA_INDEX_NAME_PRICE_ASC || `${indexName}_price_asc`

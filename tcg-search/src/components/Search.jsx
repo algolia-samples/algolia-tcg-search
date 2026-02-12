@@ -19,6 +19,7 @@ import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
+import ChatAgent from './ChatAgent';
 
 function HitsWithNoResults() {
   const { results } = useHits();
@@ -111,6 +112,9 @@ export default function Search() {
               <HitsWithNoResults />
             </div>
           </div>
+
+          {/* AI Chat Agent */}
+          <ChatAgent />
         </InstantSearch>
       </div>
     </div>
