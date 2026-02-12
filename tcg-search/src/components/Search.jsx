@@ -5,6 +5,7 @@ import {
   Hits,
   InstantSearch,
   Pagination,
+  PoweredBy,
   SearchBox,
   SortBy,
   useHits
@@ -81,6 +82,11 @@ export default function Search() {
             hitsPerPage={12}
             clickAnalytics={true}
           />
+
+          {/* Powered by Algolia */}
+          <div className="powered-by-container">
+            <PoweredBy />
+          </div>
 
           {/* Top 10 Carousel - separate InstantSearch instance */}
           <Carousel

@@ -83,6 +83,19 @@ em {
     1px 1px 0 #e74c3c;
 }
 
+/* Powered by Algolia container */
+.powered-by-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.15rem 1rem 0.35rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.powered-by-container .ais-PoweredBy-logo {
+  height: 18px;
+}
+
 .header-search-button {
   background: #ffffff;
   border: none;
@@ -1343,6 +1356,16 @@ article {
   /* Tighter spacing for search button on mobile */
   .header-search-button {
     margin-right: 0.5rem;
+  }
+
+  /* Adjust PoweredBy on mobile */
+  .powered-by-container {
+    padding: 0.1rem 0.75rem 0.25rem 0;
+    margin-bottom: 0.25rem;
+  }
+
+  .powered-by-container .ais-PoweredBy-logo {
+    height: 16px;
   }
 
   /* Reduce carousel title on mobile */
