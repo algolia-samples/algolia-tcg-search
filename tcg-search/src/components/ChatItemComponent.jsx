@@ -154,11 +154,13 @@ export default function ChatItemComponent({ item }) {
 
 ChatItemComponent.propTypes = {
   item: PropTypes.shape({
+    objectID: PropTypes.string.isRequired,
     pokemon_name: PropTypes.string.isRequired,
     image_small: PropTypes.string,
     image_large: PropTypes.string,
     estimated_value: PropTypes.number,
     set_name: PropTypes.string,
+    number: PropTypes.string,
     machine_quantity: PropTypes.number,
   }).isRequired,
 };
