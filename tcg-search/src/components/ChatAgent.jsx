@@ -1,4 +1,3 @@
-import React from 'react';
 import { Chat } from 'react-instantsearch';
 import 'instantsearch.css/components/chat.css';
 import ChatItemComponent from './ChatItemComponent';
