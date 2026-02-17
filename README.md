@@ -14,24 +14,40 @@ Search and claim cards from the TCG vending machine inventory.
 ```
 /
 ├── tcg-search/          # React frontend application
-├── api/                 # Vercel serverless API routes
-├── data/                # Algolia index creation scripts
+│   ├── src/
+│   │   ├── components/  # React components (search, carousels, modals, chat)
+│   │   ├── utilities/   # Algolia & Supabase client setup
+│   │   └── assets/      # Logos and icons
+│   ├── api/             # Vercel serverless API routes
+│   └── public/          # Static assets
+├── data/                # Algolia index management
+│   ├── data-files/      # CSV inventory data
+│   └── data-utilities/  # Python scripts for indexing
 ├── vercel.json          # Vercel deployment configuration
 └── .vercelignore        # Files excluded from deployment
 ```
 
-## Development
+## Prerequisites
 
-### Prerequisites
+### Required Accounts
+- **[Algolia](https://www.algolia.com/)** - Search service (free tier available)
+- **[Supabase](https://supabase.com/)** - Database backend (free tier available)
+- **[Vercel](https://vercel.com/)** - Hosting platform (free tier available)
 
+### Local Development Tools
 - **Node.js 20+** (required by @supabase/supabase-js)
-- Vercel CLI: `npm i -g vercel`
-- Supabase account (for claims backend)
+  ```bash
+  node --version  # Should be v20.0.0 or higher
+  ```
+- **Vercel CLI**: `npm i -g vercel`
+- **Python 3.x + Poetry** (only needed for updating Algolia index)
 
-Check your Node version:
-```bash
-node --version  # Should be v20.0.0 or higher
-```
+### Tech Stack
+- React 18 with Algolia InstantSearch v7
+- Supabase JS Client for real-time subscriptions
+- Vercel Serverless Functions
+
+## Development
 
 ### Local Development
 
