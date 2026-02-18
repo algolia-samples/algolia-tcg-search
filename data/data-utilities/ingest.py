@@ -123,11 +123,36 @@ def parse_boolean(value: str) -> bool:
     return str(value).strip().upper() == "TRUE"
 
 
-def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, debug: bool = False) -> dict:
+def fetch_card_details(set_id: str, local_id: str) -> Optional[dict]:
+    """
+    Fetch full card details from TCGdex API.
+    Returns card data including types, or None on failure.
+    """
+    max_retries = 3
+    retry_delay = 1
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}/{local_id}", timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2
+            else:
+                print(f"  ✗ Failed to fetch card {set_id}/{local_id}: {e}")
+                return None
+        except Exception as e:
+            print(f"  ✗ Unexpected error fetching card {set_id}/{local_id}: {e}")
+            return None
+
+
+def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, set_id: Optional[str] = None, debug: bool = False) -> dict:
     """
     Find matching card from TCGdex cards list by card number.
-    Returns dict with enriched fields: image_small, image_large
-    Note: All data is extracted from the cards list, no additional API calls needed.
+    Returns dict with enriched fields: image_small, image_large, pokemon_types.
+    Fetches full card details when set_id is provided to get type data.
     """
     enriched = {}
 
@@ -145,6 +170,12 @@ def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, debug: bool = 
             if base_image_url:
                 enriched["image_small"] = f"{base_image_url}/low.webp"
                 enriched["image_large"] = f"{base_image_url}/high.webp"
+
+            # Fetch full card details for type data
+            if set_id:
+                card_details = fetch_card_details(set_id, local_id)
+                if card_details:
+                    enriched["pokemon_types"] = card_details.get("types") or []
 
             return enriched
 
@@ -242,10 +273,10 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
             if set_id:
                 record["set_id"] = set_id
 
-            # Enrich with TCGdex card data (adds image_small, image_large)
+            # Enrich with TCGdex card data (adds image_small, image_large, pokemon_types)
             if enrich and tcgdex_cards:
                 debug = (idx < 5)  # Debug first 5 cards
-                enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, debug=debug)
+                enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, set_id=set_id, debug=debug)
                 record.update(enriched_data)  # Safe even if empty dict
                 if enriched_data.get("image_small"):
                     enriched_count += 1
