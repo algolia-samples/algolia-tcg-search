@@ -3,10 +3,12 @@
     "pokemon_name",
     "number",
     "card_type",
-    "set_name"
+    "set_name",
+    "pokemon_types"
   ],
   "attributesForFaceting": [
     "card_type",
+    "pokemon_types",
     "is_chase_card",
     "filterOnly(is_top_10_chase_card)",
     "filterOnly(is_classic_pokemon)",
