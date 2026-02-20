@@ -8,12 +8,12 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "lint": "eslint",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "test:ci": "react-scripts test --watchAll=false --coverage",
-    "eject": "react-scripts eject"
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src",
+    "test": "vitest",
+    "test:ci": "vitest run --coverage"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
@@ -26,28 +26,24 @@
     "react-router-dom": "^6.8.2",
     "search-insights": "^2.4.0"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "overrides": {
+    "minimatch": "^10.0.0",
+    "glob": "^11.0.0",
+    "ajv": "^8.18.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@typescript-eslint/eslint-plugin": "^5.54.0",
-    "@typescript-eslint/parser": "^5.54.0",
-    "eslint": "^8.35.0",
-    "eslint-plugin-react": "^7.32.2",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react": "^7.37.0",
+    "globals": "^15.0.0",
+    "jsdom": "^25.0.0",
     "node-mocks-http": "^1.17.2",
-    "react-scripts": "^5.0.1",
-    "source-map-explorer": "^2.5.3"
+    "vite": "^6.2.0",
+    "vitest": "^3.0.0"
   }
 }
