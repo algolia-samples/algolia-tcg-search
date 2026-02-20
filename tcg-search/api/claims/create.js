@@ -1,6 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import { algoliasearch } from 'algoliasearch';
 
+// Validate required environment variables at startup
+const requiredEnvVars = [
+  'VITE_SUPABASE_URL',
+  'SUPABASE_SECRET_KEY',
+  'VITE_ALGOLIA_APP_ID',
+  'ALGOLIA_WRITE_API_KEY',
+  'VITE_ALGOLIA_INDEX_NAME',
+];
+for (const key of requiredEnvVars) {
+  if (!process.env[key]) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+}
+
 // Initialize Supabase client with secret key for server-side operations
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
