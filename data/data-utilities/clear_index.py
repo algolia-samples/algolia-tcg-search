@@ -5,6 +5,7 @@ Preserves index settings and configuration.
 """
 
 import os
+import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 from algoliasearch.search.client import SearchClientSync
@@ -20,6 +21,9 @@ ALGOLIA_INDEX_NAME = os.getenv("ALGOLIA_INDEX_NAME", "pokemon_tcg_cards")
 
 def main():
     """Clear all records from the Algolia index."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
+    args = parser.parse_args()
 
     # Validate environment
     if not ALGOLIA_APP_ID or not ALGOLIA_API_KEY:
@@ -27,12 +31,13 @@ def main():
         return
 
     # Confirm before proceeding
-    print(f"This will delete ALL records from index: {ALGOLIA_INDEX_NAME}")
-    print("Index settings and configuration will be preserved.")
-    confirm = input("Type 'yes' to confirm: ").strip().lower()
-    if confirm != "yes":
-        print("Aborted.")
-        return
+    if not args.yes:
+        print(f"This will delete ALL records from index: {ALGOLIA_INDEX_NAME}")
+        print("Index settings and configuration will be preserved.")
+        confirm = input("Type 'yes' to confirm: ").strip().lower()
+        if confirm != "yes":
+            print("Aborted.")
+            return
 
     # Connect and clear
     print(f"\nConnecting to Algolia...")
