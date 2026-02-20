@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CardModal from './CardModal';
@@ -13,14 +14,14 @@ const mockHit = {
 };
 
 const mockOrigin = { x: 500, y: 500 };
-const mockOnClose = jest.fn();
+const mockOnClose = vi.fn();
 
 describe('CardModal - Phase 1 UI', () => {
   let fetchSpy;
 
   beforeEach(() => {
     // Mock fetch for API calls
-    fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(() =>
+    fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: async () => ({ success: true })
@@ -243,10 +244,10 @@ describe('CardModal - Phase 2 API Integration', () => {
 
   beforeEach(() => {
     // Mock fetch
-    fetchSpy = jest.spyOn(global, 'fetch');
+    fetchSpy = vi.spyOn(global, 'fetch');
 
     // Mock window.location.reload
-    reloadSpy = jest.fn();
+    reloadSpy = vi.fn();
     Object.defineProperty(window, 'location', {
       writable: true,
       value: { reload: reloadSpy }
@@ -470,7 +471,7 @@ describe('CardModal - Phase 2 API Integration', () => {
   });
 
   it('clears success timeout when modal closes early', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
 
     fetchSpy.mockResolvedValueOnce({
       ok: true,
@@ -529,7 +530,7 @@ describe('CardModal - isClaimed behavior', () => {
 
   beforeEach(() => {
     // Mock fetch for API calls
-    fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(() =>
+    fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: async () => ({ success: true })

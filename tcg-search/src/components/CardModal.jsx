@@ -220,7 +220,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
         // Form view
         <div className="modal-form-container">
           <h2 className="modal-form-title">Claim {hit.pokemon_name}</h2>
-          <form onSubmit={handleFormSubmit}>
+          <form onSubmit={handleFormSubmit} noValidate>
             <div className="modal-form-group">
               <label htmlFor="claimer-name">Your Name</label>
               <input

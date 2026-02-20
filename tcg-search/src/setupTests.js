@@ -5,6 +5,6 @@
 import '@testing-library/jest-dom';
 
 // Mock environment variables for tests
-process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
-process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY = 'test-publishable-key';
+process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'test-publishable-key';
 process.env.SUPABASE_SECRET_KEY = 'test-secret-key';

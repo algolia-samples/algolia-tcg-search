@@ -1,29 +1,32 @@
+import { vi } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import ClaimedCarousel from './ClaimedCarousel';
 import { supabase } from '../utilities/supabase';
 
 // Mock dependencies
-jest.mock('../utilities/supabase', () => ({
+vi.mock('../utilities/supabase', () => ({
   supabase: {
-    from: jest.fn(),
-    channel: jest.fn(),
-    removeChannel: jest.fn(),
+    from: vi.fn(),
+    channel: vi.fn(),
+    removeChannel: vi.fn(),
   },
 }));
 
-jest.mock('./BaseCarousel', () => {
-  return function MockBaseCarousel({ data, loading }) {
-    if (loading || !data || data.length === 0) return null;
-    return (
-      <div data-testid="base-carousel">
-        {data.map((claim) => (
-          <div key={claim.id} data-testid={`claim-${claim.id}`}>
-            {claim.pokemon_name} - ${claim.card_value}
-            {claim.claimer_email && <span data-testid="leaked-email">{claim.claimer_email}</span>}
-          </div>
-        ))}
-      </div>
-    );
+vi.mock('./BaseCarousel', () => {
+  return {
+    default: function MockBaseCarousel({ data, loading }) {
+      if (loading || !data || data.length === 0) return null;
+      return (
+        <div data-testid="base-carousel">
+          {data.map((claim) => (
+            <div key={claim.id} data-testid={`claim-${claim.id}`}>
+              {claim.pokemon_name} - ${claim.card_value}
+              {claim.claimer_email && <span data-testid="leaked-email">{claim.claimer_email}</span>}
+            </div>
+          ))}
+        </div>
+      );
+    },
   };
 });
 
@@ -40,12 +43,12 @@ describe('ClaimedCarousel', () => {
   beforeEach(() => {
     // Clear localStorage
     localStorage.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock Supabase channel subscription
     insertCallback = null;
     subscribeCallback = null;
-    mockSubscribe = jest.fn((callback) => {
+    mockSubscribe = vi.fn((callback) => {
       subscribeCallback = callback;
       // Simulate SUBSCRIBED status after a tick
       setTimeout(() => {
@@ -56,7 +59,7 @@ describe('ClaimedCarousel', () => {
       return mockChannel;
     });
     mockChannel = {
-      on: jest.fn((event, config, callback) => {
+      on: vi.fn((event, config, callback) => {
         if (config.event === 'INSERT') {
           insertCallback = callback;
         }
@@ -69,8 +72,8 @@ describe('ClaimedCarousel', () => {
     supabase.removeChannel.mockImplementation(() => {});
 
     // Mock Supabase query
-    mockSelect = jest.fn();
-    mockFrom = jest.fn(() => ({
+    mockSelect = vi.fn();
+    mockFrom = vi.fn(() => ({
       select: mockSelect,
     }));
     supabase.from = mockFrom;
@@ -109,8 +112,8 @@ describe('ClaimedCarousel', () => {
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
         })),
       });
 
@@ -143,8 +146,8 @@ describe('ClaimedCarousel', () => {
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
         })),
       });
 
@@ -174,8 +177,8 @@ describe('ClaimedCarousel', () => {
 
     test('fetches fresh data when cache is missing', async () => {
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
         })),
       });
 
@@ -203,8 +206,8 @@ describe('ClaimedCarousel', () => {
   describe('PII Protection', () => {
     test('does not fetch or cache claimer_email', async () => {
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
         })),
       });
 
@@ -239,8 +242,8 @@ describe('ClaimedCarousel', () => {
       }));
 
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: tenClaims, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: tenClaims, error: null })),
         })),
       });
 
@@ -279,8 +282,8 @@ describe('ClaimedCarousel', () => {
 
     test('cleans up subscription on unmount', async () => {
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
         })),
       });
 
@@ -316,8 +319,8 @@ describe('ClaimedCarousel', () => {
       };
 
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: [zeroValueClaim], error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: [zeroValueClaim], error: null })),
         })),
       });
 
@@ -330,8 +333,8 @@ describe('ClaimedCarousel', () => {
 
     test('handles empty claims gracefully', async () => {
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
         })),
       });
 
@@ -344,12 +347,12 @@ describe('ClaimedCarousel', () => {
 
     test('handles fetch error gracefully', async () => {
       mockSelect.mockReturnValue({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: null, error: new Error('Network error') })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve({ data: null, error: new Error('Network error') })),
         })),
       });
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const { container } = render(<ClaimedCarousel />);
 

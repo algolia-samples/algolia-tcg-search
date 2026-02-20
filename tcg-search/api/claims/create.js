@@ -3,13 +3,13 @@ import { algoliasearch } from 'algoliasearch';
 
 // Initialize Supabase client with secret key for server-side operations
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
+  process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SECRET_KEY
 );
 
 // Initialize Algolia client with write API key for server-side operations
 const algoliaClient = algoliasearch(
-  process.env.REACT_APP_ALGOLIA_APP_ID,
+  process.env.VITE_ALGOLIA_APP_ID,
   process.env.ALGOLIA_WRITE_API_KEY
 );
 
@@ -117,7 +117,7 @@ export default async function handler(req, res) {
     // Decrement inventory in Algolia atomically
     try {
       await algoliaClient.partialUpdateObject({
-        indexName: process.env.REACT_APP_ALGOLIA_INDEX_NAME,
+        indexName: process.env.VITE_ALGOLIA_INDEX_NAME,
         objectID: cardId,
         attributesToUpdate: {
           machine_quantity: {
