@@ -187,7 +187,7 @@ export default function Hit({hit, sendEvent}) {
           <span className={`special-badge badge-top-10 ${hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
             ⭐ Top 10!
           </span>
-          <span className={`special-badge badge-chase ${hit.is_chase_card && !hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
+          <span className={`special-badge badge-chase ${hit.is_chase_card ? 'active' : 'inactive'}`}>
             🏁 Chase Card
           </span>
           <span className={`special-badge badge-full-art ${hit.is_full_art ? 'active' : 'inactive'}`}>
