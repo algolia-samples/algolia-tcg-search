@@ -1193,6 +1193,10 @@ article {
   width: 100%;
 }
 
+.hit-card-image-wrapper .card {
+  border-radius: 4.5%;
+}
+
 .hit-header {
   display: flex;
   justify-content: space-between;
