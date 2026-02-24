@@ -14,7 +14,7 @@ const VALUE_WEIGHT = 0.4;
  * Score and sort a pool of claims by blending recency rank and card value,
  * then return the top DISPLAY_LIMIT results.
  */
-function scoreAndSort(pool) {
+export function scoreAndSort(pool) {
   if (!pool.length) return [];
 
   const values = pool.map(c => parseFloat(c.card_value) || 0);
@@ -22,16 +22,16 @@ function scoreAndSort(pool) {
   const minValue = Math.min(...values);
   const valueRange = maxValue - minValue || 1;
 
-  // Assign recency ranks (0 = most recent)
+  // Assign recency ranks (0 = most recent) — precompute map for O(n) lookup
   const sortedByTime = [...pool].sort(
     (a, b) => new Date(b.claimed_at) - new Date(a.claimed_at)
   );
   const n = sortedByTime.length;
+  const recencyRankById = new Map(sortedByTime.map((claim, i) => [claim.id, i]));
 
-  const scored = pool.map(claim => {
-    const valueScore = ((parseFloat(claim.card_value) || 0) - minValue) / valueRange;
-    const recencyIndex = sortedByTime.findIndex(c => c.id === claim.id);
-    const recencyScore = 1 - recencyIndex / Math.max(n - 1, 1);
+  const scored = pool.map((claim, i) => {
+    const valueScore = (values[i] - minValue) / valueRange;
+    const recencyScore = 1 - (recencyRankById.get(claim.id) ?? 0) / Math.max(n - 1, 1);
     return {
       ...claim,
       _score: RECENCY_WEIGHT * recencyScore + VALUE_WEIGHT * valueScore,
@@ -90,6 +90,8 @@ export default function ClaimedCarousel() {
   const subscriptionEstablished = useRef(false);
   // Raw pool of fetched claims — used to re-score when new claims arrive
   const claimsPool = useRef([]);
+  // Debounce timer for localStorage writes triggered by real-time inserts
+  const cacheDebounceTimer = useRef(null);
 
   // Fetch claims from Supabase
   const fetchClaims = async (showStaleWhileRevalidate = false) => {
@@ -162,8 +164,12 @@ export default function ClaimedCarousel() {
           // Prepend new claim to pool, trim to FETCH_LIMIT, re-score
           const updatedPool = [payload.new, ...claimsPool.current].slice(0, FETCH_LIMIT);
           claimsPool.current = updatedPool;
-          setCachedClaims(updatedPool);
           setClaims(scoreAndSort(updatedPool));
+          // Debounce localStorage write to avoid main-thread jank on burst inserts
+          clearTimeout(cacheDebounceTimer.current);
+          cacheDebounceTimer.current = setTimeout(() => {
+            setCachedClaims(claimsPool.current);
+          }, 500);
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
@@ -175,9 +181,10 @@ export default function ClaimedCarousel() {
 
     initializeData();
 
-    // Cleanup subscription on unmount
+    // Cleanup subscription and pending cache write on unmount
     return () => {
       mounted = false;
+      clearTimeout(cacheDebounceTimer.current);
       // Only remove channel if subscription was established (prevents StrictMode issues)
       if (channel && subscriptionEstablished.current) {
         supabase.removeChannel(channel);
