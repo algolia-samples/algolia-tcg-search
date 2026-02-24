@@ -5,7 +5,41 @@ import ClaimedCard from './ClaimedCard';
 
 const CACHE_KEY = 'tcg_recent_claims';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const CLAIMS_LIMIT = 10;
+const FETCH_LIMIT = 50;  // Pool size to score from
+const DISPLAY_LIMIT = 10; // Cards shown in carousel
+const RECENCY_WEIGHT = 0.6;
+const VALUE_WEIGHT = 0.4;
+
+/**
+ * Score and sort a pool of claims by blending recency rank and card value,
+ * then return the top DISPLAY_LIMIT results.
+ */
+export function scoreAndSort(pool) {
+  if (!pool.length) return [];
+
+  const values = pool.map(c => parseFloat(c.card_value) || 0);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+  const valueRange = maxValue - minValue || 1;
+
+  // Assign recency ranks (0 = most recent) — precompute map for O(n) lookup
+  const sortedByTime = [...pool].sort(
+    (a, b) => new Date(b.claimed_at) - new Date(a.claimed_at)
+  );
+  const n = sortedByTime.length;
+  const recencyRankById = new Map(sortedByTime.map((claim, i) => [claim.id, i]));
+
+  const scored = pool.map((claim, i) => {
+    const valueScore = (values[i] - minValue) / valueRange;
+    const recencyScore = 1 - (recencyRankById.get(claim.id) ?? 0) / Math.max(n - 1, 1);
+    return {
+      ...claim,
+      _score: RECENCY_WEIGHT * recencyScore + VALUE_WEIGHT * valueScore,
+    };
+  });
+
+  return scored.sort((a, b) => b._score - a._score).slice(0, DISPLAY_LIMIT);
+}
 
 // Cache helpers
 function getCachedClaims() {
@@ -54,6 +88,10 @@ export default function ClaimedCarousel() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const subscriptionEstablished = useRef(false);
+  // Raw pool of fetched claims — used to re-score when new claims arrive
+  const claimsPool = useRef([]);
+  // Debounce timer for localStorage writes triggered by real-time inserts
+  const cacheDebounceTimer = useRef(null);
 
   // Fetch claims from Supabase
   const fetchClaims = async (showStaleWhileRevalidate = false) => {
@@ -67,12 +105,14 @@ export default function ClaimedCarousel() {
         .from('claims')
         .select('id, pokemon_name, image_url, card_value, claimer_name, claimed_at')
         .order('claimed_at', { ascending: false })
-        .limit(CLAIMS_LIMIT);
+        .limit(FETCH_LIMIT);
 
       if (error) throw error;
 
       const freshData = data || [];
-      setClaims(freshData);
+      claimsPool.current = freshData;
+      const scored = scoreAndSort(freshData);
+      setClaims(scored);
       setCachedClaims(freshData);
     } catch (error) {
       console.error('Error fetching claims:', error);
@@ -93,13 +133,15 @@ export default function ClaimedCarousel() {
       if (cached && !cached.stale) {
         // Fresh cache - use it, skip fetch
         if (mounted) {
-          setClaims(cached);
+          claimsPool.current = cached;
+          setClaims(scoreAndSort(cached));
           setLoading(false);
         }
       } else if (cached && cached.stale) {
         // Stale cache - show immediately, fetch in background
         if (mounted) {
-          setClaims(cached.data);
+          claimsPool.current = cached.data;
+          setClaims(scoreAndSort(cached.data));
           setLoading(false);
         }
         await fetchClaims(true);
@@ -119,12 +161,15 @@ export default function ClaimedCarousel() {
           schema: 'public',
           table: 'claims'
         }, (payload) => {
-          // Add new claim to the beginning, keep only CLAIMS_LIMIT
-          setClaims(prev => {
-            const updated = [payload.new, ...prev].slice(0, CLAIMS_LIMIT);
-            setCachedClaims(updated); // Update cache
-            return updated;
-          });
+          // Prepend new claim to pool, trim to FETCH_LIMIT, re-score
+          const updatedPool = [payload.new, ...claimsPool.current].slice(0, FETCH_LIMIT);
+          claimsPool.current = updatedPool;
+          setClaims(scoreAndSort(updatedPool));
+          // Debounce localStorage write to avoid main-thread jank on burst inserts
+          clearTimeout(cacheDebounceTimer.current);
+          cacheDebounceTimer.current = setTimeout(() => {
+            setCachedClaims(claimsPool.current);
+          }, 500);
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
@@ -136,9 +181,10 @@ export default function ClaimedCarousel() {
 
     initializeData();
 
-    // Cleanup subscription on unmount
+    // Cleanup subscription and pending cache write on unmount
     return () => {
       mounted = false;
+      clearTimeout(cacheDebounceTimer.current);
       // Only remove channel if subscription was established (prevents StrictMode issues)
       if (channel && subscriptionEstablished.current) {
         supabase.removeChannel(channel);

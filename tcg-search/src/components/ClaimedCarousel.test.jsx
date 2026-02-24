@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import ClaimedCarousel from './ClaimedCarousel';
+import ClaimedCarousel, { scoreAndSort } from './ClaimedCarousel';
 import { supabase } from '../utilities/supabase';
 
 // Mock dependencies
@@ -31,6 +31,56 @@ vi.mock('./BaseCarousel', () => {
 });
 
 const CACHE_KEY = 'tcg_recent_claims';
+
+describe('scoreAndSort', () => {
+  const makePool = (items) =>
+    items.map(([id, value, msAgo]) => ({
+      id,
+      pokemon_name: `Pokemon${id}`,
+      card_value: value,
+      claimed_at: new Date(Date.now() - msAgo).toISOString(),
+    }));
+
+  test('high-value claim boosts above low-value newer claim', () => {
+    // 3-item pool: newest is worthless, middle-aged is high-value, oldest is worthless
+    const pool = makePool([
+      [1, 0,   0],           // newest,  $0
+      [2, 100, 5 * 60_000],  // 5m ago,  $100
+      [3, 0,   10 * 60_000], // 10m ago, $0
+    ]);
+    const result = scoreAndSort(pool);
+    // Charizard ($100, middle) outranks Magikarp ($0, newest)
+    expect(result.map(c => c.id)).toEqual([2, 1, 3]);
+  });
+
+  test('most recent claim wins when values are equal', () => {
+    const pool = makePool([
+      [1, 10, 0],         // newest
+      [2, 10, 60_000],    // 1m ago
+      [3, 10, 120_000],   // 2m ago
+    ]);
+    const result = scoreAndSort(pool);
+    expect(result[0].id).toBe(1);
+  });
+
+  test('limits output to DISPLAY_LIMIT (10) with a larger pool', () => {
+    const pool = makePool(
+      Array.from({ length: 20 }, (_, i) => [i + 1, i * 10, i * 1000])
+    );
+    expect(scoreAndSort(pool)).toHaveLength(10);
+  });
+
+  test('handles null card_value as 0', () => {
+    const pool = [{ id: 1, pokemon_name: 'Magikarp', card_value: null, claimed_at: new Date().toISOString() }];
+    const result = scoreAndSort(pool);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(1);
+  });
+
+  test('returns empty array for empty pool', () => {
+    expect(scoreAndSort([])).toEqual([]);
+  });
+});
 
 describe('ClaimedCarousel', () => {
   let mockChannel;
