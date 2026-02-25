@@ -5,8 +5,10 @@ import pokeballIcon from '../assets/pokeball_icon.svg';
 
 export default function CardModal({ isOpen, onClose, hit, origin, rotation, isClosing, isClaimed = false }) {
   const [modalView, setModalView] = useState('image'); // 'image' | 'form' | 'success'
-  const [claimerName, setClaimerName] = useState('');
-  const [claimerEmail, setClaimerEmail] = useState('');
+  // const [claimerName, setClaimerName] = useState('');
+  // const [claimerEmail, setClaimerEmail] = useState('');
+  const [claimerFirstName, setClaimerFirstName] = useState('');
+  const [claimerLastName, setClaimerLastName] = useState('');
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const successTimeoutRef = useRef(null);
@@ -15,8 +17,10 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
   useEffect(() => {
     if (isOpen) {
       setModalView('image');
-      setClaimerName('');
-      setClaimerEmail('');
+      // setClaimerName('');
+      // setClaimerEmail('');
+      setClaimerFirstName('');
+      setClaimerLastName('');
       setFormErrors({});
       setIsSubmitting(false);
     }
@@ -63,19 +67,37 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
   const validateForm = () => {
     const errors = {};
 
-    // Name validation: 2-50 characters, alphanumeric and spaces
-    if (!claimerName || claimerName.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters';
-    } else if (claimerName.length > 50) {
-      errors.name = 'Name must be less than 50 characters';
-    } else if (!/^[a-zA-Z0-9\s]+$/.test(claimerName)) {
-      errors.name = 'Name can only contain letters, numbers, and spaces';
+    // // Name validation: 2-50 characters, alphanumeric and spaces
+    // if (!claimerName || claimerName.trim().length < 2) {
+    //   errors.name = 'Name must be at least 2 characters';
+    // } else if (claimerName.length > 50) {
+    //   errors.name = 'Name must be less than 50 characters';
+    // } else if (!/^[a-zA-Z0-9\s]+$/.test(claimerName)) {
+    //   errors.name = 'Name can only contain letters, numbers, and spaces';
+    // }
+
+    // // Email validation
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // if (!claimerEmail || !emailRegex.test(claimerEmail)) {
+    //   errors.email = 'Please enter a valid email address';
+    // }
+
+    // First name validation: 2-50 characters, alphanumeric and spaces
+    if (!claimerFirstName || claimerFirstName.trim().length < 2) {
+      errors.firstName = 'First name must be at least 2 characters';
+    } else if (claimerFirstName.length > 50) {
+      errors.firstName = 'First name must be less than 50 characters';
+    } else if (!/^[a-zA-Z0-9\s]+$/.test(claimerFirstName)) {
+      errors.firstName = 'First name can only contain letters, numbers, and spaces';
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!claimerEmail || !emailRegex.test(claimerEmail)) {
-      errors.email = 'Please enter a valid email address';
+    // Last name validation: 2-50 characters, alphanumeric and spaces
+    if (!claimerLastName || claimerLastName.trim().length < 2) {
+      errors.lastName = 'Last name must be at least 2 characters';
+    } else if (claimerLastName.length > 50) {
+      errors.lastName = 'Last name must be less than 50 characters';
+    } else if (!/^[a-zA-Z0-9\s]+$/.test(claimerLastName)) {
+      errors.lastName = 'Last name can only contain letters, numbers, and spaces';
     }
 
     setFormErrors(errors);
@@ -106,8 +128,10 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
           setName: hit.set_name,
           cardValue: hit.estimated_value,
           imageUrl: hit.image_large || hit.image_small,
-          claimerName: claimerName.trim(),
-          claimerEmail: claimerEmail.trim(),
+          // claimerName: claimerName.trim(),
+          // claimerEmail: claimerEmail.trim(),
+          claimerFirstName: claimerFirstName.trim(),
+          claimerLastName: claimerLastName.trim(),
         }),
       });
 
@@ -221,7 +245,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
         <div className="modal-form-container">
           <h2 className="modal-form-title">Claim {hit.pokemon_name}</h2>
           <form onSubmit={handleFormSubmit} noValidate>
-            <div className="modal-form-group">
+            {/* <div className="modal-form-group">
               <label htmlFor="claimer-name">Your Name</label>
               <input
                 type="text"
@@ -252,6 +276,40 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
               />
               {formErrors.email && (
                 <span id="email-error" className="form-error">{formErrors.email}</span>
+              )}
+            </div> */}
+
+            <div className="modal-form-group">
+              <label htmlFor="claimer-first-name">First Name</label>
+              <input
+                type="text"
+                id="claimer-first-name"
+                value={claimerFirstName}
+                onChange={(e) => setClaimerFirstName(e.target.value)}
+                placeholder="Enter your first name"
+                disabled={isSubmitting}
+                aria-invalid={!!formErrors.firstName}
+                aria-describedby={formErrors.firstName ? 'first-name-error' : undefined}
+              />
+              {formErrors.firstName && (
+                <span id="first-name-error" className="form-error">{formErrors.firstName}</span>
+              )}
+            </div>
+
+            <div className="modal-form-group">
+              <label htmlFor="claimer-last-name">Last Name</label>
+              <input
+                type="text"
+                id="claimer-last-name"
+                value={claimerLastName}
+                onChange={(e) => setClaimerLastName(e.target.value)}
+                placeholder="Enter your last name"
+                disabled={isSubmitting}
+                aria-invalid={!!formErrors.lastName}
+                aria-describedby={formErrors.lastName ? 'last-name-error' : undefined}
+              />
+              {formErrors.lastName && (
+                <span id="last-name-error" className="form-error">{formErrors.lastName}</span>
               )}
             </div>
 

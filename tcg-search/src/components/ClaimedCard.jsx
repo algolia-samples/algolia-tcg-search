@@ -62,7 +62,7 @@ export default function ClaimedCard({ claim, eager = false }) {
           {claim.card_value != null ? `$${claim.card_value.toFixed(2)}` : '\u00A0'}
         </div>
         <div className="claimed-card-claimer">
-          by {claim.claimer_name} • {formatTimeAgo(claim.claimed_at)}
+          by {claim.claimer_name ?? `${claim.claimer_first_name} ${claim.claimer_last_name}`} • {formatTimeAgo(claim.claimed_at)}
         </div>
       </div>
     </div>
@@ -75,7 +75,9 @@ ClaimedCard.propTypes = {
     pokemon_name: PropTypes.string.isRequired,
     image_url: PropTypes.string,
     card_value: PropTypes.number,
-    claimer_name: PropTypes.string.isRequired,
+    claimer_name: PropTypes.string,
+    claimer_first_name: PropTypes.string,
+    claimer_last_name: PropTypes.string,
     claimed_at: PropTypes.string.isRequired,
   }).isRequired,
   eager: PropTypes.bool,
