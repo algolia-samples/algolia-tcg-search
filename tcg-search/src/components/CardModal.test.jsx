@@ -67,11 +67,11 @@ describe('CardModal - Phase 1 UI', () => {
     fireEvent.click(claimButton);
 
     expect(screen.getByText(/Claim Pikachu/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Your Name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Your Email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/First Name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Last Name/i)).toBeInTheDocument();
   });
 
-  it('validates name field - too short', async () => {
+  it('validates first name field - too short', async () => {
     render(
       <CardModal
         isOpen={true}
@@ -85,18 +85,16 @@ describe('CardModal - Phase 1 UI', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    const nameInput = screen.getByLabelText(/Your Name/i);
-    const emailInput = screen.getByLabelText(/Your Email/i);
     const submitButton = screen.getByRole('button', { name: /Submit Claim/i });
 
-    await userEvent.type(nameInput, 'A');
-    await userEvent.type(emailInput, 'test@example.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'A');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/Name must be at least 2 characters/i)).toBeInTheDocument();
+    expect(await screen.findByText(/First name must be at least 2 characters/i)).toBeInTheDocument();
   });
 
-  it('validates name field - too long', async () => {
+  it('validates last name field - too short', async () => {
     render(
       <CardModal
         isOpen={true}
@@ -110,17 +108,16 @@ describe('CardModal - Phase 1 UI', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    const nameInput = screen.getByLabelText(/Your Name/i);
     const submitButton = screen.getByRole('button', { name: /Submit Claim/i });
 
-    await userEvent.type(nameInput, 'A'.repeat(51));
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'test@example.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'K');
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/Name must be less than 50 characters/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Last name must be at least 2 characters/i)).toBeInTheDocument();
   });
 
-  it('validates name field - invalid characters', async () => {
+  it('validates first name field - too long', async () => {
     render(
       <CardModal
         isOpen={true}
@@ -134,17 +131,16 @@ describe('CardModal - Phase 1 UI', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    const nameInput = screen.getByLabelText(/Your Name/i);
     const submitButton = screen.getByRole('button', { name: /Submit Claim/i });
 
-    await userEvent.type(nameInput, 'Test@User!');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'test@example.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'A'.repeat(51));
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/Name can only contain letters, numbers, and spaces/i)).toBeInTheDocument();
+    expect(await screen.findByText(/First name must be less than 50 characters/i)).toBeInTheDocument();
   });
 
-  it('validates email field - invalid format', async () => {
+  it('validates first name field - invalid characters', async () => {
     render(
       <CardModal
         isOpen={true}
@@ -158,15 +154,13 @@ describe('CardModal - Phase 1 UI', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    const nameInput = screen.getByLabelText(/Your Name/i);
-    const emailInput = screen.getByLabelText(/Your Email/i);
     const submitButton = screen.getByRole('button', { name: /Submit Claim/i });
 
-    await userEvent.type(nameInput, 'Test User');
-    await userEvent.type(emailInput, 'invalid-email');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Test@User!');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/Please enter a valid email address/i)).toBeInTheDocument();
+    expect(await screen.findByText(/First name can only contain letters, numbers, and spaces/i)).toBeInTheDocument();
   });
 
   it('returns to image view when Back button is clicked', () => {
@@ -283,8 +277,8 @@ describe('CardModal - Phase 2 API Integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
     // Fill out form
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
 
     // Submit
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
@@ -301,8 +295,8 @@ describe('CardModal - Phase 2 API Integration', () => {
           setName: 'Base Set',
           cardValue: 100.50,
           imageUrl: 'https://example.com/pikachu-large.jpg',
-          claimerName: 'Ash Ketchum',
-          claimerEmail: 'ash@pokemon.com',
+          claimerFirstName: 'Ash',
+          claimerLastName: 'Ketchum',
         }),
       });
     });
@@ -343,8 +337,8 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
     expect(await screen.findByText(/Card already claimed/i)).toBeInTheDocument();
@@ -366,8 +360,8 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
     expect(await screen.findByText(/Network error. Please try again./i)).toBeInTheDocument();
@@ -399,8 +393,8 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
 
     const submitButton = screen.getByRole('button', { name: /Submit Claim/i });
     fireEvent.click(submitButton);
@@ -432,8 +426,8 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
     expect(await screen.findByText(/Server error. Please try again later./i)).toBeInTheDocument();
@@ -463,8 +457,8 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
 
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
     expect(await screen.findByText(/Server error. Please try again later./i)).toBeInTheDocument();
@@ -494,8 +488,8 @@ describe('CardModal - Phase 2 API Integration', () => {
 
     // Go to form view and submit
     fireEvent.click(screen.getByRole('button', { name: /claim this card/i }));
-    await userEvent.type(screen.getByLabelText(/Your Name/i), 'Ash Ketchum');
-    await userEvent.type(screen.getByLabelText(/Your Email/i), 'ash@pokemon.com');
+    await userEvent.type(screen.getByLabelText(/First Name/i), 'Ash');
+    await userEvent.type(screen.getByLabelText(/Last Name/i), 'Ketchum');
     fireEvent.click(screen.getByRole('button', { name: /Submit Claim/i }));
 
     // Wait for success view to appear (timeout is created here)

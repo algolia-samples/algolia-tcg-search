@@ -27,29 +27,22 @@ const algoliaClient = algoliasearch(
   process.env.ALGOLIA_WRITE_API_KEY
 );
 
-// Simple in-memory rate limiting
-// Map of email -> array of timestamps
-const rateLimitStore = new Map();
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_CLAIMS_PER_WINDOW = 5;
-
-function checkRateLimit(email) {
-  const now = Date.now();
-  const userClaims = rateLimitStore.get(email) || [];
-
-  // Remove claims outside the time window
-  const recentClaims = userClaims.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS);
-
-  if (recentClaims.length >= MAX_CLAIMS_PER_WINDOW) {
-    return false; // Rate limit exceeded
-  }
-
-  // Add current claim and update store
-  recentClaims.push(now);
-  rateLimitStore.set(email, recentClaims);
-
-  return true; // Within rate limit
-}
+// Simple in-memory rate limiting (disabled - was email-based)
+// const rateLimitStore = new Map();
+// const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+// const MAX_CLAIMS_PER_WINDOW = 5;
+//
+// function checkRateLimit(email) {
+//   const now = Date.now();
+//   const userClaims = rateLimitStore.get(email) || [];
+//   const recentClaims = userClaims.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS);
+//   if (recentClaims.length >= MAX_CLAIMS_PER_WINDOW) {
+//     return false; // Rate limit exceeded
+//   }
+//   recentClaims.push(now);
+//   rateLimitStore.set(email, recentClaims);
+//   return true; // Within rate limit
+// }
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -65,42 +58,58 @@ export default async function handler(req, res) {
       setName,
       cardValue,
       imageUrl,
-      claimerName,
-      claimerEmail,
+      // claimerName,
+      // claimerEmail,
+      claimerFirstName,
+      claimerLastName,
     } = req.body;
 
     // Validate required fields
-    if (!cardId || !pokemonName || !claimerName || !claimerEmail) {
+    // if (!cardId || !pokemonName || !claimerName || !claimerEmail) {
+    if (!cardId || !pokemonName || !claimerFirstName || !claimerLastName) {
       return res.status(400).json({
         error: 'Missing required fields'
       });
     }
 
-    // Validate claimer name (2-50 characters, alphanumeric and spaces)
-    if (claimerName.trim().length < 2 || claimerName.length > 50) {
+    // // Validate claimer name (2-50 characters, alphanumeric and spaces)
+    // if (claimerName.trim().length < 2 || claimerName.length > 50) {
+    //   return res.status(400).json({ error: 'Name must be between 2 and 50 characters' });
+    // }
+    // if (!/^[a-zA-Z0-9\s]+$/.test(claimerName)) {
+    //   return res.status(400).json({ error: 'Name can only contain letters, numbers, and spaces' });
+    // }
+    // // Validate email format
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // if (!emailRegex.test(claimerEmail)) {
+    //   return res.status(400).json({ error: 'Invalid email address' });
+    // }
+    // // Check rate limit
+    // if (!checkRateLimit(claimerEmail)) {
+    //   return res.status(429).json({ error: 'Too many claims. Please wait before claiming again.' });
+    // }
+
+    // Validate first name (2-50 characters, alphanumeric and spaces)
+    if (claimerFirstName.trim().length < 2 || claimerFirstName.length > 50) {
       return res.status(400).json({
-        error: 'Name must be between 2 and 50 characters'
+        error: 'First name must be between 2 and 50 characters'
+      });
+    }
+    if (!/^[a-zA-Z0-9\s]+$/.test(claimerFirstName)) {
+      return res.status(400).json({
+        error: 'First name can only contain letters, numbers, and spaces'
       });
     }
 
-    if (!/^[a-zA-Z0-9\s]+$/.test(claimerName)) {
+    // Validate last name (2-50 characters, alphanumeric and spaces)
+    if (claimerLastName.trim().length < 2 || claimerLastName.length > 50) {
       return res.status(400).json({
-        error: 'Name can only contain letters, numbers, and spaces'
+        error: 'Last name must be between 2 and 50 characters'
       });
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(claimerEmail)) {
+    if (!/^[a-zA-Z0-9\s]+$/.test(claimerLastName)) {
       return res.status(400).json({
-        error: 'Invalid email address'
-      });
-    }
-
-    // Check rate limit
-    if (!checkRateLimit(claimerEmail)) {
-      return res.status(429).json({
-        error: 'Too many claims. Please wait before claiming again.'
+        error: 'Last name can only contain letters, numbers, and spaces'
       });
     }
 
@@ -115,8 +124,10 @@ export default async function handler(req, res) {
           set_name: setName,
           card_value: cardValue,
           image_url: imageUrl,
-          claimer_name: claimerName.trim(),
-          claimer_email: claimerEmail.trim(),
+          // claimer_name: claimerName.trim(),
+          // claimer_email: claimerEmail.trim(),
+          claimer_first_name: claimerFirstName.trim(),
+          claimer_last_name: claimerLastName.trim(),
         },
       ])
       .select();
