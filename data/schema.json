@@ -112,13 +112,23 @@
         "source_column": "ENRICHED",
         "searchable": false,
         "filterable": false
+      },
+      {
+        "name": "pokemon_types",
+        "type": "array<string>",
+        "description": "Pokemon type(s) for the card (e.g. [\"Fire\"], [\"Water\", \"Lightning\"]), enriched from TCGdex per-card API",
+        "source_column": "ENRICHED",
+        "searchable": true,
+        "filterable": true,
+        "facetable": true
       }
     ],
     "algolia_configuration": {
       "searchableAttributes": [
         "pokemon_name",
         "card_type",
-        "set_name"
+        "set_name",
+        "pokemon_types"
       ],
       "attributesForFaceting": [
         "filterOnly(card_type)",
@@ -126,7 +136,8 @@
         "filterOnly(is_top_10_chase_card)",
         "filterOnly(is_classic_pokemon)",
         "filterOnly(is_full_art)",
-        "searchable(set_name)"
+        "searchable(set_name)",
+        "filterOnly(pokemon_types)"
       ],
       "numericAttributesForFiltering": [
         "estimated_value",

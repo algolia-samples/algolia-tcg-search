@@ -88,6 +88,16 @@ SUPABASE_SECRET_KEY=your_secret_key  # server-side only, not exposed to browser
 ALGOLIA_WRITE_API_KEY=your_write_key  # server-side only, used by claims API
 ```
 
+## Data Pipeline
+
+Card inventory is managed via CSV exports from the master spreadsheet, ingested into Algolia via Python scripts in `data/data-utilities/`.
+
+See [`data/data-utilities/README.md`](data/data-utilities/README.md) for full details on CSV format, column definitions, and output schema.
+
+**Quick reference — CSV columns:** `Pokemon Name`, `Number`, `Card Type`, `# in Machine`, `Estimated Value`, `Is Chase Card?`, `Is top 10 chase card?`, `Is classic Pokemon?`, `Is Full Art?`
+
+**Filename convention:** `TCG Search Website - Raw List - {Set Name} ({Count}).csv`
+
 ## Testing
 
 ```bash
@@ -154,6 +164,26 @@ Build and root directory settings are configured in the Vercel dashboard (Root D
 - **Database:** Supabase (Postgres)
 - **API Routes:**
   - `POST /api/claims/create` - Submit card claim
+
+### Supabase: `claims` Table
+
+Required table in your Supabase project:
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `bigint` | Primary key, auto-increment |
+| `card_id` | `text` | Algolia `objectID` (e.g., `sv08-102`) |
+| `pokemon_name` | `text` | |
+| `card_number` | `text` | |
+| `set_name` | `text` | |
+| `card_value` | `numeric` | Nullable |
+| `image_url` | `text` | Nullable |
+| `claimer_first_name` | `text` | |
+| `claimer_last_name` | `text` | |
+| `claimer_name` | `text` | Legacy field, nullable |
+| `claimed_at` | `timestamptz` | Default: `now()` |
+
+Enable Row Level Security (RLS) with a policy allowing public inserts and reads of non-PII fields only.
 
 ### Security
 - Row Level Security (RLS) enabled on Supabase
