@@ -183,7 +183,7 @@ Required table in your Supabase project. Run [`data/supabase_claims_table.sql`](
 | `claimer_name` | `text` | Legacy field, nullable |
 | `claimed_at` | `timestamptz` | Default: `now()` |
 
-Enable Row Level Security (RLS) with a policy allowing public inserts and reads of non-PII fields only.
+Enable Row Level Security (RLS). The anon role is granted SELECT on all rows — the table contains no sensitive PII (no email). Inserts go through the server-side API using the service_role key.
 
 ### Security
 - Row Level Security (RLS) enabled on Supabase

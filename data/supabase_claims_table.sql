@@ -24,7 +24,10 @@ ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 -- SELECTs and Realtime subscriptions use the anon key from the frontend.
 GRANT SELECT ON TABLE claims TO anon;
 
--- Allow anyone to read claims (app queries only non-PII columns)
+-- Allow anon to read all rows. The table contains no sensitive PII (no email
+-- or private contact info). Claimer first/last name is intentionally public —
+-- it is displayed in the "Recently Claimed" carousel. Column selection is
+-- handled at the application layer in ClaimedCarousel.jsx.
 CREATE POLICY "Allow public reads"
   ON claims FOR SELECT
   TO anon
