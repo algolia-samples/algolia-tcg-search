@@ -18,17 +18,23 @@ CREATE TABLE IF NOT EXISTS claims (
 -- Enable Row Level Security
 ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone to submit a claim
-CREATE POLICY "Allow public inserts"
-  ON claims FOR INSERT
-  TO anon
-  WITH CHECK (true);
+-- Grant table-level privileges to the anon role.
+-- Note: INSERTs go through the server-side API route using the service_role key,
+-- which bypasses RLS entirely, so no INSERT grant is needed for anon.
+-- SELECTs and Realtime subscriptions use the anon key from the frontend.
+GRANT SELECT ON TABLE claims TO anon;
 
 -- Allow anyone to read claims (app queries only non-PII columns)
 CREATE POLICY "Allow public reads"
   ON claims FOR SELECT
   TO anon
   USING (true);
+
+-- Allow server-side inserts (service_role key bypasses RLS, policy included for completeness)
+CREATE POLICY "Allow service role inserts"
+  ON claims FOR INSERT
+  TO service_role
+  WITH CHECK (true);
 
 -- Enable Realtime for this table so postgres_changes subscriptions fire.
 -- Required for the "Recently Claimed" carousel live updates.
