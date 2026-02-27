@@ -83,6 +83,9 @@ VITE_ALGOLIA_CHAT_AGENT_ID=your_chat_agent_id  # optional
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
 SUPABASE_SECRET_KEY=your_secret_key  # server-side only, not exposed to browser
+
+# Algolia (server-side only)
+ALGOLIA_WRITE_API_KEY=your_write_key  # server-side only, used by claims API
 ```
 
 ## Testing
