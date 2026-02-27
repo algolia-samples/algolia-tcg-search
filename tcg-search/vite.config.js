@@ -6,9 +6,6 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.PORT) || 5173,
   },
-  build: {
-    outDir: 'build',
-  },
   test: {
     globals: true,
     environment: 'jsdom',
