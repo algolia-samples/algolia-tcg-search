@@ -89,6 +89,10 @@ Each card uploaded to Algolia contains:
 |---|---|---|
 | `objectID` | string | `{set_id}-{card_number}` (e.g., `sv08-102`) — matches Supabase `card_id` |
 
+## Algolia Index Settings
+
+Index configuration (searchable attributes, facets, ranking, etc.) is defined in [`data/algolia-config.json`](../algolia-config.json) and applied via `configure_index.py`. This is the authoritative source — it matches the live index.
+
 ## Utilities
 
 | Script | Description |
