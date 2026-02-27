@@ -29,3 +29,7 @@ CREATE POLICY "Allow public reads"
   ON claims FOR SELECT
   TO anon
   USING (true);
+
+-- Enable Realtime for this table so postgres_changes subscriptions fire.
+-- Required for the "Recently Claimed" carousel live updates.
+ALTER PUBLICATION supabase_realtime ADD TABLE claims;
