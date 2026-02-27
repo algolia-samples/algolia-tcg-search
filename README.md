@@ -51,24 +51,21 @@ Search and claim cards from the TCG vending machine inventory.
 
 ### Local Development
 
-**Run full stack locally (frontend + API):**
+**Run frontend only (fast, no API):**
 
 ```bash
 npm run dev
-# or
-vercel dev
 ```
 
-This starts:
-- React dev server at `http://localhost:3000`
-- API routes at `http://localhost:3000/api/*`
+Starts Vite dev server at `http://localhost:5173`.
 
-**Run frontend only (no API):**
+**Run full stack locally (frontend + API routes):**
 
 ```bash
-cd tcg-search
-npm start
+npm run serve
 ```
+
+Starts Vercel dev server at `http://localhost:3000` with API routes available at `http://localhost:3000/api/*`.
 
 ### Environment Variables
 
@@ -76,15 +73,19 @@ Required for local development (`.env` in `tcg-search/`):
 
 ```bash
 # Algolia
-REACT_APP_ALGOLIA_APP_ID=your_app_id
-REACT_APP_ALGOLIA_API_KEY=your_search_key
-REACT_APP_ALGOLIA_INDEX_NAME=your_index_name
-REACT_APP_USER_TOKEN=your_user_token
+VITE_ALGOLIA_APP_ID=your_app_id
+VITE_ALGOLIA_API_KEY=your_search_key
+VITE_ALGOLIA_INDEX_NAME=your_index_name
+VITE_USER_TOKEN=your_user_token
+VITE_ALGOLIA_CHAT_AGENT_ID=your_chat_agent_id  # optional
 
 # Supabase
-REACT_APP_SUPABASE_URL=https://your-project.supabase.co
-REACT_APP_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
-SUPABASE_SECRET_KEY=your_secret_key
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+SUPABASE_SECRET_KEY=your_secret_key  # server-side only, not exposed to browser
+
+# Algolia (server-side only)
+ALGOLIA_WRITE_API_KEY=your_write_key  # server-side only, used by claims API
 ```
 
 ## Testing
@@ -131,7 +132,7 @@ npm run deploy:prod
 vercel --prod
 ```
 
-The `vercel.json` configuration handles the mono-repo structure automatically.
+Build and root directory settings are configured in the Vercel dashboard (Root Directory: `tcg-search`).
 
 ### What Gets Deployed
 
@@ -144,7 +145,7 @@ The `vercel.json` configuration handles the mono-repo structure automatically.
 ## Architecture
 
 ### Frontend (`/tcg-search`)
-- **Framework:** React 18 with Create React App
+- **Framework:** React 18 with Vite
 - **Search:** Algolia InstantSearch v7
 - **Styling:** Custom CSS
 
@@ -156,13 +157,13 @@ The `vercel.json` configuration handles the mono-repo structure automatically.
 
 ### Security
 - Row Level Security (RLS) enabled on Supabase
-- Rate limiting: 5 claims per hour per email
 - Server-side validation for all inputs
+- `SUPABASE_SECRET_KEY` and `ALGOLIA_WRITE_API_KEY` are server-side only, never exposed to the browser
 
 ## Contributing
 
 1. Create a feature branch: `git checkout -b feat/your-feature`
-2. Make changes and test locally with `vercel dev`
+2. Make changes and test locally with `npm run serve`
 3. Run tests: `cd tcg-search && npm run test:ci`
 4. Commit with semantic prefixes: `feat:`, `fix:`, `chore:`, etc.
 5. Push and create a PR
