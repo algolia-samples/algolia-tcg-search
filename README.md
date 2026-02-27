@@ -167,7 +167,7 @@ Build and root directory settings are configured in the Vercel dashboard (Root D
 
 ### Supabase: `claims` Table
 
-Required table in your Supabase project:
+Required table in your Supabase project. Run [`data/supabase_claims_table.sql`](data/supabase_claims_table.sql) in the Supabase SQL editor to create the table and policies:
 
 | Column | Type | Notes |
 |---|---|---|
