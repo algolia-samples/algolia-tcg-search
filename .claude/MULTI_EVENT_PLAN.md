@@ -22,20 +22,25 @@ multi-event platform following the swagsearch architecture pattern:
   "name": "Etail West 2026",
   "booth": "701",
   "venue": "Long Beach Convention Center",
-  "index_prefix": "etail-west-2026",
   "current": true
 }
 ```
 
 ### Index Naming Pattern
-`{index_prefix}_tcg_cards` (primary), `_price_asc`, `_price_desc` (replicas)
-- e.g. `etail-west-2026_tcg_cards`, `shoptalk-2026_tcg_cards`
+`tcg_cards_{event_id}` (primary), `tcg_cards_{event_id}_price_asc`, `tcg_cards_{event_id}_price_desc` (replicas)
+- e.g. `tcg_cards_etail-west-2026`, `tcg_cards_shoptalk-2026`
+- `tcg_cards_*` prefix groups all card indices together in the Algolia dashboard
+
+### URL Routing
+- `/` — fetches `current:true` event, redirects to `/{event_id}`
+- `/:eventId` — fetches that event's config by objectID, renders the full search UI
 
 ### App Initialization Flow
-1. Query `tcg_events` with filter `current:true`
-2. Store event config in React `EventContext`
-3. Derive Algolia index names from `index_prefix`
-4. Initialize InstantSearch with dynamic index names
+1. At `/`: query `tcg_events` for `current:true`, redirect to `/{event_id}`
+2. At `/:eventId`: fetch event config by objectID from `tcg_events`
+3. Store event config in React `EventContext`
+4. Derive Algolia index names from `index_prefix`
+5. Initialize InstantSearch with dynamic index names
 
 ---
 
@@ -75,19 +80,22 @@ retired and replaced via re-ingestion in Step 7 under the new naming convention
 
 ---
 
-### Step 3: Frontend — Event Context
+### Step 3: Frontend — Event Context + Routing
 **New files:**
-- `/tcg-search/src/utilities/events.js` — `fetchCurrentEvent()` queries `tcg_events`
-  for `current:true`, returns event config object
-- `/tcg-search/src/context/EventContext.jsx` — React context + provider that calls
-  `fetchCurrentEvent()` on mount, exposes `{ eventConfig, loading, error }`
+- `/tcg-search/src/utilities/events.js` — `fetchCurrentEvent()` (filter `current:true`)
+  and `fetchEventById(eventId)` (getObject by objectID) helpers
+- `/tcg-search/src/context/EventContext.jsx` — React context + provider; accepts
+  `eventId` prop, calls `fetchEventById(eventId)`, exposes `{ eventConfig, loading, error }`
 
 **Modified files:**
 - `/tcg-search/src/utilities/algolia.js` — remove hardcoded `VITE_ALGOLIA_INDEX_NAME*`
   env vars; export a `getIndexNames(indexPrefix)` helper that returns
   `{ primary, priceAsc, priceDesc }` index names
-- `/tcg-search/src/App.jsx` — wrap app in `<EventProvider>`, render loading state
-  while event config is being fetched, pass `indexPrefix` to InstantSearch config
+- `/tcg-search/src/App.jsx` — routes:
+  - `/` → `<CurrentEventRedirect />` (fetches current event, navigates to `/:eventId`)
+  - `/:eventId` → `<EventProvider eventId={eventId}><Search /></EventProvider>`
+- `/tcg-search/src/components/Search.jsx` — call `useEvent()` + `getIndexNames()` instead
+  of importing hardcoded index name constants
 - `/tcg-search/.env.example` — remove `VITE_ALGOLIA_INDEX_NAME*` vars;
   add `VITE_ALGOLIA_EVENTS_INDEX=tcg_events`
 
@@ -176,7 +184,6 @@ Removed: `VITE_ALGOLIA_INDEX_NAME`, `VITE_ALGOLIA_INDEX_NAME_PRICE_ASC`,
 ## Out of Scope (Future Work)
 - Per-event branding (logos, colors) — events index schema supports adding `logo_url`
   and `primary_color` fields later
-- Historical event browsing via URL routing (e.g. `/etail-west-2026`) — foundation is
-  in place once event_id is threaded through
+- ~~Historical event browsing via URL routing~~ — implemented in Step 3
 - Admin dashboard UI for event management (swagsearch pattern) — `create_event.py`
   and `set_active_event.py` CLI tools cover the immediate need

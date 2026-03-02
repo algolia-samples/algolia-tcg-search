@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { searchClient, indexName, indexNamePriceAsc, indexNamePriceDesc } from '../utilities/algolia';
+import { searchClient, getIndexNames, userToken } from '../utilities/algolia';
+import { useEvent } from '../context/EventContext';
 import {
   Configure,
   Hits,
@@ -11,7 +12,6 @@ import {
   useHits
 } from 'react-instantsearch';
 import aa from 'search-insights';
-import { userToken } from '../utilities/algolia';
 
 // Set user token for insights
 aa('setUserToken', userToken);
@@ -48,6 +48,8 @@ function HitsWithNoResults() {
 }
 
 export default function Search() {
+  const { eventConfig, loading, error } = useEvent();
+
   // Override mobile browser's default scroll-to-center behavior on input focus
   useEffect(() => {
     const handleFocus = (e) => {
@@ -63,13 +65,18 @@ export default function Search() {
     return () => document.removeEventListener('focus', handleFocus, true);
   }, []);
 
+  if (loading) return <div className="event-loading">Loading event…</div>;
+  if (error || !eventConfig) return <div className="event-error">Event not found.</div>;
+
+  const { primary, priceAsc, priceDesc } = getIndexNames(eventConfig.event_id);
+
   return (
     <div>
       <Header />
       <div className="container">
         <InstantSearch
           searchClient={searchClient}
-          indexName={indexNamePriceDesc}
+          indexName={priceDesc}
           routing={true}
           insights={{
             insightsClient: aa,
@@ -105,9 +112,9 @@ export default function Search() {
               <FilterDropdown attribute="card_type" placeholder="All Types" />
               <SortBy
                 items={[
-                  { label: 'Relevance', value: indexName },
-                  { label: 'Sort Price ↑', value: indexNamePriceAsc },
-                  { label: 'Sort Price ↓', value: indexNamePriceDesc }
+                  { label: 'Relevance', value: primary },
+                  { label: 'Sort Price ↑', value: priceAsc },
+                  { label: 'Sort Price ↓', value: priceDesc }
                 ]}
               />
             </div>

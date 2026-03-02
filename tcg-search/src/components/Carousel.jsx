@@ -4,7 +4,8 @@ import {
   Configure,
   useInfiniteHits,
 } from 'react-instantsearch';
-import { searchClient, indexNamePriceDesc } from '../utilities/algolia';
+import { searchClient, getIndexNames } from '../utilities/algolia';
+import { useEvent } from '../context/EventContext';
 import BaseCarousel from './BaseCarousel';
 import CarouselHit from './CarouselHit';
 
@@ -41,10 +42,13 @@ CarouselContent.propTypes = {
 
 // Main carousel component with separate InstantSearch instance
 export default function Carousel({ title, filters, hitsPerPage = 10 }) {
+  const { eventConfig } = useEvent();
+  const { priceDesc } = getIndexNames(eventConfig?.event_id ?? '');
+
   return (
     <InstantSearch
       searchClient={searchClient}
-      indexName={indexNamePriceDesc}
+      indexName={priceDesc}
     >
       <Configure
         hitsPerPage={hitsPerPage}

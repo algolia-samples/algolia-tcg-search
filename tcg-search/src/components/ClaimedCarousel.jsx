@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utilities/supabase';
+import { useEvent } from '../context/EventContext';
 import BaseCarousel from './BaseCarousel';
 import ClaimedCard from './ClaimedCard';
 
@@ -85,6 +86,7 @@ function setCachedClaims(data) {
  * - Smart image preloading via BaseCarousel
  */
 export default function ClaimedCarousel() {
+  const { eventConfig } = useEvent();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const subscriptionEstablished = useRef(false);
@@ -104,6 +106,7 @@ export default function ClaimedCarousel() {
       const { data, error } = await supabase
         .from('claims')
         .select('id, pokemon_name, image_url, card_value, claimer_name, claimer_first_name, claimer_last_name, claimed_at')
+        .eq('event_id', eventConfig.event_id)
         .order('claimed_at', { ascending: false })
         .limit(FETCH_LIMIT);
 
@@ -125,6 +128,8 @@ export default function ClaimedCarousel() {
   useEffect(() => {
     let channel;
     let mounted = true;
+
+    if (!eventConfig) return;
 
     const initializeData = async () => {
       // Check cache first (stale-while-revalidate)
@@ -155,11 +160,12 @@ export default function ClaimedCarousel() {
 
       // Always set up real-time subscription (regardless of cache state)
       channel = supabase
-        .channel('claims')
+        .channel(`claims:${eventConfig.event_id}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
-          table: 'claims'
+          table: 'claims',
+          filter: `event_id=eq.${eventConfig.event_id}`,
         }, (payload) => {
           // Prepend new claim to pool, trim to FETCH_LIMIT, re-score
           const updatedPool = [payload.new, ...claimsPool.current].slice(0, FETCH_LIMIT);
@@ -191,7 +197,7 @@ export default function ClaimedCarousel() {
         subscriptionEstablished.current = false;
       }
     };
-  }, []);
+  }, [eventConfig]);
 
   return (
     <BaseCarousel

@@ -16,7 +16,8 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 CONFIG_FILE = Path(__file__).parent.parent / "algolia-config.json"
 ALGOLIA_APP_ID = os.getenv("ALGOLIA_APP_ID")
 ALGOLIA_API_KEY = os.getenv("ALGOLIA_API_KEY")
-ALGOLIA_INDEX_NAME = os.getenv("ALGOLIA_INDEX_NAME", "pokemon_tcg_cards")
+ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID", "")
+ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}" if ALGOLIA_EVENT_ID else "tcg_cards_default"
 
 
 def main():

@@ -3,6 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS claims (
   id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  event_id           TEXT        NOT NULL DEFAULT 'etail-west-2026',  -- tcg_events objectID
   card_id            TEXT        NOT NULL,  -- Algolia objectID, e.g. "sv08-102"
   pokemon_name       TEXT        NOT NULL,
   card_number        TEXT,
@@ -15,6 +16,8 @@ CREATE TABLE IF NOT EXISTS claims (
   claimed_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS claims_event_id_idx ON claims (event_id);
+
 -- Enable Row Level Security
 ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 
@@ -24,10 +27,12 @@ ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 -- SELECTs and Realtime subscriptions use the anon key from the frontend.
 GRANT SELECT ON TABLE claims TO anon;
 
--- Allow anon to read all rows. The table contains no sensitive PII (no email
--- or private contact info). Claimer first/last name is intentionally public —
--- it is displayed in the "Recently Claimed" carousel. Column selection is
+-- Allow anon to read rows for the requested event. The table contains no sensitive
+-- PII (no email or private contact info). Claimer first/last name is intentionally
+-- public — it is displayed in the "Recently Claimed" carousel. Column selection is
 -- handled at the application layer in ClaimedCarousel.jsx.
+-- Note: RLS cannot enforce the event_id filter here since anon queries supply it
+-- as a WHERE clause; the policy allows all reads and the app layer scopes by event.
 CREATE POLICY "Allow public reads"
   ON claims FOR SELECT
   TO anon
