@@ -206,6 +206,57 @@ with the primary and always inherit settings — simpler and more storage-effici
 
 ---
 
+### Step 9: Per-Event Chat Agents
+Currently `VITE_ALGOLIA_CHAT_AGENT_ID` is a static env var — one agent for all events.
+Each event needs its own agent configured in the Algolia AI dashboard (with the
+event-specific prompt: correct event name, booth, card index). The agent ID should
+live in the `tcg_events` record so switching events automatically switches agents.
+
+**Architecture:**
+- Each event has its own Algolia AI agent, configured in the dashboard with
+  `PROMPT.md` content filled in for that event (event name, booth, card index name)
+- The `tcg_events` record stores `agent_id` for that event
+- `ChatAgent.jsx` reads `eventConfig.agent_id` from EventContext instead of the
+  static `VITE_ALGOLIA_CHAT_AGENT_ID` env var
+
+**Modified files:**
+- `/data/data-utilities/create_event.py` — add `--agent-id` optional argument;
+  include `agent_id` in the `tcg_events` record (nullable — can be added later)
+- `/tcg-search/src/components/ChatAgent.jsx` — read agent ID from
+  `eventConfig.agent_id` with fallback to `VITE_ALGOLIA_CHAT_AGENT_ID` env var
+- `/tcg-search/.env.example` — note `VITE_ALGOLIA_CHAT_AGENT_ID` is now a fallback only
+
+**Updated `tcg_events` schema:**
+```json
+{
+  "objectID": "etail-palm-springs-2026",
+  "event_id": "etail-palm-springs-2026",
+  "name": "eTail Palm Springs 2026",
+  "booth": "701",
+  "venue": "JW Marriott Desert Springs Resort",
+  "agent_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "current": true
+}
+```
+
+**Manual steps (per event):**
+1. In Algolia AI dashboard, create a new agent for the event
+2. Set its system prompt from `PROMPT.md`, substituting `{{event_name}}`, `{{booth}}`,
+   and pointing its search tool at `tcg_cards_{event_id}`
+3. Copy the agent ID and add it to the event record via `set_active_event.py` or
+   directly in the Algolia dashboard
+
+**Open question:** Does the Algolia AI agent API support runtime variable substitution
+in the system prompt (e.g. passing `{{event_name}}` values at query time)? If so, a
+single shared agent could work instead of one per event — investigate before implementing.
+
+**Verification:**
+- Navigate to `/etail-palm-springs-2026` — chat agent answers questions about that
+  event's cards and booth
+- Switch active event → chat agent reflects new event without any code change
+
+---
+
 ## Out of Scope (Future Work)
 - Per-event branding (logos, colors) — events index schema supports adding `logo_url`
   and `primary_color` fields later
