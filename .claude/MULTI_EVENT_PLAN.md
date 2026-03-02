@@ -183,14 +183,16 @@ Removed: `VITE_ALGOLIA_INDEX_NAME`, `VITE_ALGOLIA_INDEX_NAME_PRICE_ASC`,
 
 ---
 
-### Step 8: Switch to Virtual Replicas
+### Step 8: Switch to Virtual Replicas ✅
 Standard replicas store a full copy of the data and require manual settings propagation
 (caused the `attributesForFaceting` bug fixed in Step 7). Virtual replicas share data
 with the primary and always inherit settings — simpler and more storage-efficient.
 
 **Modified files:**
-- `/data/data-utilities/create_event.py` — change `"replicas"` key to `"virtualReplicas"`;
-  remove the separate `set_settings` calls for replicas (settings inherited automatically)
+- `/data/data-utilities/create_event.py` — keep `"replicas"` key but wrap values with
+  `virtual("index_name")` modifier (e.g. `"virtual(tcg_cards_event_price_asc)"`);
+  simplify replica `set_settings` calls to only set `{"ranking": [...]}` (all other
+  settings inherited automatically from primary)
 
 **Manual steps:**
 - Delete existing `tcg_cards_etail-palm-springs-2026_price_asc` and `_price_desc` indices

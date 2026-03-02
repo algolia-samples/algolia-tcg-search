@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 Scaffold a new TCG event:
-1. Creates {event_id}_tcg_cards + replica indices in Algolia
-2. Applies algolia-config.json settings to new indices
-3. Inserts record into tcg_events index
+1. Creates tcg_cards_{event_id} primary index + virtual replica indices in Algolia
+2. Applies algolia-config.json settings to the primary (replicas inherit automatically)
+3. Sets price-sort ranking on each virtual replica
+4. Inserts record into tcg_events index
 
 Usage:
     python create_event.py <event_id> <event_name> <booth> [--venue <venue>]
@@ -53,20 +54,20 @@ def main():
     with open(CARD_CONFIG_FILE) as f:
         card_config = json.load(f)
 
-    # Create primary index with replica references
+    # Create primary index with virtual replica references
+    # Virtual replicas use the `replicas` key with virtual("name") modifier syntax
     print(f"Creating and configuring {primary}...")
-    primary_config = {**card_config, "replicas": [price_asc, price_desc]}
+    primary_config = {**card_config, "replicas": [f"virtual({price_asc})", f"virtual({price_desc})"]}
     client.set_settings(index_name=primary, index_settings=primary_config)
     print(f"  ✓ {primary}")
 
-    # Configure replica indices: inherit full card config, override ranking
+    # Set price-sort ranking on each virtual replica (all other settings inherited from primary)
     for replica_name, sort_direction in [(price_asc, "asc"), (price_desc, "desc")]:
         print(f"Configuring {replica_name}...")
-        replica_config = {
-            **card_config,
-            "ranking": [f"{sort_direction}(estimated_value)"],
-        }
-        client.set_settings(index_name=replica_name, index_settings=replica_config)
+        client.set_settings(
+            index_name=replica_name,
+            index_settings={"ranking": [f"{sort_direction}(estimated_value)"]},
+        )
         print(f"  ✓ {replica_name}")
 
     # Insert event record into tcg_events
