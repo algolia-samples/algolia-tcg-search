@@ -181,6 +181,31 @@ Removed: `VITE_ALGOLIA_INDEX_NAME`, `VITE_ALGOLIA_INDEX_NAME_PRICE_ASC`,
 
 ---
 
+---
+
+### Step 8: Switch to Virtual Replicas
+Standard replicas store a full copy of the data and require manual settings propagation
+(caused the `attributesForFaceting` bug fixed in Step 7). Virtual replicas share data
+with the primary and always inherit settings — simpler and more storage-efficient.
+
+**Modified files:**
+- `/data/data-utilities/create_event.py` — change `"replicas"` key to `"virtualReplicas"`;
+  remove the separate `set_settings` calls for replicas (settings inherited automatically)
+
+**Manual steps:**
+- Delete existing `tcg_cards_etail-palm-springs-2026_price_asc` and `_price_desc` indices
+  in the Algolia dashboard (standard replicas must be deleted before re-creating as virtual)
+- Re-run `create_event.py etail-palm-springs-2026 ...` to recreate as virtual replicas
+  (or run the targeted `set_settings` one-liner to flip the primary's `virtualReplicas` key)
+
+**Verification:**
+- `get_settings(primary).virtual_replicas` returns the two replica names
+- `get_settings(primary).replicas` is empty
+- `is_top_10_chase_card:true` filter still returns 19 hits in the price_desc replica
+  without needing to manually set `attributesForFaceting`
+
+---
+
 ## Out of Scope (Future Work)
 - Per-event branding (logos, colors) — events index schema supports adding `logo_url`
   and `primary_color` fields later
