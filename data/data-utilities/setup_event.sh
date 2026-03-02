@@ -38,11 +38,14 @@ VENUE="${4:-}"
 # ── Env var check ──────────────────────────────────────────────────────────────
 
 ENV_FILE="$SCRIPT_DIR/../.env"
-if [ -f "$ENV_FILE" ]; then
-  set -a; source "$ENV_FILE"; set +a
+if [ ! -f "$ENV_FILE" ]; then
+  echo "ERROR: data/.env not found — copy data/.env.example and fill in credentials"
+  exit 1
 fi
 
-if [ -z "$ALGOLIA_APP_ID" ] || [ -z "$ALGOLIA_API_KEY" ]; then
+# Let python-dotenv handle loading (it handles CRLF correctly).
+# Just do a quick grep to catch obviously missing credentials before running.
+if ! grep -qE "^ALGOLIA_APP_ID=.+" "$ENV_FILE" || ! grep -qE "^ALGOLIA_API_KEY=.+" "$ENV_FILE"; then
   echo "ERROR: ALGOLIA_APP_ID and ALGOLIA_API_KEY must be set in data/.env"
   exit 1
 fi

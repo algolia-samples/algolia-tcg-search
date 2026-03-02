@@ -36,26 +36,33 @@ def main():
 
     client = SearchClientSync(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
 
-    # Browse all events to get full records
+    # Browse all events to collect their objectIDs
     print(f"Fetching all events from {EVENTS_INDEX}...")
-    events = list(client.browse_objects(index_name=EVENTS_INDEX))
+    all_ids = []
 
-    if not events:
+    def collect(response):
+        for hit in response.hits:
+            all_ids.append(hit.object_id)
+
+    client.browse_objects(index_name=EVENTS_INDEX, aggregator=collect)
+
+    if not all_ids:
         print(f"ERROR: No events found in {EVENTS_INDEX}")
         sys.exit(1)
 
-    event_ids = [e["objectID"] for e in events]
-    if args.event_id not in event_ids:
+    if args.event_id not in all_ids:
         print(f"ERROR: Event '{args.event_id}' not found in {EVENTS_INDEX}")
-        print(f"Existing events: {event_ids}")
+        print(f"Existing events: {all_ids}")
         sys.exit(1)
 
-    # Set all to current=false, target to current=true
-    for event in events:
-        event["current"] = event["objectID"] == args.event_id
+    # Partial-update all events: set target to true, rest to false
+    updates = [
+        {"objectID": eid, "current": eid == args.event_id}
+        for eid in all_ids
+    ]
 
-    print(f"Updating {len(events)} event(s)...")
-    client.save_objects(index_name=EVENTS_INDEX, objects=events)
+    print(f"Updating {len(updates)} event(s)...")
+    client.partial_update_objects(index_name=EVENTS_INDEX, objects=updates)
     print(f"✓ '{args.event_id}' is now the active event.")
 
 
