@@ -13,7 +13,8 @@ poetry install
 ```bash
 ALGOLIA_APP_ID=your-app-id
 ALGOLIA_API_KEY=your-admin-api-key
-ALGOLIA_INDEX_NAME=etail-west-tcg_cards
+ALGOLIA_EVENT_ID=my-event-2026
+ALGOLIA_EVENTS_INDEX=tcg_events
 ```
 
 3. **Run ingestion:**
