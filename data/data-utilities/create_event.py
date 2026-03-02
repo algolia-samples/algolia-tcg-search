@@ -59,13 +59,14 @@ def main():
     client.set_settings(index_name=primary, index_settings=primary_config)
     print(f"  ✓ {primary}")
 
-    # Configure replica indices with price ranking
+    # Configure replica indices: inherit full card config, override ranking
     for replica_name, sort_direction in [(price_asc, "asc"), (price_desc, "desc")]:
         print(f"Configuring {replica_name}...")
-        client.set_settings(
-            index_name=replica_name,
-            index_settings={"ranking": [f"{sort_direction}(estimated_value)"]}
-        )
+        replica_config = {
+            **card_config,
+            "ranking": [f"{sort_direction}(estimated_value)"],
+        }
+        client.set_settings(index_name=replica_name, index_settings=replica_config)
         print(f"  ✓ {replica_name}")
 
     # Insert event record into tcg_events
