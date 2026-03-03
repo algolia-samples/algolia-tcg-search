@@ -46,7 +46,7 @@ def algolia_request(path, method="GET", body=None):
         sys.exit(1)
 
 
-def algolia_index_request(path, method="GET", body=None):
+def algolia_index_request(path, method="GET", body=None, allow_404=False):
     """Make a request to the Algolia Search REST API."""
     url = f"https://{APP_ID}.algolia.net{path}"
     data = json.dumps(body).encode() if body else None
@@ -60,6 +60,8 @@ def algolia_index_request(path, method="GET", body=None):
         with urllib.request.urlopen(req) as resp:
             return json.loads(resp.read())
     except urllib.error.HTTPError as e:
+        if allow_404 and e.code == 404:
+            return None
         print(f"Error {e.code}: {e.read().decode()}", file=sys.stderr)
         sys.exit(1)
 
@@ -103,7 +105,8 @@ def cmd_get(args):
         for tool in tools:
             print(f"  - {tool['type']}")
             for idx in tool.get("indices", []):
-                print(f"      {idx['index']}: {idx.get('description', '').splitlines()[0]}")
+                lines = idx.get("description", "").splitlines()
+                print(f"      {idx['index']}: {lines[0] if lines else '(no description)'}")
 
     print(f"\nInstructions:\n{'-' * 60}")
     print(agent.get("instructions") or "(none)")
@@ -152,6 +155,13 @@ def cmd_create(args):
     if not prompt_path.exists():
         print(f"ERROR: {prompt_path} not found.", file=sys.stderr)
         sys.exit(1)
+
+    # Verify event exists in tcg_events before creating anything
+    event = algolia_index_request(f"/1/indexes/{EVENTS_INDEX}/{args.event_id}", allow_404=True)
+    if event is None:
+        print(f"ERROR: Event '{args.event_id}' not found in {EVENTS_INDEX}.", file=sys.stderr)
+        sys.exit(1)
+    print(f"Event: {event.get('name')} (booth {event.get('booth')})")
 
     with open(config_path) as f:
         agent_config = json.load(f)
@@ -220,9 +230,21 @@ def cmd_create(args):
     print(f"Status:        {agent['status']}")
 
     # Write agent_id back to tcg_events record
-    algolia_index_request(f"/1/indexes/{EVENTS_INDEX}/{args.event_id}/partial", method="POST", body={"agent_id": agent_id})
-    print(f"\nUpdated tcg_events record '{args.event_id}' with agent_id.")
-    print(f"\nAgent created (draft). Run:\n  python agent_cli.py publish {agent_id}")
+    try:
+        algolia_index_request(
+            f"/1/indexes/{EVENTS_INDEX}/{args.event_id}/partial?createIfNotExists=false",
+            method="POST",
+            body={"agent_id": agent_id},
+        )
+        print(f"\nUpdated tcg_events record '{args.event_id}' with agent_id.")
+        print(f"\nAgent created (draft). Run:\n  python agent_cli.py publish {agent_id}")
+    except SystemExit:
+        print(
+            f"\nWARNING: Failed to update tcg_events record '{args.event_id}'.\n"
+            f"Agent ID: {agent_id}\n"
+            f"Update manually, then run:\n  python agent_cli.py publish {agent_id}",
+            file=sys.stderr,
+        )
 
 
 def cmd_publish(args):
