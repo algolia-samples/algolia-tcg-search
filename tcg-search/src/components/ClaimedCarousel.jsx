@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utilities/supabase';
+import { useEvent } from '../context/EventContext';
 import BaseCarousel from './BaseCarousel';
 import ClaimedCard from './ClaimedCard';
 
-const CACHE_KEY = 'tcg_recent_claims';
+const CACHE_KEY_PREFIX = 'tcg_recent_claims';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const FETCH_LIMIT = 50;  // Pool size to score from
 const DISPLAY_LIMIT = 10; // Cards shown in carousel
@@ -41,10 +42,10 @@ export function scoreAndSort(pool) {
   return scored.sort((a, b) => b._score - a._score).slice(0, DISPLAY_LIMIT);
 }
 
-// Cache helpers
-function getCachedClaims() {
+// Cache helpers — keyed by event to prevent cross-event leakage
+function getCachedClaims(cacheKey) {
   try {
-    const cached = localStorage.getItem(CACHE_KEY);
+    const cached = localStorage.getItem(cacheKey);
     if (!cached) return null;
 
     const { data, timestamp } = JSON.parse(cached);
@@ -63,9 +64,9 @@ function getCachedClaims() {
   }
 }
 
-function setCachedClaims(data) {
+function setCachedClaims(cacheKey, data) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
+    localStorage.setItem(cacheKey, JSON.stringify({
       data,
       timestamp: Date.now()
     }));
@@ -85,6 +86,7 @@ function setCachedClaims(data) {
  * - Smart image preloading via BaseCarousel
  */
 export default function ClaimedCarousel() {
+  const { eventConfig } = useEvent();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const subscriptionEstablished = useRef(false);
@@ -92,6 +94,8 @@ export default function ClaimedCarousel() {
   const claimsPool = useRef([]);
   // Debounce timer for localStorage writes triggered by real-time inserts
   const cacheDebounceTimer = useRef(null);
+
+  const cacheKey = `${CACHE_KEY_PREFIX}:${eventConfig?.event_id}`;
 
   // Fetch claims from Supabase
   const fetchClaims = async (showStaleWhileRevalidate = false) => {
@@ -104,6 +108,7 @@ export default function ClaimedCarousel() {
       const { data, error } = await supabase
         .from('claims')
         .select('id, pokemon_name, image_url, card_value, claimer_name, claimer_first_name, claimer_last_name, claimed_at')
+        .eq('event_id', eventConfig.event_id)
         .order('claimed_at', { ascending: false })
         .limit(FETCH_LIMIT);
 
@@ -113,7 +118,7 @@ export default function ClaimedCarousel() {
       claimsPool.current = freshData;
       const scored = scoreAndSort(freshData);
       setClaims(scored);
-      setCachedClaims(freshData);
+      setCachedClaims(cacheKey, freshData);
     } catch (error) {
       console.error('Error fetching claims:', error);
     } finally {
@@ -126,9 +131,11 @@ export default function ClaimedCarousel() {
     let channel;
     let mounted = true;
 
+    if (!eventConfig) return;
+
     const initializeData = async () => {
       // Check cache first (stale-while-revalidate)
-      const cached = getCachedClaims();
+      const cached = getCachedClaims(cacheKey);
 
       if (cached && !cached.stale) {
         // Fresh cache - use it, skip fetch
@@ -155,11 +162,12 @@ export default function ClaimedCarousel() {
 
       // Always set up real-time subscription (regardless of cache state)
       channel = supabase
-        .channel('claims')
+        .channel(`claims:${eventConfig.event_id}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
-          table: 'claims'
+          table: 'claims',
+          filter: `event_id=eq.${eventConfig.event_id}`,
         }, (payload) => {
           // Prepend new claim to pool, trim to FETCH_LIMIT, re-score
           const updatedPool = [payload.new, ...claimsPool.current].slice(0, FETCH_LIMIT);
@@ -168,7 +176,7 @@ export default function ClaimedCarousel() {
           // Debounce localStorage write to avoid main-thread jank on burst inserts
           clearTimeout(cacheDebounceTimer.current);
           cacheDebounceTimer.current = setTimeout(() => {
-            setCachedClaims(claimsPool.current);
+            setCachedClaims(cacheKey, claimsPool.current);
           }, 500);
         })
         .subscribe((status) => {
@@ -191,7 +199,7 @@ export default function ClaimedCarousel() {
         subscriptionEstablished.current = false;
       }
     };
-  }, []);
+  }, [eventConfig]);
 
   return (
     <BaseCarousel

@@ -7,7 +7,6 @@ const requiredEnvVars = [
   'SUPABASE_SECRET_KEY',
   'VITE_ALGOLIA_APP_ID',
   'ALGOLIA_WRITE_API_KEY',
-  'VITE_ALGOLIA_INDEX_NAME',
 ];
 for (const key of requiredEnvVars) {
   if (!process.env[key]) {
@@ -35,6 +34,7 @@ export default async function handler(req, res) {
 
   try {
     const {
+      eventId,
       cardId,
       pokemonName,
       cardNumber,
@@ -45,10 +45,14 @@ export default async function handler(req, res) {
       claimerLastName,
     } = req.body;
 
-    if (!cardId || !pokemonName || !claimerFirstName || !claimerLastName) {
+    if (!eventId || !cardId || !pokemonName || !claimerFirstName || !claimerLastName) {
       return res.status(400).json({
         error: 'Missing required fields'
       });
+    }
+
+    if (!/^[a-z0-9-]+$/.test(eventId)) {
+      return res.status(400).json({ error: 'Invalid event ID' });
     }
 
     // Validate first name (2-50 characters, alphanumeric and spaces)
@@ -80,6 +84,7 @@ export default async function handler(req, res) {
       .from('claims')
       .insert([
         {
+          event_id: eventId,
           card_id: cardId,
           pokemon_name: pokemonName,
           card_number: cardNumber,
@@ -102,7 +107,7 @@ export default async function handler(req, res) {
     // Decrement inventory in Algolia atomically
     try {
       await algoliaClient.partialUpdateObject({
-        indexName: process.env.VITE_ALGOLIA_INDEX_NAME,
+        indexName: `tcg_cards_${eventId}`,
         objectID: cardId,
         attributesToUpdate: {
           machine_quantity: {

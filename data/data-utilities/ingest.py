@@ -5,6 +5,7 @@ Reads CSV files, enriches with TCGdex API data, and uploads to Algolia.
 """
 
 import os
+import sys
 import re
 import time
 import argparse
@@ -22,7 +23,11 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 DATA_DIR = Path(__file__).parent.parent / "data-files"
 ALGOLIA_APP_ID = os.getenv("ALGOLIA_APP_ID")
 ALGOLIA_API_KEY = os.getenv("ALGOLIA_API_KEY")
-ALGOLIA_INDEX_NAME = os.getenv("ALGOLIA_INDEX_NAME", "pokemon_tcg_cards")
+ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID")
+if not ALGOLIA_EVENT_ID:
+    print("ERROR: ALGOLIA_EVENT_ID is not set. Set it in data/.env or export it before running.")
+    sys.exit(1)
+ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
 TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 
 # File name pattern to extract card set
@@ -338,7 +343,7 @@ def main():
         print("\nSet these in your .env file:")
         print("  ALGOLIA_APP_ID=your-app-id")
         print("  ALGOLIA_API_KEY=your-admin-api-key")
-        print("  ALGOLIA_INDEX_NAME=your-index-name (optional)")
+        print("  ALGOLIA_EVENT_ID=your-event-slug  (e.g. etail-west-2026)")
         print("=" * 60)
         return
 

@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import pokeballIcon from '../assets/pokeball_icon.svg';
+import { useEvent } from '../context/EventContext';
 
 export default function CardModal({ isOpen, onClose, hit, origin, rotation, isClosing, isClaimed = false }) {
+  const { eventConfig } = useEvent();
   const [modalView, setModalView] = useState('image'); // 'image' | 'form' | 'success'
   // const [claimerName, setClaimerName] = useState('');
   // const [claimerEmail, setClaimerEmail] = useState('');
@@ -122,6 +124,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          eventId: eventConfig?.event_id,
           cardId: hit.objectID,
           pokemonName: hit.pokemon_name,
           cardNumber: hit.number,

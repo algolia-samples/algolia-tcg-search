@@ -1,0 +1,9 @@
+{
+  "searchableAttributes": [
+    "name",
+    "event_id"
+  ],
+  "attributesForFaceting": [
+    "filterOnly(current)"
+  ]
+}
