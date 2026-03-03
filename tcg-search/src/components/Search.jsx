@@ -12,15 +12,15 @@ import {
   useHits
 } from 'react-instantsearch';
 import aa from 'search-insights';
-
-// Set user token for insights
-aa('setUserToken', userToken);
 import Header from './Header';
 import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
 import ChatAgent from './ChatAgent';
+
+// Set user token for insights
+aa('setUserToken', userToken);
 
 function HitsWithNoResults() {
   const { results } = useHits();

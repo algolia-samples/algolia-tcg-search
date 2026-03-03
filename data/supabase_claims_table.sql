@@ -27,12 +27,12 @@ ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 -- SELECTs and Realtime subscriptions use the anon key from the frontend.
 GRANT SELECT ON TABLE claims TO anon;
 
--- Allow anon to read rows for the requested event. The table contains no sensitive
--- PII (no email or private contact info). Claimer first/last name is intentionally
--- public — it is displayed in the "Recently Claimed" carousel. Column selection is
--- handled at the application layer in ClaimedCarousel.jsx.
--- Note: RLS cannot enforce the event_id filter here since anon queries supply it
--- as a WHERE clause; the policy allows all reads and the app layer scopes by event.
+-- Allow anon to read all claim rows. The table contains no sensitive PII (no email
+-- or private contact info). Claimer first/last name is intentionally public — it is
+-- displayed in the "Recently Claimed" carousel. Column selection is handled at the
+-- application layer in ClaimedCarousel.jsx.
+-- Note: event scoping (filtering by event_id) is enforced at the application layer
+-- via WHERE clauses; this RLS policy permits reads of all rows (USING true).
 CREATE POLICY "Allow public reads"
   ON claims FOR SELECT
   TO anon

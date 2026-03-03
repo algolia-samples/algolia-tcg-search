@@ -5,6 +5,7 @@ Preserves index settings and configuration.
 """
 
 import os
+import sys
 import argparse
 from pathlib import Path
 from dotenv import load_dotenv
@@ -16,8 +17,11 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 # Configuration
 ALGOLIA_APP_ID = os.getenv("ALGOLIA_APP_ID")
 ALGOLIA_API_KEY = os.getenv("ALGOLIA_API_KEY")
-ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID", "")
-ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}" if ALGOLIA_EVENT_ID else "tcg_cards_default"
+ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID")
+if not ALGOLIA_EVENT_ID:
+    print("ERROR: ALGOLIA_EVENT_ID is not set. Set it in data/.env or export it before running.")
+    sys.exit(1)
+ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
 
 
 def main():

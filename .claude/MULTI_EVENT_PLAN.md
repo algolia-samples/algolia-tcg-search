@@ -49,7 +49,7 @@ multi-event platform following the swagsearch architecture pattern:
 ### Note: Existing Index Migration
 The existing `etail-west-tcg_cards` indices will **not** be renamed — they'll be
 retired and replaced via re-ingestion in Step 7 under the new naming convention
-(`etail-west-2026_tcg_cards`). The CSVs are the source of truth.
+(`tcg_cards_etail-west-2026`). The CSVs are the source of truth.
 
 ---
 
@@ -57,7 +57,7 @@ retired and replaced via re-ingestion in Step 7 under the new naming convention
 **Files:**
 - `/package.json` — `name`: `etail-west-tcg-search` → `algolia-tcg-search`
 - `/tcg-search/.env.example` — update index name examples to new pattern
-- `/data/.env.example` — update `ALGOLIA_INDEX_NAME` example to `{event_id}_tcg_cards`
+- `/data/.env.example` — update `ALGOLIA_INDEX_NAME` example to `tcg_cards_{event_id}`
 - `/data/data-utilities/README.md` — update index name references
 
 **Manual steps (outside code):**

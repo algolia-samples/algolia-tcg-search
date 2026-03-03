@@ -51,6 +51,10 @@ export default async function handler(req, res) {
       });
     }
 
+    if (!/^[a-z0-9-]+$/.test(eventId)) {
+      return res.status(400).json({ error: 'Invalid event ID' });
+    }
+
     // Validate first name (2-50 characters, alphanumeric and spaces)
     if (claimerFirstName.trim().length < 2 || claimerFirstName.length > 50) {
       return res.status(400).json({

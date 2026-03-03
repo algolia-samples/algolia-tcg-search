@@ -5,6 +5,7 @@ Reads CSV files, enriches with TCGdex API data, and uploads to Algolia.
 """
 
 import os
+import sys
 import re
 import time
 import argparse
@@ -22,8 +23,11 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 DATA_DIR = Path(__file__).parent.parent / "data-files"
 ALGOLIA_APP_ID = os.getenv("ALGOLIA_APP_ID")
 ALGOLIA_API_KEY = os.getenv("ALGOLIA_API_KEY")
-ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID", "")
-ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}" if ALGOLIA_EVENT_ID else "tcg_cards_default"
+ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID")
+if not ALGOLIA_EVENT_ID:
+    print("ERROR: ALGOLIA_EVENT_ID is not set. Set it in data/.env or export it before running.")
+    sys.exit(1)
+ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
 TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 
 # File name pattern to extract card set

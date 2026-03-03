@@ -43,7 +43,10 @@ CarouselContent.propTypes = {
 // Main carousel component with separate InstantSearch instance
 export default function Carousel({ title, filters, hitsPerPage = 10 }) {
   const { eventConfig } = useEvent();
-  const { priceDesc } = getIndexNames(eventConfig?.event_id ?? '');
+
+  if (!eventConfig) return null;
+
+  const { priceDesc } = getIndexNames(eventConfig.event_id);
 
   return (
     <InstantSearch

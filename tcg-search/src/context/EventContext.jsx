@@ -25,5 +25,9 @@ export function EventProvider({ eventId, children }) {
 }
 
 export function useEvent() {
-  return useContext(EventContext);
+  const context = useContext(EventContext);
+  if (context === null) {
+    throw new Error('useEvent must be used within an EventProvider');
+  }
+  return context;
 }
