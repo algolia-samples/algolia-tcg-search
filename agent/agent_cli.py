@@ -189,7 +189,7 @@ def cmd_create(args):
 
     if args.dry_run:
         print("=== DRY RUN ===")
-        print(f"\nAgent name: TCG {args.event_name} Card Vending Machine")
+        print(f"\nAgent name: TCG Agent {args.event_name}")
         print(f"Provider:   {agent_config['provider']} (will resolve to UUID at runtime)")
         print(f"Model:      {agent_config['model']}")
         print(f"\nIndices:")
@@ -202,7 +202,7 @@ def cmd_create(args):
     provider_id = resolve_provider_id(agent_config["provider"])
 
     payload = {
-        "name": f"TCG {args.event_name} Card Vending Machine",
+        "name": f"TCG Agent {args.event_name}",
         "providerId": provider_id,
         "model": agent_config["model"],
         "instructions": instructions,
