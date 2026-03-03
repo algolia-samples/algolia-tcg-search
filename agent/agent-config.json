@@ -1,4 +1,5 @@
 {
+  "_note": "To swap providers: update 'provider' to the new name from `python agent_cli.py providers`",
   "provider": "hackathon-gemini",
   "model": "gemini-2.5-flash",
   "config": {

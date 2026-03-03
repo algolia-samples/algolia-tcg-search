@@ -18,7 +18,6 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 from dotenv import load_dotenv
-from algoliasearch.search.client import SearchClientSync
 
 load_dotenv(Path(__file__).parent / ".env")
 
@@ -32,6 +31,24 @@ AGENT_DIR = Path(__file__).parent
 
 def algolia_request(path, method="GET", body=None):
     url = f"{BASE_URL}{path}"
+    data = json.dumps(body).encode() if body else None
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header("x-algolia-application-id", APP_ID)
+    req.add_header("x-algolia-api-key", API_KEY)
+    req.add_header("Content-Type", "application/json")
+    req.add_header("Accept", "application/json")
+    req.add_header("User-Agent", "algolia-tcg-cli/1.0")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        print(f"Error {e.code}: {e.read().decode()}", file=sys.stderr)
+        sys.exit(1)
+
+
+def algolia_index_request(path, method="GET", body=None):
+    """Make a request to the Algolia Search REST API."""
+    url = f"https://{APP_ID}.algolia.net{path}"
     data = json.dumps(body).encode() if body else None
     req = urllib.request.Request(url, data=data, method=method)
     req.add_header("x-algolia-application-id", APP_ID)
@@ -152,32 +169,27 @@ def cmd_create(args):
     price_asc = f"{primary}_price_asc"
     price_desc = f"{primary}_price_desc"
 
+    index_descriptions = [
+        (primary, f"Pokemon cards in the {args.event_name} vending machine. Use for inventory and pricing queries."),
+        (price_asc, "Pokemon cards sorted by estimated value ascending (lowest price first)."),
+        (price_desc, "Pokemon cards sorted by estimated value descending (highest price first)."),
+    ]
+
     tools = [
         {
-            "type": "algolia_index_search",
+            "name": "tcg_card_inventory_search",
+            "type": "algolia_search_index",
+            "description": "\n".join(f"{idx}: {desc}" for idx, desc in index_descriptions),
             "indices": [
-                {
-                    "index": primary,
-                    "description": (
-                        f"Pokemon cards in the {args.event_name} vending machine. "
-                        "Use for inventory and pricing queries."
-                    ),
-                },
-                {
-                    "index": price_asc,
-                    "description": "Pokemon cards sorted by estimated value ascending (lowest price first).",
-                },
-                {
-                    "index": price_desc,
-                    "description": "Pokemon cards sorted by estimated value descending (highest price first).",
-                },
+                {"index": idx, "description": desc}
+                for idx, desc in index_descriptions
             ],
         }
     ]
 
     if args.dry_run:
         print("=== DRY RUN ===")
-        print(f"\nAgent name: {args.event_name} Card Vending Machine")
+        print(f"\nAgent name: TCG {args.event_name} Card Vending Machine")
         print(f"Provider:   {agent_config['provider']} (will resolve to UUID at runtime)")
         print(f"Model:      {agent_config['model']}")
         print(f"\nIndices:")
@@ -190,7 +202,7 @@ def cmd_create(args):
     provider_id = resolve_provider_id(agent_config["provider"])
 
     payload = {
-        "name": f"{args.event_name} Card Vending Machine",
+        "name": f"TCG {args.event_name} Card Vending Machine",
         "providerId": provider_id,
         "model": agent_config["model"],
         "instructions": instructions,
@@ -208,17 +220,13 @@ def cmd_create(args):
     print(f"Status:        {agent['status']}")
 
     # Write agent_id back to tcg_events record
-    search_client = SearchClientSync(APP_ID, API_KEY)
-    search_client.partial_update_object(
-        index_name=EVENTS_INDEX,
-        body={"objectID": args.event_id, "agent_id": agent_id},
-    )
+    algolia_index_request(f"/1/indexes/{EVENTS_INDEX}/{args.event_id}/partial", method="POST", body={"agent_id": agent_id})
     print(f"\nUpdated tcg_events record '{args.event_id}' with agent_id.")
     print(f"\nAgent created (draft). Run:\n  python agent_cli.py publish {agent_id}")
 
 
 def cmd_publish(args):
-    result = algolia_request(f"/agents/{args.agent_id}", method="PATCH", body={"status": "published"})
+    result = algolia_request(f"/agents/{args.agent_id}/publish", method="POST")
     agent = result.get("data", result)
     print(f"Published agent: {agent['name']}")
     print(f"Agent ID:        {agent['id']}")
