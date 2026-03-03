@@ -1,0 +1,18 @@
+[project]
+name = "agent-utilities"
+version = "0.1.0"
+description = "Algolia Agent Studio CLI for TCG Search"
+authors = [
+    {name = "Chuck Meyer",email = "chuck.meyer@algolia.com"}
+]
+requires-python = ">=3.14"
+dependencies = [
+    "algoliasearch (>=4.35.4,<5.0.0)",
+    "python-dotenv (>=1.0.0,<2.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+package-mode = false

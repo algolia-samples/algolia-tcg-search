@@ -208,7 +208,9 @@ with the primary and always inherit settings — simpler and more storage-effici
 
 ---
 
-### Step 9: Per-Event Chat Agents
+### Step 9: Per-Event Chat Agents ✅
+Implemented via `/agent/` directory (agent factory). See `/agent/agent_cli.py`.
+
 Currently `VITE_ALGOLIA_CHAT_AGENT_ID` is a static env var — one agent for all events.
 Each event needs its own agent configured in the Algolia AI dashboard (with the
 event-specific prompt: correct event name, booth, card index). The agent ID should

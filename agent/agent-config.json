@@ -1,0 +1,7 @@
+{
+  "provider": "hackathon-gemini",
+  "model": "gemini-2.5-flash",
+  "config": {
+    "suggestions": { "enabled": true }
+  }
+}
