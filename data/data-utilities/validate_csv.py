@@ -5,12 +5,21 @@ Checks column structure, required fields, and data types.
 Exits with code 1 if any file fails validation.
 """
 
+import os
 import sys
 import re
 from pathlib import Path
 import pandas as pd
 
-DATA_DIR = Path(__file__).parent.parent / "data-files"
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
+
+ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID")
+if not ALGOLIA_EVENT_ID:
+    print("ERROR: ALGOLIA_EVENT_ID is not set. Set it in data/.env or export it before running.")
+    sys.exit(1)
+
+DATA_DIR = Path(__file__).parent.parent / "data-files" / ALGOLIA_EVENT_ID
 
 EXPECTED_COLUMNS = {
     "Pokemon Name",

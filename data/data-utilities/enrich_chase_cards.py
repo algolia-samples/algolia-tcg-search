@@ -10,6 +10,7 @@ Run this after a full ingest.
 
 import os
 import re
+import sys
 import requests
 from pathlib import Path
 from typing import Optional
@@ -21,12 +22,16 @@ from algoliasearch.search.client import SearchClientSync
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Configuration
-DATA_DIR = Path(__file__).parent.parent / "data-files"
-XLSX_FILE = DATA_DIR / "TCG Search Website - Raw List.xlsx"
-CHASE_SHEET = "Chase Cards"
 ALGOLIA_APP_ID = os.getenv("ALGOLIA_APP_ID")
 ALGOLIA_API_KEY = os.getenv("ALGOLIA_API_KEY")
-ALGOLIA_INDEX_NAME = os.getenv("ALGOLIA_INDEX_NAME", "pokemon_tcg_cards")
+ALGOLIA_EVENT_ID = os.getenv("ALGOLIA_EVENT_ID")
+if not ALGOLIA_EVENT_ID:
+    print("ERROR: ALGOLIA_EVENT_ID is not set. Set it in data/.env or export it before running.")
+    sys.exit(1)
+ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
+DATA_DIR = Path(__file__).parent.parent / "data-files" / ALGOLIA_EVENT_ID
+XLSX_FILE = DATA_DIR / "TCG Search Website - Raw List.xlsx"
+CHASE_SHEET = "Chase Cards"
 TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 
 

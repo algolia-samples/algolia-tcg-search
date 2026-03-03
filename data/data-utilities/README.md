@@ -55,8 +55,11 @@ Wipes any existing card records from `tcg_cards_{event_id}`. Preserves index set
 
 **Step 4 — Ingest card data** (`ingest.py`)
 
-Reads all CSV files from `data-files/`, enriches each card with image URLs and type data
+Reads all CSV files from `data-files/{event_id}/`, enriches each card with image URLs and type data
 from the TCGdex API, and uploads records to `tcg_cards_{event_id}`.
+
+> If no CSVs are found, setup exits cleanly with instructions to add files and run
+> `reset_and_ingest.sh` when ready.
 
 **Step 5 — Enrich chase cards** (`enrich_chase_cards.py`)
 
@@ -106,8 +109,9 @@ ALGOLIA_EVENT_ID=etail-palm-springs-2026
 
 ## CSV Format
 
-Place CSV files in `data-files/`. Files are exported from the master spreadsheet
-(`data-files/TCG Search Website - Raw List.xlsx`).
+Place CSV files in `data-files/{event_id}/` — each event has its own subdirectory.
+Files are exported from the master spreadsheet
+(`data-files/{event_id}/TCG Search Website - Raw List.xlsx`).
 
 ### Filename Convention
 

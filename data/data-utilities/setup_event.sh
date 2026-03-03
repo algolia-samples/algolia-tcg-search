@@ -77,6 +77,11 @@ else
   poetry run python create_event.py "$EVENT_ID" "$EVENT_NAME" "$BOOTH"
 fi
 
+# Create per-event data directory for CSV files
+DATA_DIR="$SCRIPT_DIR/../data-files/$EVENT_ID"
+mkdir -p "$DATA_DIR"
+echo "  ✓ Data directory: data/data-files/$EVENT_ID/"
+
 # ── Step 2: Set event as active ────────────────────────────────────────────────
 
 echo ""
@@ -92,6 +97,25 @@ echo "========================================"
 echo "Step 3/5: Clearing index tcg_cards_${EVENT_ID}"
 echo "========================================"
 poetry run python clear_index.py --yes
+
+# ── Step 4 guard: check for CSV files ─────────────────────────────────────────
+
+CSV_FILES=("$DATA_DIR"/*.csv)
+if [ ! -e "${CSV_FILES[0]}" ]; then
+  echo ""
+  echo "  ⚠  No CSV files found in data/data-files/$EVENT_ID/"
+  echo ""
+  echo "  Copy card CSVs into that directory, then run:"
+  echo "    ./reset_and_ingest.sh $EVENT_ID"
+  echo ""
+  echo "Algolia indices created:"
+  echo "  tcg_cards_${EVENT_ID}"
+  echo "  tcg_cards_${EVENT_ID}_price_asc"
+  echo "  tcg_cards_${EVENT_ID}_price_desc"
+  echo ""
+  echo "The app at / will now redirect to /$EVENT_ID"
+  exit 0
+fi
 
 # ── Step 4: Ingest card data ───────────────────────────────────────────────────
 
@@ -120,21 +144,5 @@ echo "Algolia indices created:"
 echo "  tcg_cards_${EVENT_ID}"
 echo "  tcg_cards_${EVENT_ID}_price_asc"
 echo "  tcg_cards_${EVENT_ID}_price_desc"
-echo ""
-echo "┌─────────────────────────────────────────────────────────────┐"
-echo "│  ACTION REQUIRED — Supabase migration                       │"
-echo "│                                                             │"
-echo "│  If you haven't already, run this SQL in the Supabase       │"
-echo "│  dashboard (SQL editor) to add event scoping to claims:     │"
-echo "│                                                             │"
-echo "│  ALTER TABLE claims                                         │"
-echo "│    ADD COLUMN IF NOT EXISTS event_id TEXT                   │"
-echo "│    NOT NULL DEFAULT 'etail-west-2026';                      │"
-echo "│                                                             │"
-echo "│  CREATE INDEX IF NOT EXISTS claims_event_id_idx             │"
-echo "│    ON claims (event_id);                                    │"
-echo "│                                                             │"
-echo "│  This is a one-time migration — skip if already applied.    │"
-echo "└─────────────────────────────────────────────────────────────┘"
 echo ""
 echo "The app at / will now redirect to /$EVENT_ID"
