@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { searchClient, getIndexNames, userToken } from '../utilities/algolia';
+import { searchClient, getIndexNames, userToken, chatAgentId } from '../utilities/algolia';
 import { useEvent } from '../context/EventContext';
 import {
   Configure,
@@ -69,6 +69,7 @@ export default function Search() {
   if (error || !eventConfig) return <div className="event-error">Event not found.</div>;
 
   const { primary, priceAsc, priceDesc } = getIndexNames(eventConfig.event_id);
+  const agentId = eventConfig.agent_id || chatAgentId;
 
   return (
     <div>
@@ -127,7 +128,7 @@ export default function Search() {
           </div>
 
           {/* AI Chat Agent */}
-          <ChatAgent />
+          <ChatAgent agentId={agentId} />
         </InstantSearch>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
 /**
@@ -12,7 +12,7 @@ import PropTypes from 'prop-types';
  * - Explicit dimensions to prevent layout shift
  * - Preloads high-res only when visible
  */
-export default function OptimizedImage({
+const OptimizedImage = forwardRef(function OptimizedImage({
   src,
   largeSrc,
   alt,
@@ -24,9 +24,18 @@ export default function OptimizedImage({
   width = 245,
   height = 342,
   fill = false, // Set true to fill container instead of fixed dimensions
-}) {
+}, ref) {
   const [imageSrc, setImageSrc] = useState(null); // null = placeholder, src = loaded
   const imgRef = useRef(null);
+
+  // Merge external ref with internal imgRef
+  const setRefs = (el) => {
+    imgRef.current = el;
+    if (ref) {
+      if (typeof ref === 'function') ref(el);
+      else ref.current = el;
+    }
+  };
   const observerRef = useRef(null);
   const largePreloadRef = useRef(null);
 
@@ -147,7 +156,7 @@ export default function OptimizedImage({
 
   return (
     <div
-      ref={imgRef}
+      ref={setRefs}
       style={wrapperStyle}
       onClick={onClick}
     >
@@ -198,7 +207,9 @@ export default function OptimizedImage({
       )}
     </div>
   );
-}
+});
+
+export default OptimizedImage;
 
 OptimizedImage.propTypes = {
   src: PropTypes.string.isRequired,
