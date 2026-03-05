@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, forwardRef } from 'react';
+import { useState, useRef, useEffect, useCallback, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
 /**
@@ -29,13 +29,13 @@ const OptimizedImage = forwardRef(function OptimizedImage({
   const imgRef = useRef(null);
 
   // Merge external ref with internal imgRef
-  const setRefs = (el) => {
+  const setRefs = useCallback((el) => {
     imgRef.current = el;
     if (ref) {
       if (typeof ref === 'function') ref(el);
       else ref.current = el;
     }
-  };
+  }, [ref]);
   const observerRef = useRef(null);
   const largePreloadRef = useRef(null);
 
