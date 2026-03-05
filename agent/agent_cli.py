@@ -187,7 +187,7 @@ def cmd_create(args):
 
     tools = [
         {
-            "name": "tcg_card_inventory_search",
+            "name": "algolia_search_index",
             "type": "algolia_search_index",
             "description": "\n".join(f"{idx}: {desc}" for idx, desc in index_descriptions),
             "indices": [
