@@ -2,10 +2,12 @@
 """
 TCG-specific wrapper around algolia-agent.
 
-Creates and manages per-event Algolia Agent Studio agents, with:
-  - Event verification against the tcg_events Algolia index
-  - TCG index name construction from event_id
-  - Writing agent_id back to the tcg_events record after creation
+Handles the two things unique to TCG:
+  1. Verify the event exists in tcg_events before creating anything
+  2. Write agent_id back to the tcg_events record after creation
+
+All agent config (index names, descriptions, prompt) lives in agent-config.json
+and PROMPT.md, using {{event_id}}, {{event_name}}, and {{booth}} template vars.
 
 Usage:
   python create_event_agent.py create <event_id> "<Event Name>" <booth> [--dry-run] [--publish]
@@ -22,6 +24,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from algolia_agent.cli import build_tool, load_config, merge_config, parse_vars, resolve_vars
 from algolia_agent.client import AgentAPIError, AlgoliaAgentClient
 from algolia_agent.template import render
 
@@ -54,6 +57,25 @@ def algolia_index_request(path, method="GET", body=None, allow_404=False):
         sys.exit(1)
 
 
+def _render_config(event_id, event_name, booth):
+    """Load agent-config.json and PROMPT.md, render all template vars, return (config, instructions)."""
+    config_path = AGENT_DIR / "agent-config.json"
+    raw_config = load_config(str(config_path))
+
+    instructions_path = AGENT_DIR / raw_config["instructions"]
+    instructions_template = instructions_path.read_text()
+
+    variables = {"event_id": event_id, "event_name": event_name, "booth": booth}
+
+    # Render config JSON and instructions together so missing vars are caught in one pass
+    config_json = json.dumps(raw_config)
+    resolved = resolve_vars(config_json + "\n" + instructions_template, variables)
+
+    config = json.loads(render(config_json, resolved))
+    instructions = render(instructions_template, resolved)
+    return config, instructions
+
+
 def cmd_create(args):
     if not APP_ID or not API_KEY:
         print("ERROR: Missing ALGOLIA_APP_ID or ALGOLIA_API_KEY in agent/.env", file=sys.stderr)
@@ -68,55 +90,36 @@ def cmd_create(args):
         sys.exit(1)
     print(f"Event: {event.get('name')} (booth {event.get('booth')})")
 
-    # Build TCG index names
-    primary = f"tcg_cards_{args.event_id}"
-    price_asc = f"{primary}_price_asc"
-    price_desc = f"{primary}_price_desc"
-
-    # Render instructions
-    prompt_path = AGENT_DIR / "PROMPT.md"
-    instructions = render(
-        prompt_path.read_text(),
-        {"event_name": args.event_name, "booth": args.booth},
-    )
-
-    # Load agent config
-    config_path = AGENT_DIR / "agent-config.json"
-    with open(config_path) as f:
-        agent_config = json.load(f)
-
-    tool = {
-        "name": "algolia_search_index",
-        "type": "algolia_search_index",
-        "indices": [
-            {"index": primary},
-            {"index": price_asc},
-            {"index": price_desc},
-        ],
-    }
+    config, instructions = _render_config(args.event_id, args.event_name, args.booth)
+    tool = build_tool(config)
 
     if args.dry_run:
         print("=== DRY RUN ===")
-        print(f"\nAgent name: TCG Agent {args.event_name}")
-        print(f"Provider:   {agent_config['provider']}")
-        print(f"Model:      {agent_config['model']}")
+        print(f"\nAgent name: {config['name']}")
+        print(f"Provider:   {config['provider']}")
+        print(f"Model:      {config['model']}")
         print(f"\nTool payload:\n{json.dumps(tool, indent=2)}")
         print(f"\n--- Rendered instructions ---\n{instructions}")
         return
 
     client = AlgoliaAgentClient()
-    provider_id = client.resolve_provider_id(agent_config["provider"])
+
+    try:
+        provider_id = client.resolve_provider_id(config["provider"])
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
 
     payload = {
-        "name": f"TCG Agent {args.event_name}",
+        "name": config["name"],
         "providerId": provider_id,
-        "model": agent_config["model"],
+        "model": config["model"],
         "instructions": instructions,
         "status": "draft",
         "tools": [tool],
     }
-    if agent_config.get("config"):
-        payload["config"] = agent_config["config"]
+    if config.get("config"):
+        payload["config"] = config["config"]
 
     try:
         agent = client.create_agent(payload)
