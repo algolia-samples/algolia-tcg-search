@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "algolia-agent @ git+https://github.com/algolia-samples/algolia-agent-cli.git",
+    "algolia-agent @ git+https://github.com/algolia-samples/algolia-agent-cli.git@8105d9f",
     "python-dotenv (>=1.0.0,<2.0.0)",
 ]
 

@@ -60,12 +60,12 @@ event's record drives everything: which index to search, what to show in the hea
 is a one-field update in Algolia. 
 
 The agent factory is a self-contained Python project
-with a single CLI entry point, `agent_cli.py`. Two commands create and publish a fully
+with a single CLI entry point, `agent.py`. Two commands create and publish a fully
 configured agent for any event:
 
 ```bash
-python agent_cli.py create etail-palm-springs-2026 "eTail Palm Springs 2026" 701
-python agent_cli.py publish <agent_id>
+python agent.py create etail-palm-springs-2026 "eTail Palm Springs 2026" 701
+python agent.py publish <agent_id>
 ```
 
 Two design principles drove the implementation:

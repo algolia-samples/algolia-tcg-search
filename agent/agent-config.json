@@ -1,5 +1,5 @@
 {
-  "_note": "Pass --var event_id=... --var event_name=... --var booth=... to create_event_agent.py",
+  "_note": "Template vars {{event_id}}, {{event_name}}, {{booth}} are supplied as positional args to agent.py",
   "name": "TCG Agent {{event_name}}",
   "provider": "hackathon-gemini",
   "model": "gemini-2.5-flash",

@@ -24,7 +24,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from algolia_agent.cli import build_tool, load_config, merge_config, parse_vars, resolve_vars
+from algolia_agent.cli import build_tool, load_config, resolve_vars
 from algolia_agent.client import AgentAPIError, AlgoliaAgentClient
 from algolia_agent.template import render
 
@@ -199,7 +199,6 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
         new_payload["config"] = config["config"]
 
     if dry_run:
-        from algolia_agent.cli import _diff
         changes = _diff(current, new_payload)
         print(f"\n--- {event_id} ({agent_id}) ---")
         if changes:

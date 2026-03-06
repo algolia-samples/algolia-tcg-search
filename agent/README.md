@@ -13,7 +13,7 @@ For `list`, `get`, and `providers`, call `algolia-agent` directly.
 ## Setup
 
 ```bash
-pip install algolia-agent  # or: pip install -e path/to/algolia-agent-cli
+poetry install             # installs algolia-agent-cli and python-dotenv
 cp .env.example .env       # fill in ALGOLIA_APP_ID and ALGOLIA_API_KEY
 ```
 
@@ -21,16 +21,16 @@ cp .env.example .env       # fill in ALGOLIA_APP_ID and ALGOLIA_API_KEY
 
 ```bash
 # Preview without making API calls
-python create_event_agent.py create <event_id> "<Event Name>" <booth> --dry-run
+python agent.py create <event_id> "<Event Name>" <booth> --dry-run
 
 # Create a draft agent (also writes agent_id to tcg_events record)
-python create_event_agent.py create <event_id> "<Event Name>" <booth>
+python agent.py create <event_id> "<Event Name>" <booth>
 
 # Create and publish in one step
-python create_event_agent.py create <event_id> "<Event Name>" <booth> --publish
+python agent.py create <event_id> "<Event Name>" <booth> --publish
 
 # Publish a draft agent
-python create_event_agent.py publish <agent_id>
+python agent.py publish <agent_id>
 
 # List / inspect agents directly via algolia-agent
 algolia-agent list
@@ -41,9 +41,9 @@ algolia-agent providers
 ## Example
 
 ```bash
-python create_event_agent.py create etail-palm-springs-2026 "eTail Palm Springs 2026" 701 --dry-run
-python create_event_agent.py create etail-palm-springs-2026 "eTail Palm Springs 2026" 701
-python create_event_agent.py publish <agent_id>
+python agent.py create etail-palm-springs-2026 "eTail Palm Springs 2026" 701 --dry-run
+python agent.py create etail-palm-springs-2026 "eTail Palm Springs 2026" 701
+python agent.py publish <agent_id>
 ```
 
 ## Configuration
