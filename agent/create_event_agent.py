@@ -154,6 +154,107 @@ def cmd_create(args):
         print(f"\nAgent created (draft). To publish:\n  python create_event_agent.py publish {agent_id}")
 
 
+def _browse_events_with_agents():
+    """Yield all tcg_events records that have an agent_id set."""
+    cursor = None
+    while True:
+        body = {"query": "", "hitsPerPage": 100}
+        if cursor:
+            body["cursor"] = cursor
+        result = algolia_index_request(
+            f"/1/indexes/{EVENTS_INDEX}/browse", method="POST", body=body
+        )
+        for hit in result.get("hits", []):
+            if hit.get("agent_id"):
+                yield hit
+        cursor = result.get("cursor")
+        if not cursor:
+            break
+
+
+def _update_event_agent(client, event, dry_run=False, publish=False):
+    """Re-render and update the agent for a single tcg_events record."""
+    event_id = event["objectID"]
+    event_name = event.get("name", event_id)
+    booth = str(event.get("booth", ""))
+    agent_id = event["agent_id"]
+
+    config, instructions = _render_config(event_id, event_name, booth)
+    tool = build_tool(config)
+
+    from algolia_agent.cli import _diff
+
+    current = client.get_agent(agent_id)
+    provider_id = client.resolve_provider_id(config["provider"])
+
+    new_payload = {
+        "name": config["name"],
+        "providerId": provider_id,
+        "model": config["model"],
+        "instructions": instructions,
+        "status": current.get("status", "draft"),
+        "tools": [tool],
+    }
+    if config.get("config"):
+        new_payload["config"] = config["config"]
+
+    if dry_run:
+        from algolia_agent.cli import _diff
+        changes = _diff(current, new_payload)
+        print(f"\n--- {event_id} ({agent_id}) ---")
+        if changes:
+            print("\n".join(changes))
+        else:
+            print("  No changes.")
+        return
+
+    try:
+        agent = client.update_agent(agent_id, new_payload)
+    except AgentAPIError as e:
+        print(f"  ERROR updating {event_id}: {e}", file=sys.stderr)
+        return
+
+    print(f"  Updated: {agent['name']} ({agent_id})")
+
+    if publish:
+        _publish(client, agent_id)
+
+
+def cmd_update(args):
+    if not APP_ID or not API_KEY:
+        print("ERROR: Missing ALGOLIA_APP_ID or ALGOLIA_API_KEY in agent/.env", file=sys.stderr)
+        sys.exit(1)
+
+    client = AlgoliaAgentClient()
+
+    if args.all:
+        print("Browsing tcg_events for agents to update...")
+        events = list(_browse_events_with_agents())
+        if not events:
+            print("No events with agent_id found.")
+            return
+        print(f"Found {len(events)} event(s) with agents.")
+        if args.dry_run:
+            print("=== DRY RUN ===")
+        for event in events:
+            _update_event_agent(client, event, dry_run=args.dry_run, publish=args.publish)
+        if not args.dry_run:
+            print(f"\nDone. {len(events)} agent(s) updated.")
+    else:
+        event = algolia_index_request(
+            f"/1/indexes/{EVENTS_INDEX}/{args.event_id}", allow_404=True
+        )
+        if event is None:
+            print(f"ERROR: Event '{args.event_id}' not found in {EVENTS_INDEX}.", file=sys.stderr)
+            sys.exit(1)
+        if not event.get("agent_id"):
+            print(f"ERROR: Event '{args.event_id}' has no agent_id.", file=sys.stderr)
+            sys.exit(1)
+        if args.dry_run:
+            print("=== DRY RUN ===")
+        _update_event_agent(client, event, dry_run=args.dry_run, publish=args.publish)
+
+
 def cmd_publish(args):
     client = AlgoliaAgentClient()
     _publish(client, args.agent_id)
@@ -183,6 +284,16 @@ def main():
     create_p.add_argument("--publish", action="store_true",
                           help="Publish immediately after creation")
 
+    update_p = sub.add_parser("update", help="Update agent(s) from current template")
+    update_p.add_argument("event_id", nargs="?",
+                          help="Event ID to update (omit with --all)")
+    update_p.add_argument("--all", action="store_true",
+                          help="Update all events that have an agent_id")
+    update_p.add_argument("--dry-run", action="store_true",
+                          help="Show what would change without making API calls")
+    update_p.add_argument("--publish", action="store_true",
+                          help="Publish after updating")
+
     pub_p = sub.add_parser("publish", help="Publish a draft agent")
     pub_p.add_argument("agent_id", help="Agent ID (UUID)")
 
@@ -190,6 +301,10 @@ def main():
 
     if args.command == "create":
         cmd_create(args)
+    elif args.command == "update":
+        if not args.all and not args.event_id:
+            update_p.error("provide an event_id or --all")
+        cmd_update(args)
     elif args.command == "publish":
         cmd_publish(args)
     else:

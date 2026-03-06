@@ -59,7 +59,7 @@ event's record drives everything: which index to search, what to show in the hea
 — after the agent factory — which AI agent to load in the chat widget. Switching events
 is a one-field update in Algolia. 
 
-The agent factory is a standalone `/agent/` directory — a self-contained Python project
+The agent factory is a self-contained Python project
 with a single CLI entry point, `agent_cli.py`. Two commands create and publish a fully
 configured agent for any event:
 
