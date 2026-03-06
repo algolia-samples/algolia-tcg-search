@@ -260,6 +260,36 @@ def cmd_publish(args):
     _publish(client, args.agent_id)
 
 
+def cmd_delete(args):
+    if not APP_ID or not API_KEY:
+        print("ERROR: Missing ALGOLIA_APP_ID or ALGOLIA_API_KEY in agent/.env", file=sys.stderr)
+        sys.exit(1)
+
+    event = algolia_index_request(
+        f"/1/indexes/{EVENTS_INDEX}/{args.event_id}", allow_404=True
+    )
+    if event is None:
+        print(f"ERROR: Event '{args.event_id}' not found in {EVENTS_INDEX}.", file=sys.stderr)
+        sys.exit(1)
+
+    agent_id = event.get("agent_id")
+    if not agent_id:
+        print(f"  No agent_id on record for '{args.event_id}' — nothing to delete.")
+        return
+
+    client = AlgoliaAgentClient()
+    try:
+        client.delete_agent(agent_id)
+    except AgentAPIError as e:
+        if e.status_code == 404:
+            print(f"  Agent {agent_id} already deleted — skipping.")
+        else:
+            print(f"ERROR: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print(f"  ✓ Deleted agent: {agent_id}")
+
+
 def _publish(client, agent_id):
     try:
         agent = client.publish_agent(agent_id)
@@ -297,6 +327,9 @@ def main():
     pub_p = sub.add_parser("publish", help="Publish a draft agent")
     pub_p.add_argument("agent_id", help="Agent ID (UUID)")
 
+    del_p = sub.add_parser("delete", help="Delete the agent for a TCG event")
+    del_p.add_argument("event_id", help="Event ID slug")
+
     args = parser.parse_args()
 
     if args.command == "create":
@@ -307,6 +340,8 @@ def main():
         cmd_update(args)
     elif args.command == "publish":
         cmd_publish(args)
+    elif args.command == "delete":
+        cmd_delete(args)
     else:
         parser.print_help()
 
