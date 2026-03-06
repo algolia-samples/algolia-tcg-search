@@ -130,13 +130,20 @@ echo "Step 3/6: Ingesting card data"
 echo "========================================"
 (cd "$DATA_UTILS" && poetry run python ingest.py)
 
-# ── Step 4: Enrich chase cards ─────────────────────────────────────────────────
+# ── Step 4: Enrich chase cards (optional — requires XLSX) ─────────────────────
 
 echo ""
 echo "========================================"
 echo "Step 4/6: Enriching chase cards"
 echo "========================================"
-(cd "$DATA_UTILS" && poetry run python enrich_chase_cards.py)
+XLSX_FILE="$DATA_DIR/TCG Search Website - Raw List.xlsx"
+if [ -f "$XLSX_FILE" ]; then
+  (cd "$DATA_UTILS" && poetry run python enrich_chase_cards.py)
+else
+  echo "  Skipped — no XLSX found in data/data-files/$EVENT_ID/"
+  echo "  To enrich later: copy the XLSX then run:"
+  echo "    cd data/data-utilities && ALGOLIA_EVENT_ID=$EVENT_ID poetry run python enrich_chase_cards.py"
+fi
 
 # ── Step 5: Create Agent Studio agent ─────────────────────────────────────────
 

@@ -10,8 +10,8 @@ All agent config (index names, descriptions, prompt) lives in agent-config.json
 and PROMPT.md, using {{event_id}}, {{event_name}}, and {{booth}} template vars.
 
 Usage:
-  python create_event_agent.py create <event_id> "<Event Name>" <booth> [--dry-run] [--publish]
-  python create_event_agent.py publish <agent_id>
+  python agent.py create <event_id> "<Event Name>" <booth> [--dry-run] [--publish]
+  python agent.py publish <agent_id>
 """
 
 import argparse
@@ -151,7 +151,7 @@ def cmd_create(args):
     if args.publish:
         _publish(client, agent_id)
     else:
-        print(f"\nAgent created (draft). To publish:\n  python create_event_agent.py publish {agent_id}")
+        print(f"\nAgent created (draft). To publish:\n  python agent.py publish {agent_id}")
 
 
 def _browse_events_with_agents():
