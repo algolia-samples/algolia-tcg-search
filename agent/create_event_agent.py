@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TCG-specific wrapper around algolia-agent CLI.
+TCG-specific wrapper around algolia-agent.
 
 Creates and manages per-event Algolia Agent Studio agents, with:
   - Event verification against the tcg_events Algolia index
@@ -12,15 +12,18 @@ Usage:
   python create_event_agent.py publish <agent_id>
 """
 
+import argparse
 import json
 import os
-import subprocess
 import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from algolia_agent.client import AgentAPIError, AlgoliaAgentClient
+from algolia_agent.template import render
 
 load_dotenv(Path(__file__).parent / ".env")
 
@@ -70,33 +73,58 @@ def cmd_create(args):
     price_asc = f"{primary}_price_asc"
     price_desc = f"{primary}_price_desc"
 
-    # Build algolia-agent create command
-    cmd = [
-        "algolia-agent", "create",
-        "--config", str(AGENT_DIR / "agent-config.json"),
-        "--name", f"TCG Agent {args.event_name}",
-        "--index", primary,
-        "--replica", price_asc,
-        "--replica", price_desc,
-        "--var", f"event_name={args.event_name}",
-        "--var", f"booth={args.booth}",
-        "--json",
-    ]
+    # Render instructions
+    prompt_path = AGENT_DIR / "PROMPT.md"
+    instructions = render(
+        prompt_path.read_text(),
+        {"event_name": args.event_name, "booth": args.booth},
+    )
+
+    # Load agent config
+    config_path = AGENT_DIR / "agent-config.json"
+    with open(config_path) as f:
+        agent_config = json.load(f)
+
+    tool = {
+        "name": "algolia_search_index",
+        "type": "algolia_search_index",
+        "indices": [
+            {"index": primary},
+            {"index": price_asc},
+            {"index": price_desc},
+        ],
+    }
 
     if args.dry_run:
-        cmd = [c for c in cmd if c != "--json"]
-        cmd.append("--dry-run")
-        subprocess.run(cmd, check=True)
+        print("=== DRY RUN ===")
+        print(f"\nAgent name: TCG Agent {args.event_name}")
+        print(f"Provider:   {agent_config['provider']}")
+        print(f"Model:      {agent_config['model']}")
+        print(f"\nTool payload:\n{json.dumps(tool, indent=2)}")
+        print(f"\n--- Rendered instructions ---\n{instructions}")
         return
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(result.stderr, file=sys.stderr)
-        sys.exit(result.returncode)
+    client = AlgoliaAgentClient()
+    provider_id = client.resolve_provider_id(agent_config["provider"])
 
-    agent = json.loads(result.stdout)
+    payload = {
+        "name": f"TCG Agent {args.event_name}",
+        "providerId": provider_id,
+        "model": agent_config["model"],
+        "instructions": instructions,
+        "status": "draft",
+        "tools": [tool],
+    }
+    if agent_config.get("config"):
+        payload["config"] = agent_config["config"]
+
+    try:
+        agent = client.create_agent(payload)
+    except AgentAPIError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
     agent_id = agent["id"]
-
     print(f"Created agent: {agent['name']}")
     print(f"Agent ID:      {agent_id}")
     print(f"Status:        {agent['status']}")
@@ -118,32 +146,28 @@ def cmd_create(args):
         )
 
     if args.publish:
-        _publish(agent_id)
+        _publish(client, agent_id)
     else:
         print(f"\nAgent created (draft). To publish:\n  python create_event_agent.py publish {agent_id}")
 
 
 def cmd_publish(args):
-    _publish(args.agent_id)
+    client = AlgoliaAgentClient()
+    _publish(client, args.agent_id)
 
 
-def _publish(agent_id):
-    result = subprocess.run(
-        ["algolia-agent", "publish", agent_id, "--json"],
-        capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        print(result.stderr, file=sys.stderr)
-        sys.exit(result.returncode)
-    agent = json.loads(result.stdout)
+def _publish(client, agent_id):
+    try:
+        agent = client.publish_agent(agent_id)
+    except AgentAPIError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
     print(f"Published agent: {agent['name']}")
     print(f"Agent ID:        {agent['id']}")
     print(f"Status:          {agent['status']}")
 
 
 def main():
-    import argparse
-
     parser = argparse.ArgumentParser(description="TCG Event Agent Manager")
     sub = parser.add_subparsers(dest="command")
 
