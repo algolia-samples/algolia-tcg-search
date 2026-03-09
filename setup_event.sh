@@ -113,7 +113,7 @@ if [ ! -e "${CSV_FILES[0]}" ]; then
   echo "    data/data-utilities/reset_and_ingest.sh $EVENT_ID"
   echo ""
   echo "  Then activate the event when ready:"
-  echo "    cd data/data-utilities && poetry run python set_active_event.py $EVENT_ID"
+  echo "    cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
   echo ""
   echo "Algolia indices created:"
   echo "  tcg_cards_${EVENT_ID}"
@@ -161,9 +161,9 @@ echo "Step 6/6: Setting '$EVENT_ID' as the active event"
 echo "========================================"
 if [ "$NO_ACTIVATE" = true ]; then
   echo "  Skipped (--no-activate). To activate when ready:"
-  echo "    cd data/data-utilities && poetry run python set_active_event.py $EVENT_ID"
+  echo "    cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
 else
-  (cd "$DATA_UTILS" && poetry run python set_active_event.py "$EVENT_ID")
+  (cd "$DATA_UTILS" && poetry run python set_active_event.py set "$EVENT_ID")
 fi
 
 # ── Done ───────────────────────────────────────────────────────────────────────

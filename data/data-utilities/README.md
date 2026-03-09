@@ -87,7 +87,8 @@ re-run Steps 3–5 without recreating indices or touching the events record:
 To make a different (already set-up) event the active one:
 
 ```bash
-poetry run python set_active_event.py <event_id>
+poetry run python set_active_event.py list          # see all events
+poetry run python set_active_event.py set <event_id>
 ```
 
 This is a safe, non-destructive operation — it only updates the `current` field in
