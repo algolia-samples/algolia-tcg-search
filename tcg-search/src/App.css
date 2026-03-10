@@ -2503,10 +2503,29 @@ article {
 }
 
 .carousel-hit-price {
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #3B4CCA;
   line-height: 1.2;
+}
+
+.carousel-inventory-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  font-size: 0.7rem;
+}
+
+.carousel-inventory-label {
+  font-weight: 600;
+  color: #4a5568;
+  white-space: nowrap;
+}
+
+.carousel-inventory-count {
+  color: #2d3748;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .carousel-hit-set {
@@ -2770,3 +2789,32 @@ button.carousel-nav-right {
 .claimed-card-image-wrapper {
   position: relative;
 }
+
+/* Inventory progress bar */
+.inventory-bar-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  margin: 0 0.4rem;
+}
+
+.hit-detail-row--inventory {
+  align-items: center;
+}
+
+.inventory-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.inventory-bar-fill {
+  height: 100%;
+  background: #e74c3c;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+

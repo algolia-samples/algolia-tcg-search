@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import OptimizedImage from './OptimizedImage';
 import CardModal from './CardModal';
+import InventoryBar from './InventoryBar';
 
 // Helper to format set name with line break after colon
 function formatSetName(setName) {
@@ -132,6 +133,13 @@ export default function ChatItemComponent({ item }) {
             {item.pokemon_name}
           </h3>
           <div className="carousel-hit-price">{formattedPrice}</div>
+          {item.machine_quantity !== undefined && item.machine_quantity !== null && (
+            <div className="carousel-inventory-row">
+              <span className="carousel-inventory-label">In Stock:</span>
+              <InventoryBar current={item.machine_quantity} initial={item.initial_quantity} />
+              <span className="carousel-inventory-count">{item.machine_quantity}</span>
+            </div>
+          )}
           {item.set_name && (
             <div className="carousel-hit-set">{formatSetName(item.set_name)}</div>
           )}
@@ -162,5 +170,6 @@ ChatItemComponent.propTypes = {
     set_name: PropTypes.string,
     number: PropTypes.string,
     machine_quantity: PropTypes.number,
+    initial_quantity: PropTypes.number,
   }).isRequired,
 };
