@@ -171,15 +171,13 @@ export default function Hit({hit, sendEvent}) {
         )}
 
         <div className="hit-details">
-          <div className="hit-detail-row">
-            <span className="hit-label">Set:</span>
-            <span className="hit-value">{formatSetName(hit.set_name)}</span>
-          </div>
+          {hit.set_name && (
+            <div className="hit-detail-value">{formatSetName(hit.set_name)}</div>
+          )}
           {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
-            <div className="hit-detail-row hit-detail-row--inventory">
-              <span className="hit-label">In Stock:</span>
+            <div className="hit-inventory-row">
+              <span className={hit.machine_quantity === 1 ? 'hit-inventory-count hit-inventory-count--last' : 'hit-inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
               <InventoryBar current={hit.machine_quantity} initial={hit.initial_quantity} />
-              <span className="hit-value">{hit.machine_quantity}</span>
             </div>
           )}
         </div>
