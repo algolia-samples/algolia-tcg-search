@@ -86,10 +86,17 @@ em {
 /* Powered by Algolia container */
 .powered-by-container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   padding: 0.15rem 1rem 0.35rem 0;
   margin-bottom: 0.5rem;
+}
+
+.event-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  padding-left: 0.25rem;
 }
 
 .powered-by-container .ais-PoweredBy-logo {

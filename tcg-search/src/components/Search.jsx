@@ -93,6 +93,7 @@ export default function Search() {
 
           {/* Powered by Algolia */}
           <div className="powered-by-container">
+            <span className="event-name">{eventConfig.name} (Booth {eventConfig.booth})</span>
             <PoweredBy />
           </div>
 
