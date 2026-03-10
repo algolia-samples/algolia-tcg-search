@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Highlight } from 'react-instantsearch';
 import OptimizedImage from './OptimizedImage';
 import CardModal from './CardModal';
+import InventoryBar from './InventoryBar';
 
 // Helper to format set name with line break after colon
 function formatSetName(setName) {
@@ -134,6 +135,12 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
             <Highlight attribute="pokemon_name" hit={hit} />
           </h3>
           <div className="carousel-hit-price">{formattedPrice}</div>
+          {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
+            <div className="carousel-inventory-row">
+              <span className={hit.machine_quantity === 1 ? 'carousel-inventory-count carousel-inventory-count--last' : 'carousel-inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
+              <InventoryBar current={hit.machine_quantity} initial={hit.initial_quantity} />
+            </div>
+          )}
           {hit.set_name && (
             <div className="carousel-hit-set">{formatSetName(hit.set_name)}</div>
           )}
@@ -161,6 +168,8 @@ CarouselHit.propTypes = {
     image_large: PropTypes.string,
     estimated_value: PropTypes.number,
     set_name: PropTypes.string,
+    machine_quantity: PropTypes.number,
+    initial_quantity: PropTypes.number,
   }).isRequired,
   sendEvent: PropTypes.func.isRequired,
   eager: PropTypes.bool,

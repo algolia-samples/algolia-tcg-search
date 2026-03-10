@@ -260,12 +260,14 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
                 # Fallback if no set_id available
                 object_id = f"{set_name.replace(' ', '-').replace(':', '').lower()}-{card_number}"
 
+            machine_qty = int(row["# in Machine"])
             record = {
                 "objectID": object_id,
                 "pokemon_name": pokemon_name,
                 "number": card_number,
                 "card_type": str(row["Card Type"]).strip(),
-                "machine_quantity": int(row["# in Machine"]),
+                "machine_quantity": machine_qty,
+                "initial_quantity": machine_qty,
                 "estimated_value": parse_estimated_value(row["Estimated Value"]),
                 "is_chase_card": parse_boolean(row["Is Chase Card?"]),
                 "is_top_10_chase_card": parse_boolean(row["Is top 10 chase card?"]),

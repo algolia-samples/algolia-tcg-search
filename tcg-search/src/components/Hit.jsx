@@ -5,6 +5,7 @@ import {
 } from 'react-instantsearch';
 import OptimizedImage from './OptimizedImage';
 import CardModal from './CardModal';
+import InventoryBar from './InventoryBar';
 
 // Helper to get card type badge color
 function getCardTypeColor(cardType) {
@@ -170,14 +171,13 @@ export default function Hit({hit, sendEvent}) {
         )}
 
         <div className="hit-details">
-          <div className="hit-detail-row">
-            <span className="hit-label">Set:</span>
-            <span className="hit-value">{formatSetName(hit.set_name)}</span>
-          </div>
+          {hit.set_name && (
+            <div className="hit-detail-value">{formatSetName(hit.set_name)}</div>
+          )}
           {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
-            <div className="hit-detail-row">
-              <span className="hit-label">In Stock:</span>
-              <span className="hit-value">{hit.machine_quantity}</span>
+            <div className="hit-inventory-row">
+              <span className={hit.machine_quantity === 1 ? 'hit-inventory-count hit-inventory-count--last' : 'hit-inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
+              <InventoryBar current={hit.machine_quantity} initial={hit.initial_quantity} />
             </div>
           )}
         </div>
@@ -224,6 +224,7 @@ Hit.propTypes = {
     set_name: PropTypes.string,
     number: PropTypes.string,
     machine_quantity: PropTypes.number,
+    initial_quantity: PropTypes.number,
     is_top_10_chase_card: PropTypes.bool,
     is_chase_card: PropTypes.bool,
     is_full_art: PropTypes.bool,
