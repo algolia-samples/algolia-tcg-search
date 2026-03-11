@@ -201,7 +201,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
           <div className="success-icon">✓</div>
           <h2 className="modal-form-title">Successfully Claimed!</h2>
           <p className="success-message">
-            You've claimed <strong>{hit.pokemon_name}</strong>!
+            You&apos;ve claimed <strong>{hit.pokemon_name}</strong>!
           </p>
           <p className="success-submessage">Refreshing page...</p>
         </div>

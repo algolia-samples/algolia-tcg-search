@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Highlight } from 'react-instantsearch';
 import OptimizedImage from './OptimizedImage';
@@ -48,7 +48,7 @@ function getRotationFromMatrix(element) {
   }
 }
 
-export default function CarouselHit({ hit, sendEvent, eager = false }) {
+export default function CarouselHit({ hit, eager = false }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
