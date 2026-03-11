@@ -110,7 +110,7 @@ npm test
 npm run test:ci
 ```
 
-See [tcg-search/TESTING.md](tcg-search/TESTING.md) for detailed testing documentation.
+See [tcg-search/README.md](tcg-search/README.md) for more details on the frontend.
 
 ## Deployment
 

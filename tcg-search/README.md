@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# tcg-search
 
-## Getting Started
+React frontend for the Pokemon TCG vending machine search. Deployed on Vercel.
 
-First, run the development server:
+## Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **React 18** with Vite
+- **Algolia InstantSearch v7** for search
+- **Supabase JS** for real-time claim subscriptions
+- **Vercel Serverless Functions** (`api/`) for the claims API
+- **Vitest** + Testing Library for tests
+- **ESLint** for linting
+
+## Project Structure
+
+```
+tcg-search/
+├── src/
+│   ├── components/       # UI components
+│   ├── context/          # EventContext — active event config
+│   ├── utilities/        # Algolia & Supabase client setup
+│   └── assets/           # Icons and logos
+├── api/
+│   └── claims/create.js  # POST /api/claims/create (serverless)
+└── public/               # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env` and fill in credentials:
 
-## Learn More
+```bash
+# Algolia
+VITE_ALGOLIA_APP_ID=
+VITE_ALGOLIA_API_KEY=
+VITE_ALGOLIA_INDEX_NAME=
+VITE_USER_TOKEN=
+VITE_ALGOLIA_CHAT_AGENT_ID=   # optional
 
-To learn more about Next.js, take a look at the following resources:
+# Supabase
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=           # server-side only
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Algolia write key (server-side only, used by claims API)
+ALGOLIA_WRITE_API_KEY=
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Development
 
-## Deploy on Vercel
+From inside `tcg-search/`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Frontend only (Vite, no API routes)
+npm start          # http://localhost:5173
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+API routes are not available locally. To test the claims API, use a Vercel preview deployment.
+
+## Testing
+
+```bash
+# Interactive watch mode
+npm test
+
+# One-time run with coverage report
+npm run test:ci
+```
+
+Tests live alongside components (`*.test.jsx`) and the API handler (`api/claims/create.test.js`).
+
+## Linting
+
+```bash
+npm run lint
+```
+
+## Deployment
+
+Deployed automatically via Vercel on merge to `main`. See the [root README](../README.md) for deployment details.
