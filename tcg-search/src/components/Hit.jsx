@@ -230,5 +230,5 @@ Hit.propTypes = {
     is_full_art: PropTypes.bool,
     is_classic_pokemon: PropTypes.bool,
   }).isRequired,
-  sendEvent: PropTypes.func.isRequired,
+
 };

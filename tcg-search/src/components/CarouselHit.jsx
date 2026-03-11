@@ -171,6 +171,6 @@ CarouselHit.propTypes = {
     machine_quantity: PropTypes.number,
     initial_quantity: PropTypes.number,
   }).isRequired,
-  sendEvent: PropTypes.func.isRequired,
+
   eager: PropTypes.bool,
 };
