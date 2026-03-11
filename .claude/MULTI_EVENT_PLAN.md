@@ -169,14 +169,12 @@ Removed: `VITE_ALGOLIA_INDEX_NAME`, `VITE_ALGOLIA_INDEX_NAME_PRICE_ASC`,
 
 ---
 
-## Verification
-1. `npm run serve` — app loads with a spinner, then renders the active event's cards
-2. Change `current: true` in Algolia dashboard to a different event record → reload
-   shows that event's cards without any code change or redeploy
-3. Claim a card → row in Supabase has correct `event_id`; ClaimedCarousel only shows
-   claims for the active event
+## Verification ✅ (verified 2026-03-10 against foo-nyc-2026)
+1. ✅ App loads with a spinner, then renders the active event's cards
+2. ✅ `set_active_event.py set foo-nyc-2026` → reload shows Foo Con cards without redeploy
+3. ✅ Claim a card → row in Supabase has correct `event_id`; ClaimedCarousel scoped to active event
 4. `python create_event.py shoptalk-2026 "Shoptalk 2026" 314` creates indices and
-   events record; `python set_active_event.py shoptalk-2026` switches the active event
+   events record; `python set_active_event.py set shoptalk-2026` switches the active event
 5. `npm test` — existing ClaimedCarousel and CardModal tests still pass
 
 ---
