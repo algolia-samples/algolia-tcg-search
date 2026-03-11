@@ -8,7 +8,7 @@ vi.mock('react-instantsearch', () => ({
 }));
 
 vi.mock('./OptimizedImage', () => ({
-  default: reactForwardRef(({ alt, onClick, src }, _ref) => (
+  default: reactForwardRef(({ alt, onClick, src }) => (
     <img alt={alt} src={src} onClick={onClick} />
   )),
 }));
