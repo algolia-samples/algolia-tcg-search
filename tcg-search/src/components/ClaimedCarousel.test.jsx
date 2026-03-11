@@ -297,7 +297,7 @@ describe('ClaimedCarousel', () => {
         })),
       });
 
-      const { rerender } = render(<ClaimedCarousel />);
+      render(<ClaimedCarousel />);
 
       await waitFor(() => {
         expect(screen.getByTestId('base-carousel')).toBeInTheDocument();

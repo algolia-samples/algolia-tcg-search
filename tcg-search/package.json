@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Pokemon TCG vending machine search application with React InstantSearch v7",
   "private": true,
+  "type": "module",
   "main": "index.js",
   "engines": {
     "node": ">=20.0.0"
@@ -26,21 +27,17 @@
     "react-router-dom": "^6.8.2",
     "search-insights": "^2.4.0"
   },
-  "overrides": {
-    "minimatch": "^10.0.0",
-    "glob": "^11.0.0",
-    "ajv": "^8.18.0"
-  },
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
+    "@eslint/js": "^9.39.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^4.3.0",
     "@vitest/coverage-v8": "^3.0.0",
-    "eslint": "^9.0.0",
-    "eslint-plugin-react": "^7.37.0",
-    "globals": "^15.0.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
     "jsdom": "^25.0.0",
     "node-mocks-http": "^1.17.2",
     "vite": "^6.2.0",
