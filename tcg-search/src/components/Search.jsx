@@ -31,7 +31,7 @@ function HitsWithNoResults() {
       <div className="no-results">
         <h2 className="no-results-title">No cards found</h2>
         <p className="no-results-description">
-          Try adjusting your search or filters to find what you're looking for.
+          Try adjusting your search or filters to find what you&apos;re looking for.
         </p>
       </div>
     );

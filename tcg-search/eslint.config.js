@@ -8,6 +8,7 @@ export default [
   reactPlugin.configs.flat.recommended,
   reactPlugin.configs.flat['jsx-runtime'],
   {
+    files: ['**/*.{js,jsx}'],
     plugins: {
       'react-hooks': reactHooksPlugin,
     },
@@ -20,6 +21,8 @@ export default [
     rules: {
       ...reactHooksPlugin.configs.recommended.rules,
       'react/prop-types': 'warn',
+      // Too aggressive — fires on valid patterns like setLoading(true) before async ops
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
   {

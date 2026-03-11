@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Highlight,
@@ -63,7 +63,7 @@ function getRotationFromMatrix(element) {
   }
 }
 
-export default function Hit({hit, sendEvent}) {
+export default function Hit({ hit }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
