@@ -232,3 +232,4 @@ Hit.propTypes = {
   }).isRequired,
   sendEvent: PropTypes.func.isRequired,
 };
+const foo = 'unused'
