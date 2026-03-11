@@ -2,6 +2,15 @@ import { vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CardModal from './CardModal';
+import { useEvent } from '../context/EventContext';
+
+vi.mock('../context/EventContext', () => ({
+  useEvent: vi.fn(),
+}));
+
+beforeEach(() => {
+  useEvent.mockReturnValue({ eventConfig: { event_id: 'test-event-123' } });
+});
 
 const mockHit = {
   objectID: 'card-123',
@@ -289,6 +298,7 @@ describe('CardModal - Phase 2 API Integration', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          eventId: 'test-event-123',
           cardId: 'card-123',
           pokemonName: 'Pikachu',
           cardNumber: '25',
