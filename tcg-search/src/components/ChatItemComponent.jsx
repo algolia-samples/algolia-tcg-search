@@ -135,7 +135,7 @@ export default function ChatItemComponent({ item }) {
           <div className="carousel-hit-price">{formattedPrice}</div>
           {item.machine_quantity !== undefined && item.machine_quantity !== null && (
             <div className="carousel-inventory-row">
-              <span className={item.machine_quantity === 1 ? 'carousel-inventory-count carousel-inventory-count--last' : 'carousel-inventory-count'}>{item.machine_quantity === 1 ? 'Last one!' : `${item.machine_quantity} left`}</span>
+              <span className={item.machine_quantity === 1 ? 'inventory-count inventory-count--last' : 'inventory-count'}>{item.machine_quantity === 1 ? 'Last one!' : `${item.machine_quantity} left`}</span>
               <InventoryBar current={item.machine_quantity} initial={item.initial_quantity} />
             </div>
           )}

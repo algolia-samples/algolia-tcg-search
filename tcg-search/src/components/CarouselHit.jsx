@@ -137,7 +137,7 @@ export default function CarouselHit({ hit, sendEvent, eager = false }) {
           <div className="carousel-hit-price">{formattedPrice}</div>
           {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
             <div className="carousel-inventory-row">
-              <span className={hit.machine_quantity === 1 ? 'carousel-inventory-count carousel-inventory-count--last' : 'carousel-inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
+              <span className={hit.machine_quantity === 1 ? 'inventory-count inventory-count--last' : 'inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
               <InventoryBar current={hit.machine_quantity} initial={hit.initial_quantity} />
             </div>
           )}

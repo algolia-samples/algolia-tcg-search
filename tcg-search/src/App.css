@@ -642,21 +642,6 @@ em {
   border-color: #e2e8f0;
 }
 
-.row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.column {
-  display: flex;
-  flex-direction: column;
-  flex-basis: 100%;
-  flex: 1;
-  padding: 10px;
-}
-
 button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
   border: none;
   cursor: pointer;
@@ -774,94 +759,8 @@ article {
   margin: auto;
 }
 
-/* Item component for Chat carousel */
-.item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 120px;
-  margin: 0.375rem;
-  text-align: center;
-  background: white;
-  border-radius: 8px;
-  padding: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.item-card {
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
-  transition: transform .3s ease-in-out;
-  max-width: 50px;
-  height: auto;
-}
-
-.item-card:hover {
-  transform: scale(1.05);
-}
-
-.item-desc {
-  margin-top: 0.25rem;
-  font-size: 0.7rem;
-  width: 100%;
-}
-
-.item-desc h3 {
-  font-size: 0.75rem;
-  margin: 0 0 0.125rem 0;
-  font-weight: 600;
-  color: #1a202c;
-}
-
-.item-line {
-  font-size: 0.65rem;
-  color: #4a5568;
-  margin: 0.0625rem 0;
-  line-height: 1.2;
-}
-
-.item-type {
-  color: #3B4CCA;
-  font-size: 0.65rem;
-}
-
-.item-info {
-  color: #666;
-  font-size: 0.65rem;
-}
-
-.item-set {
-  color: #3B4CCA;
-  font-size: 0.65rem;
-}
-
-.item-price {
-  color: #2d3748;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-/* Hit component styles */
-.hit-line {
-  font-size: 0.875rem;
-  color: #4a5568;
-  padding: 0.5rem 0.75rem;
-  line-height: 1.4;
-}
-
-.hit-line:nth-child(even) {
-  background: #f7fafc;
-}
-
-.hit-line:nth-child(odd) {
-  background: white;
-}
 
 .hit-label {
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.hit-price {
   font-weight: 600;
   color: #2d3748;
 }
@@ -916,235 +815,6 @@ article {
   opacity: 0.9;
 }
 
-/* Card Information Section */
-.card-info-section {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.card-info-section h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.card-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-.info-item {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.info-label {
-  font-weight: 600;
-  color: #666;
-}
-
-.info-value {
-  color: #333;
-}
-
-/* Pricing section styles - compact version */
-.pricing-section-compact {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.pricing-section-compact > h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.pricing-source-compact {
-  margin-bottom: 1.5rem;
-}
-
-.pricing-source-compact:last-child {
-  margin-bottom: 0;
-}
-
-.pricing-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.pricing-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: #3B4CCA;
-}
-
-.pricing-updated-inline {
-  font-size: 0.75rem;
-  color: #666;
-}
-
-.pricing-table-compact {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  font-size: 0.9rem;
-}
-
-.pricing-table-compact th {
-  background-color: #3B4CCA;
-  color: white;
-  padding: 0.5rem;
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.pricing-table-compact th:first-child {
-  text-align: left;
-}
-
-.pricing-table-compact td {
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
-  text-align: center;
-}
-
-.pricing-table-compact tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-.pricing-table-compact tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.pricing-table-compact .variation-label {
-  text-align: left;
-  font-weight: 600;
-  color: #555;
-}
-
-.pricing-table-compact .price-value {
-  font-weight: 600;
-  color: #00aeff;
-}
-
-/* Filter Drawer Styles */
-.filter-drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  backdrop-filter: blur(2px);
-}
-
-.filter-drawer {
-  position: fixed;
-  top: 0;
-  left: -100%;
-  width: 85%;
-  max-width: 350px;
-  height: 100vh;
-  background: white;
-  z-index: 1000;
-  transition: left 0.3s ease-in-out;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-}
-
-.filter-drawer--open {
-  left: 0;
-}
-
-.filter-drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1rem;
-  background: linear-gradient(135deg, #3B4CCA 0%, #00aeff 100%);
-  color: white;
-  border-bottom: none;
-}
-
-.filter-drawer-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.filter-drawer-close {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.75rem;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.filter-drawer-close:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.filter-drawer-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  -webkit-overflow-scrolling: touch;
-}
-
-.filter-toggle-btn {
-  display: none; /* Hidden by default, shown on mobile */
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #3B4CCA 0%, #00aeff 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.filter-toggle-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.filter-toggle-btn:active {
-  transform: translateY(0);
-}
-
-.filter-toggle-btn svg {
-  width: 20px;
-  height: 20px;
-}
 
 /* Updated Hit Card Styles - Mobile First */
 .hit-card {
@@ -1286,13 +956,13 @@ article {
   font-size: 0.85rem;
 }
 
-.hit-inventory-count {
+.inventory-count {
   color: #2d3748;
   font-weight: 500;
   white-space: nowrap;
 }
 
-.hit-inventory-count--last {
+.inventory-count--last {
   color: #e74c3c;
   font-weight: 700;
   flex: 1;
@@ -2419,16 +2089,19 @@ article {
   position: relative;
 }
 
-.carousel-title {
+.carousel-title,
+.claimed-carousel-title {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.35rem;
   padding: 0.5rem 1rem;
-  background: #3B4CCA;
   color: white;
   font-family: 'Righteous', cursive;
   border-radius: 8px;
 }
+
+.carousel-title { background: #3B4CCA; }
+.claimed-carousel-title { background: #FF1C1C; }
 
 .carousel-container {
   position: relative;
@@ -2515,19 +2188,6 @@ article {
   font-size: 0.7rem;
 }
 
-
-.carousel-inventory-count {
-  color: #2d3748;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.carousel-inventory-count--last {
-  color: #e74c3c;
-  font-weight: 700;
-  flex: 1;
-  text-align: center;
-}
 
 .carousel-hit-set {
   font-size: 0.65rem;
@@ -2623,16 +2283,6 @@ button.carousel-nav-right {
   color: white;
 }
 
-.claimed-carousel-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 0.35rem;
-  padding: 0.5rem 1rem;
-  background: #FF1C1C;
-  color: white;
-  font-family: 'Righteous', cursive;
-  border-radius: 8px;
-}
 
 .claimed-carousel-track {
   display: flex;
@@ -2660,7 +2310,9 @@ button.carousel-nav-right {
   opacity: 0.8;
 }
 
-.claimed-card-badge {
+.claimed-card-badge,
+.hit-claimed-badge,
+.carousel-claimed-badge {
   position: absolute;
   top: 42%;
   left: 50%;
@@ -2678,6 +2330,11 @@ button.carousel-nav-right {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   opacity: 0.95;
+}
+
+.hit-claimed-badge,
+.carousel-claimed-badge {
+  pointer-events: none;
 }
 
 .claimed-card-image-wrapper {
@@ -2746,28 +2403,6 @@ button.carousel-nav-right {
   }
 }
 
-/* Claimed badges for Hit and CarouselHit components */
-.hit-claimed-badge,
-.carousel-claimed-badge {
-  position: absolute;
-  top: 42%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-15deg);
-  background: rgba(255, 255, 255, 0.3);
-  color: #FF1C1C;
-  padding: 0.5rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 900;
-  border: 4px solid #FF1C1C;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(255, 28, 28, 0.3);
-  z-index: 10;
-  font-family: 'Righteous', cursive;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  opacity: 0.95;
-  pointer-events: none;
-}
 
 /* Reduced opacity for claimed cards (applied to image wrapper only for subtle fade) */
 .hit-card-image-wrapper.claimed,
