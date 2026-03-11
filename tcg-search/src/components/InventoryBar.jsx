@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 export default function InventoryBar({ current, initial }) {
-  if (!initial || initial < 2) return null;
+  if (!initial || initial < 2 || current === 1) return null;
   const safeCurrent = Math.max(0, Math.min(initial, current ?? 0));
   const isUntouched = safeCurrent >= initial;
   const fillPercent = Math.max(0, Math.min(100, (safeCurrent / initial) * 100));
