@@ -8,7 +8,6 @@
   },
   "scripts": {
     "dev": "npm --prefix tcg-search start",
-    "serve": "vercel dev --cwd tcg-search",
     "deploy": "vercel --cwd tcg-search --scope algolia",
     "deploy:prod": "vercel --prod --cwd tcg-search --scope algolia"
   },
