@@ -64,6 +64,7 @@ function getRotationFromMatrix(element) {
 }
 
 export default function Hit({ hit }) {
+  const oops = neverDefined;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
