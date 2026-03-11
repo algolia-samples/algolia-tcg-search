@@ -19,4 +19,4 @@ jobs:
           cache: npm
           cache-dependency-path: tcg-search/package-lock.json
       - run: npm ci
-      - run: npm run lint -- --format github
+      - run: npm run lint
