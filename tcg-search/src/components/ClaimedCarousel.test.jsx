@@ -2,6 +2,11 @@ import { vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import ClaimedCarousel, { scoreAndSort } from './ClaimedCarousel';
 import { supabase } from '../utilities/supabase';
+import { useEvent } from '../context/EventContext';
+
+vi.mock('../context/EventContext', () => ({
+  useEvent: vi.fn(),
+}));
 
 // Mock dependencies
 vi.mock('../utilities/supabase', () => ({
@@ -30,7 +35,7 @@ vi.mock('./BaseCarousel', () => {
   };
 });
 
-const CACHE_KEY = 'tcg_recent_claims';
+const CACHE_KEY = 'tcg_recent_claims:test-event-123';
 
 describe('scoreAndSort', () => {
   const makePool = (items) =>
@@ -94,6 +99,12 @@ describe('ClaimedCarousel', () => {
     // Clear localStorage
     localStorage.clear();
     vi.clearAllMocks();
+
+    useEvent.mockReturnValue({
+      eventConfig: { event_id: 'test-event-123' },
+      loading: false,
+      error: null,
+    });
 
     // Mock Supabase channel subscription
     insertCallback = null;
@@ -162,8 +173,10 @@ describe('ClaimedCarousel', () => {
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+          })),
         })),
       });
 
@@ -177,7 +190,7 @@ describe('ClaimedCarousel', () => {
       expect(mockFrom).not.toHaveBeenCalled();
 
       // Should still subscribe for real-time updates
-      expect(supabase.channel).toHaveBeenCalledWith('claims');
+      expect(supabase.channel).toHaveBeenCalledWith('claims:test-event-123');
       expect(mockChannel.on).toHaveBeenCalled();
       expect(mockSubscribe).toHaveBeenCalled();
 
@@ -196,8 +209,10 @@ describe('ClaimedCarousel', () => {
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+          })),
         })),
       });
 
@@ -212,7 +227,7 @@ describe('ClaimedCarousel', () => {
       await waitFor(() => {
         expect(mockFrom).toHaveBeenCalledWith('claims');
         expect(mockSelect).toHaveBeenCalledWith(
-          'id, pokemon_name, image_url, card_value, claimer_name, claimed_at'
+          'id, pokemon_name, image_url, card_value, claimer_name, claimer_first_name, claimer_last_name, claimed_at'
         );
       });
 
@@ -227,8 +242,10 @@ describe('ClaimedCarousel', () => {
 
     test('fetches fresh data when cache is missing', async () => {
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+          })),
         })),
       });
 
@@ -238,7 +255,7 @@ describe('ClaimedCarousel', () => {
       await waitFor(() => {
         expect(mockFrom).toHaveBeenCalledWith('claims');
         expect(mockSelect).toHaveBeenCalledWith(
-          'id, pokemon_name, image_url, card_value, claimer_name, claimed_at'
+          'id, pokemon_name, image_url, card_value, claimer_name, claimer_first_name, claimer_last_name, claimed_at'
         );
       });
 
@@ -256,8 +273,10 @@ describe('ClaimedCarousel', () => {
   describe('PII Protection', () => {
     test('does not fetch or cache claimer_email', async () => {
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+          })),
         })),
       });
 
@@ -265,7 +284,7 @@ describe('ClaimedCarousel', () => {
 
       await waitFor(() => {
         expect(mockSelect).toHaveBeenCalledWith(
-          'id, pokemon_name, image_url, card_value, claimer_name, claimed_at'
+          'id, pokemon_name, image_url, card_value, claimer_name, claimer_first_name, claimer_last_name, claimed_at'
         );
       });
 
@@ -292,8 +311,10 @@ describe('ClaimedCarousel', () => {
       }));
 
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: tenClaims, error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: tenClaims, error: null })),
+          })),
         })),
       });
 
@@ -332,8 +353,10 @@ describe('ClaimedCarousel', () => {
 
     test('cleans up subscription on unmount', async () => {
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: mockClaims, error: null })),
+          })),
         })),
       });
 
@@ -346,7 +369,7 @@ describe('ClaimedCarousel', () => {
 
       // Wait for subscription to be established
       await waitFor(() => {
-        expect(supabase.channel).toHaveBeenCalledWith('claims');
+        expect(supabase.channel).toHaveBeenCalledWith('claims:test-event-123');
         expect(mockSubscribe).toHaveBeenCalled();
       });
 
@@ -369,8 +392,10 @@ describe('ClaimedCarousel', () => {
       };
 
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: [zeroValueClaim], error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: [zeroValueClaim], error: null })),
+          })),
         })),
       });
 
@@ -383,8 +408,10 @@ describe('ClaimedCarousel', () => {
 
     test('handles empty claims gracefully', async () => {
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+          })),
         })),
       });
 
@@ -397,8 +424,10 @@ describe('ClaimedCarousel', () => {
 
     test('handles fetch error gracefully', async () => {
       mockSelect.mockReturnValue({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ data: null, error: new Error('Network error') })),
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve({ data: null, error: new Error('Network error') })),
+          })),
         })),
       });
 
