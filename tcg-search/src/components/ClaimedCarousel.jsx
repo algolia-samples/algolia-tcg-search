@@ -94,6 +94,7 @@ export default function ClaimedCarousel() {
   const claimsPool = useRef([]);
   // Debounce timer for localStorage writes triggered by real-time inserts
   const cacheDebounceTimer = useRef(null);
+  const rescoreTimer = useRef(null);
 
   const cacheKey = `${CACHE_KEY_PREFIX}:${eventConfig?.event_id}`;
 
@@ -169,11 +170,14 @@ export default function ClaimedCarousel() {
           table: 'claims',
           filter: `event_id=eq.${eventConfig.event_id}`,
         }, (payload) => {
-          // Prepend new claim to pool, trim to FETCH_LIMIT, re-score
-          const updatedPool = [payload.new, ...claimsPool.current].slice(0, FETCH_LIMIT);
-          claimsPool.current = updatedPool;
-          setClaims(scoreAndSort(updatedPool));
-          // Debounce localStorage write to avoid main-thread jank on burst inserts
+          // Prepend new claim to pool, trim to FETCH_LIMIT
+          claimsPool.current = [payload.new, ...claimsPool.current].slice(0, FETCH_LIMIT);
+          // Debounce re-score to batch burst inserts — pool stays current via ref
+          clearTimeout(rescoreTimer.current);
+          rescoreTimer.current = setTimeout(() => {
+            setClaims(scoreAndSort(claimsPool.current));
+          }, 150);
+          // Debounce localStorage write separately (longer window)
           clearTimeout(cacheDebounceTimer.current);
           cacheDebounceTimer.current = setTimeout(() => {
             setCachedClaims(cacheKey, claimsPool.current);
@@ -192,6 +196,7 @@ export default function ClaimedCarousel() {
     // Cleanup subscription and pending cache write on unmount
     return () => {
       mounted = false;
+      clearTimeout(rescoreTimer.current);
       clearTimeout(cacheDebounceTimer.current);
       // Only remove channel if subscription was established (prevents StrictMode issues)
       if (channel && subscriptionEstablished.current) {
