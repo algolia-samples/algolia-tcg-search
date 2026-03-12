@@ -1,110 +1,15 @@
-import { useState, useRef } from 'react';
+import { Highlight } from 'react-instantsearch';
 import PropTypes from 'prop-types';
-import {
-  Highlight,
-} from 'react-instantsearch';
 import OptimizedImage from './OptimizedImage';
 import CardModal from './CardModal';
 import InventoryBar from './InventoryBar';
-
-// Helper to get card type badge color
-function getCardTypeColor(cardType) {
-  const colors = {
-    'Full Art': '#e74c3c',
-    'Alternative Full Art': '#ff6b6b',
-    'Gold': '#f39c12',
-    'Secret Art': '#9b59b6',
-    'Holo': '#3498db',
-    'Reverse Holo': '#1abc9c'
-  };
-  return colors[cardType] || '#3B4CCA';
-}
-
-// Helper to format set name with line break after colon
-function formatSetName(setName) {
-  if (!setName) return null;
-  const parts = setName.split(':');
-  if (parts.length > 1) {
-    return (
-      <>
-        {parts[0]}:<br />{parts.slice(1).join(':').trim()}
-      </>
-    );
-  }
-  return setName;
-}
-
-// Helper to extract rotation from transform matrix
-function getRotationFromMatrix(element) {
-  try {
-    const computedStyle = window.getComputedStyle(element);
-    const matrix = computedStyle.transform;
-
-    if (!matrix || matrix === 'none') {
-      return 0;
-    }
-
-    const values = matrix.split('(')[1]?.split(')')[0]?.split(',');
-    if (!values || values.length < 2) {
-      return 0;
-    }
-
-    const a = parseFloat(values[0]);
-    const b = parseFloat(values[1]);
-
-    if (isNaN(a) || isNaN(b)) {
-      return 0;
-    }
-
-    return Math.round(Math.atan2(b, a) * (180 / Math.PI));
-  } catch (error) {
-    console.warn('Failed to extract rotation from matrix:', error);
-    return 0;
-  }
-}
+import { useCardModal } from './useCardModal';
+import { formatSetName, getCardTypeColor, PLACEHOLDER_CARD_STYLE, CURSOR_POINTER_STYLE } from '../utilities/cardHelpers.jsx';
 
 export default function Hit({ hit }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const [origin, setOrigin] = useState({ x: 0, y: 0 });
-  const [rotation, setRotation] = useState(0);
-  const imgRef = useRef(null);
-  const wrapperRef = useRef(null);
+  const { isModalOpen, isClosing, origin, rotation, imgRef, wrapperRef, handleImageClick, handleCloseModal } = useCardModal(hit);
   const formattedPrice = hit.estimated_value != null ? `$${hit.estimated_value.toFixed(2)}` : '\u00A0';
   const isClaimed = !hit.machine_quantity || hit.machine_quantity <= 0;
-
-  const handleImageClick = (e) => {
-    if (hit.image_large || hit.image_small) {
-      // Find the actual image element
-      const imgElement = e.target.tagName === 'IMG' ? e.target : e.target.querySelector('img');
-      if (!imgElement) return;
-
-      const rect = imgElement.getBoundingClientRect();
-      const currentRotation = getRotationFromMatrix(wrapperRef.current);
-
-      setOrigin({
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
-      });
-      setRotation(currentRotation);
-      setIsModalOpen(true);
-      setIsClosing(false);
-    }
-  };
-
-  const handleCloseModal = () => {
-    // Capture current rotation state of the card before closing
-    if (wrapperRef.current) {
-      const currentRotation = getRotationFromMatrix(wrapperRef.current);
-      setRotation(currentRotation);
-    }
-
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsModalOpen(false);
-      setIsClosing(false);
-    }, 250); // Match animation duration
-  };
 
   return (
     <>
@@ -126,90 +31,76 @@ export default function Hit({ hit }) {
               alt={`${hit.pokemon_name} Pokemon card`}
               preloadLarge={true}
               onClick={handleImageClick}
-              style={{ cursor: 'pointer' }}
+              style={CURSOR_POINTER_STYLE}
               width={245}
               height={342}
             />
           ) : (
-            <div className="card" style={{
-              width: '245px',
-              height: '342px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              padding: '1rem',
-              borderRadius: '8px'
-            }}>
+            <div className="card" style={PLACEHOLDER_CARD_STYLE}>
               {hit.pokemon_name}
             </div>
           )}
         </div>
-      <div className="search__desc">
-        <div className="hit-price-prominent">
-          {formattedPrice}
-        </div>
-
-        {hit.card_type && (
-          <div className="hit-variants-row">
-            <span className="hit-label">Type:</span>
-            <div className="variant-badges" role="list" aria-label="Card type">
-              <span
-                className="variant-badge"
-                style={{ backgroundColor: getCardTypeColor(hit.card_type) }}
-                role="listitem"
-                aria-label={`${hit.card_type} card`}
-              >
-                {hit.card_type}
-              </span>
-            </div>
+        <div className="search__desc">
+          <div className="hit-price-prominent">
+            {formattedPrice}
           </div>
-        )}
 
-        <div className="hit-details">
-          {hit.set_name && (
-            <div className="hit-detail-value">{formatSetName(hit.set_name)}</div>
-          )}
-          {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
-            <div className="hit-inventory-row">
-              <span className={hit.machine_quantity === 1 ? 'inventory-count inventory-count--last' : 'inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
-              <InventoryBar current={hit.machine_quantity} initial={hit.initial_quantity} />
+          {hit.card_type && (
+            <div className="hit-variants-row">
+              <span className="hit-label">Type:</span>
+              <div className="variant-badges" role="list" aria-label="Card type">
+                <span
+                  className="variant-badge"
+                  style={{ backgroundColor: getCardTypeColor(hit.card_type) }}
+                  role="listitem"
+                  aria-label={`${hit.card_type} card`}
+                >
+                  {hit.card_type}
+                </span>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Special badges 2x2 grid */}
-        <div className="hit-special-badges">
-          <span className={`special-badge badge-top-10 ${hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
-            ⭐ Top 10!
-          </span>
-          <span className={`special-badge badge-chase ${hit.is_chase_card ? 'active' : 'inactive'}`}>
-            🏁 Chase Card
-          </span>
-          <span className={`special-badge badge-full-art ${hit.is_full_art ? 'active' : 'inactive'}`}>
-            🎨 Full Art
-          </span>
-          <span className={`special-badge badge-gen1 ${hit.is_classic_pokemon ? 'active' : 'inactive'}`}>
-            ✓ Gen 1
-          </span>
-        </div>
-      </div>
-    </article>
+          <div className="hit-details">
+            {hit.set_name && (
+              <div className="hit-detail-value">{formatSetName(hit.set_name)}</div>
+            )}
+            {hit.machine_quantity !== undefined && hit.machine_quantity !== null && (
+              <div className="hit-inventory-row">
+                <span className={hit.machine_quantity === 1 ? 'inventory-count inventory-count--last' : 'inventory-count'}>{hit.machine_quantity === 1 ? 'Last one!' : `${hit.machine_quantity} left`}</span>
+                <InventoryBar current={hit.machine_quantity} initial={hit.initial_quantity} />
+              </div>
+            )}
+          </div>
 
-    {/* Card Modal with claim functionality */}
-    <CardModal
-      isOpen={isModalOpen}
-      onClose={handleCloseModal}
-      hit={hit}
-      origin={origin}
-      rotation={rotation}
-      isClosing={isClosing}
-      isClaimed={isClaimed}
-    />
+          {/* Special badges 2x2 grid */}
+          <div className="hit-special-badges">
+            <span className={`special-badge badge-top-10 ${hit.is_top_10_chase_card ? 'active' : 'inactive'}`}>
+              ⭐ Top 10!
+            </span>
+            <span className={`special-badge badge-chase ${hit.is_chase_card ? 'active' : 'inactive'}`}>
+              🏁 Chase Card
+            </span>
+            <span className={`special-badge badge-full-art ${hit.is_full_art ? 'active' : 'inactive'}`}>
+              🎨 Full Art
+            </span>
+            <span className={`special-badge badge-gen1 ${hit.is_classic_pokemon ? 'active' : 'inactive'}`}>
+              ✓ Gen 1
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <CardModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        hit={hit}
+        origin={origin}
+        rotation={rotation}
+        isClosing={isClosing}
+        isClaimed={isClaimed}
+      />
     </>
   );
 }
@@ -230,5 +121,4 @@ Hit.propTypes = {
     is_full_art: PropTypes.bool,
     is_classic_pokemon: PropTypes.bool,
   }).isRequired,
-
 };

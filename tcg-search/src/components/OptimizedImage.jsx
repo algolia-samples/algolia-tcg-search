@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect, useCallback, forwardRef } from 'react';
 import PropTypes from 'prop-types';
 
+const FILL_WRAPPER_STYLE = { position: 'relative', width: '100%', display: 'block' };
+const FILL_PLACEHOLDER_IMG_STYLE = { width: '100%', height: 'auto', display: 'block' };
+const FIXED_PLACEHOLDER_IMG_STYLE = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' };
+const IMG_OVERLAY_BASE_STYLE = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' };
+
 /**
  * OptimizedImage - Zero-dependency, bandwidth-conscious image component
  * Perfect for conference floors with limited bandwidth
@@ -142,17 +147,8 @@ const OptimizedImage = forwardRef(function OptimizedImage({
 
   // Wrapper style - either fixed dimensions or fill container
   const wrapperStyle = fill
-    ? {
-        position: 'relative',
-        width: '100%',
-        display: 'block',
-      }
-    : {
-        position: 'relative',
-        width: `${width}px`,
-        height: `${height}px`,
-        display: 'inline-block',
-      };
+    ? FILL_WRAPPER_STYLE
+    : { position: 'relative', width: `${width}px`, height: `${height}px`, display: 'inline-block' };
 
   return (
     <div
@@ -165,18 +161,7 @@ const OptimizedImage = forwardRef(function OptimizedImage({
         src={placeholder}
         alt=""
         aria-hidden="true"
-        style={fill ? {
-          width: '100%',
-          height: 'auto',
-          display: 'block',
-        } : {
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-        }}
+        style={fill ? FILL_PLACEHOLDER_IMG_STYLE : FIXED_PLACEHOLDER_IMG_STYLE}
         className={className}
       />
 
@@ -186,23 +171,7 @@ const OptimizedImage = forwardRef(function OptimizedImage({
           className={className}
           src={imageSrc}
           alt={alt}
-          style={fill ? {
-            ...style,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-          } : {
-            ...style,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-          }}
+          style={style && Object.keys(style).length > 0 ? { ...IMG_OVERLAY_BASE_STYLE, ...style } : IMG_OVERLAY_BASE_STYLE}
         />
       )}
     </div>

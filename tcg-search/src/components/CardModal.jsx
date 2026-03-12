@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import pokeballIcon from '../assets/pokeball_icon.svg';
 import { useEvent } from '../context/EventContext';
 
+const SUBMIT_ERROR_STYLE = { marginTop: '1rem', textAlign: 'center' };
+
 export default function CardModal({ isOpen, onClose, hit, origin, rotation, isClosing, isClaimed = false }) {
   const { eventConfig } = useEvent();
   const [modalView, setModalView] = useState('image'); // 'image' | 'form' | 'success'
@@ -317,7 +319,7 @@ export default function CardModal({ isOpen, onClose, hit, origin, rotation, isCl
             </div>
 
             {formErrors.submit && (
-              <div className="form-error" style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <div className="form-error" style={SUBMIT_ERROR_STYLE}>
                 {formErrors.submit}
               </div>
             )}

@@ -1,6 +1,18 @@
 import PropTypes from 'prop-types';
 import OptimizedImage from './OptimizedImage';
 
+const CLAIMED_PLACEHOLDER_STYLE = {
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'white',
+  fontSize: '1.2rem',
+  fontWeight: 'bold',
+  textAlign: 'center',
+  padding: '1rem',
+};
+
 // Helper to format time ago
 function formatTimeAgo(timestamp) {
   const now = new Date();
@@ -41,17 +53,7 @@ export default function ClaimedCard({ claim, eager = false }) {
             fill={true}
           />
         ) : (
-          <div className="claimed-card-image claimed-card-placeholder" style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            padding: '1rem'
-          }}>
+          <div className="claimed-card-image claimed-card-placeholder" style={CLAIMED_PLACEHOLDER_STYLE}>
             {claim.pokemon_name}
           </div>
         )}
