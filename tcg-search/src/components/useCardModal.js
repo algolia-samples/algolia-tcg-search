@@ -37,6 +37,7 @@ export function useCardModal(hit) {
       setRotation(getRotationFromMatrix(wrapperRef.current));
     }
     setIsClosing(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setIsModalOpen(false);
       setIsClosing(false);
