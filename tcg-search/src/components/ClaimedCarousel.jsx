@@ -175,7 +175,7 @@ export default function ClaimedCarousel() {
           // Debounce re-score to batch burst inserts — pool stays current via ref
           clearTimeout(rescoreTimer.current);
           rescoreTimer.current = setTimeout(() => {
-            setClaims(scoreAndSort(claimsPool.current));
+            if (mounted) setClaims(scoreAndSort(claimsPool.current));
           }, 150);
           // Debounce localStorage write separately (longer window)
           clearTimeout(cacheDebounceTimer.current);
@@ -198,8 +198,7 @@ export default function ClaimedCarousel() {
       mounted = false;
       clearTimeout(rescoreTimer.current);
       clearTimeout(cacheDebounceTimer.current);
-      // Only remove channel if subscription was established (prevents StrictMode issues)
-      if (channel && subscriptionEstablished.current) {
+      if (channel) {
         supabase.removeChannel(channel);
         subscriptionEstablished.current = false;
       }
