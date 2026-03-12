@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import ClaimedCarousel, { scoreAndSort } from './ClaimedCarousel';
 import { supabase } from '../utilities/supabase';
 import { useEvent } from '../context/EventContext';
@@ -295,6 +295,85 @@ describe('ClaimedCarousel', () => {
 
       // Verify no leaked email in rendered output
       expect(screen.queryByTestId('leaked-email')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Debounced re-score', () => {
+    const makeClaim = (id) => ({
+      id,
+      pokemon_name: `NewPokemon${id}`,
+      card_value: 50,
+      claimer_name: 'Trainer',
+      claimed_at: new Date().toISOString(),
+    });
+
+    beforeEach(() => {
+      // Fresh cache so initial render is synchronous (no fetch needed)
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: mockClaims,
+        timestamp: Date.now() - 1000,
+      }));
+    });
+
+    test('burst INSERTs are batched into a single UI update per debounce window', async () => {
+      vi.useFakeTimers();
+
+      render(<ClaimedCarousel />);
+
+      // Flush React updates and initial timers (subscribe callback setTimeout(0))
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      expect(screen.getByTestId('base-carousel')).toBeInTheDocument();
+
+      // Fire 3 INSERTs within the same 150ms window
+      act(() => {
+        insertCallback({ new: makeClaim(11) });
+        insertCallback({ new: makeClaim(12) });
+        insertCallback({ new: makeClaim(13) });
+      });
+
+      // Debounce hasn't fired yet — no new claims visible
+      expect(screen.queryByTestId('claim-11')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('claim-13')).not.toBeInTheDocument();
+
+      // Advance past the 150ms debounce
+      await act(async () => {
+        vi.advanceTimersByTime(150);
+      });
+
+      // All 3 claims now visible after a single re-score
+      expect(screen.getByTestId('claim-11')).toBeInTheDocument();
+      expect(screen.getByTestId('claim-12')).toBeInTheDocument();
+      expect(screen.getByTestId('claim-13')).toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+
+    test('single INSERT appears after debounce window elapses', async () => {
+      vi.useFakeTimers();
+
+      render(<ClaimedCarousel />);
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      act(() => {
+        insertCallback({ new: makeClaim(11) });
+      });
+
+      // Not yet visible before timeout fires
+      expect(screen.queryByTestId('claim-11')).not.toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(150);
+      });
+
+      expect(screen.getByTestId('claim-11')).toBeInTheDocument();
+
+      vi.useRealTimers();
     });
   });
 
