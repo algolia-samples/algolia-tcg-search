@@ -37,6 +37,10 @@ export default function CardScanner() {
     return () => stopEverything();
   }, []);
 
+  useEffect(() => {
+    if (capturedImage) scanCard();
+  }, [capturedImage]);
+
   async function startCamera() {
     setCameraError(null);
     capturedRef.current = false;
@@ -245,10 +249,8 @@ export default function CardScanner() {
         <>
           <img src={capturedImage} alt="Captured card" style={styles.video} />
           <div style={styles.buttonRow}>
-            <button onClick={retake} style={styles.button}>Retake</button>
-            <button onClick={scanCard} disabled={loading} style={styles.button}>
-              {loading ? 'Scanning…' : 'Scan Card'}
-            </button>
+            <button onClick={retake} disabled={loading} style={styles.button}>Retake</button>
+            {loading && <p style={styles.hint}>Scanning…</p>}
           </div>
         </>
       )}
