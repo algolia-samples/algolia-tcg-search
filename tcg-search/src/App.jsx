@@ -3,6 +3,7 @@ import { Navigate, Routes, Route, useParams } from 'react-router-dom';
 import { EventProvider } from './context/EventContext';
 import { fetchCurrentEvent } from './utilities/events';
 import Search from './components/Search';
+import CardScanner from './components/CardScanner';
 
 import './App.css';
 
@@ -41,6 +42,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/" element={<CurrentEventRedirect />} />
+        <Route path="/scan" element={<CardScanner />} />
         <Route path="/:eventId" element={<EventLayout />} />
       </Routes>
     </div>
