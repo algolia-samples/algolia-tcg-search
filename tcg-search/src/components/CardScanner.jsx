@@ -127,34 +127,43 @@ export default function CardScanner() {
     const guideH = guideW / CARD_RATIO;
     const x = (vw - guideW) / 2;
     const y = (vh - guideH) / 2;
+    const r = guideW * 0.04; // rounded corners matching card ~4% of width
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, vw, vh);
 
-    // Dim everything outside the guide
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    // Dim everything outside the guide using rounded clip
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(0, 0, vw, vh);
-    ctx.clearRect(x, y, guideW, guideH);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.roundRect(x, y, guideW, guideH, r);
+    ctx.fill();
+    ctx.restore();
 
-    // Guide border
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, guideW, guideH);
+    // Outer gold border (Pokemon card outer rim)
+    ctx.strokeStyle = '#d4a017';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.roundRect(x, y, guideW, guideH, r);
+    ctx.stroke();
 
-    // Corner accents
-    const c = 20;
-    ctx.strokeStyle = '#fff';
+    // Inner black border
+    const inset = 8;
+    ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 3;
-    for (const [cx, cy, dx, dy] of [
-      [x, y, 1, 1], [x + guideW, y, -1, 1],
-      [x, y + guideH, 1, -1], [x + guideW, y + guideH, -1, -1],
-    ]) {
-      ctx.beginPath();
-      ctx.moveTo(cx + dx * c, cy);
-      ctx.lineTo(cx, cy);
-      ctx.lineTo(cx, cy + dy * c);
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.roundRect(x + inset, y + inset, guideW - inset * 2, guideH - inset * 2, Math.max(r - inset, 2));
+    ctx.stroke();
+
+    // Inner gold accent line
+    const inset2 = 13;
+    ctx.strokeStyle = '#c8991f';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(x + inset2, y + inset2, guideW - inset2 * 2, guideH - inset2 * 2, Math.max(r - inset2, 2));
+    ctx.stroke();
   }
 
   function capture() {
