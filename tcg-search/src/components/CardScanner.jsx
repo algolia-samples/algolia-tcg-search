@@ -26,7 +26,7 @@ export default function CardScanner() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
+    } catch {
       setCameraError('Camera access denied or unavailable.');
     }
   }
