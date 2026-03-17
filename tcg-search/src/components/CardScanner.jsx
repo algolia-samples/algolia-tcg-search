@@ -1,23 +1,45 @@
 import { useEffect, useRef, useState } from 'react';
 
+// Pokemon card aspect ratio: 2.5" x 3.5"
+const CARD_RATIO = 2.5 / 3.5;
+// Guide frame takes up 80% of the viewport width
+const GUIDE_SCALE = 0.80;
+// Stability detection: sample canvas size (small = fast diff)
+const SAMPLE_W = 80;
+const SAMPLE_H = Math.round(SAMPLE_W / CARD_RATIO);
+// Mean pixel diff threshold (0-255) below which we consider the image stable
+const STABLE_THRESHOLD = 6;
+// Number of consecutive stable samples before auto-capture
+const STABLE_COUNT_NEEDED = 4;
+// Sampling interval in ms
+const SAMPLE_INTERVAL = 200;
+
 export default function CardScanner() {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  const overlayCanvasRef = useRef(null); // guide rectangle drawn here
+  const captureCanvasRef = useRef(null); // full-res capture
+  const compareCanvasRef = useRef(null); // small canvas for diff
   const streamRef = useRef(null);
+  const prevFrameDataRef = useRef(null);
+  const stableCountRef = useRef(0);
+  const samplingRef = useRef(null);
+  const capturedRef = useRef(false); // prevent double-capture
 
   const [capturedImage, setCapturedImage] = useState(null);
   const [ocrText, setOcrText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cameraError, setCameraError] = useState(null);
+  const [stableProgress, setStableProgress] = useState(0); // 0-100 for indicator
 
   useEffect(() => {
     startCamera();
-    return () => stopCamera();
+    return () => stopEverything();
   }, []);
 
   async function startCamera() {
     setCameraError(null);
+    capturedRef.current = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' },
@@ -25,21 +47,123 @@ export default function CardScanner() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          drawGuide();
+          startSampling();
+        };
       }
     } catch {
       setCameraError('Camera access denied or unavailable.');
     }
   }
 
-  function stopCamera() {
+  function stopEverything() {
+    stopSampling();
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
   }
 
+  function startSampling() {
+    stopSampling();
+    prevFrameDataRef.current = null;
+    stableCountRef.current = 0;
+    samplingRef.current = setInterval(sampleFrame, SAMPLE_INTERVAL);
+  }
+
+  function stopSampling() {
+    if (samplingRef.current) {
+      clearInterval(samplingRef.current);
+      samplingRef.current = null;
+    }
+  }
+
+  function sampleFrame() {
+    const video = videoRef.current;
+    const canvas = compareCanvasRef.current;
+    if (!video || !canvas || video.readyState < 2) return;
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, SAMPLE_W, SAMPLE_H);
+    const current = ctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H).data;
+
+    if (prevFrameDataRef.current) {
+      const diff = meanAbsDiff(prevFrameDataRef.current, current);
+      if (diff < STABLE_THRESHOLD) {
+        stableCountRef.current += 1;
+        setStableProgress(Math.min(100, (stableCountRef.current / STABLE_COUNT_NEEDED) * 100));
+        if (stableCountRef.current >= STABLE_COUNT_NEEDED && !capturedRef.current) {
+          capturedRef.current = true;
+          capture();
+        }
+      } else {
+        stableCountRef.current = 0;
+        setStableProgress(0);
+      }
+    }
+
+    prevFrameDataRef.current = current;
+  }
+
+  function meanAbsDiff(a, b) {
+    let sum = 0;
+    // Only sample every 4th pixel (R channel) for speed
+    for (let i = 0; i < a.length; i += 16) {
+      sum += Math.abs(a[i] - b[i]);
+    }
+    return sum / (a.length / 16);
+  }
+
+  function drawGuide() {
+    const canvas = overlayCanvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+
+    const vw = video.clientWidth;
+    const vh = video.clientHeight;
+    canvas.width = vw;
+    canvas.height = vh;
+
+    const guideW = vw * GUIDE_SCALE;
+    const guideH = guideW / CARD_RATIO;
+    const x = (vw - guideW) / 2;
+    const y = (vh - guideH) / 2;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, vw, vh);
+
+    // Dim everything outside the guide
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, vw, vh);
+    ctx.clearRect(x, y, guideW, guideH);
+
+    // Guide border
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, guideW, guideH);
+
+    // Corner accents
+    const c = 20;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    for (const [cx, cy, dx, dy] of [
+      [x, y, 1, 1], [x + guideW, y, -1, 1],
+      [x, y + guideH, 1, -1], [x + guideW, y + guideH, -1, -1],
+    ]) {
+      ctx.beginPath();
+      ctx.moveTo(cx + dx * c, cy);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(cx, cy + dy * c);
+      ctx.stroke();
+    }
+  }
+
   function capture() {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
+    const canvas = captureCanvasRef.current;
     if (!video || !canvas) return;
+
+    stopSampling();
+    setStableProgress(0);
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -49,7 +173,7 @@ export default function CardScanner() {
     setCapturedImage(dataUrl);
     setOcrText('');
     setError(null);
-    stopCamera();
+    stopEverything();
   }
 
   function retake() {
@@ -67,7 +191,6 @@ export default function CardScanner() {
     setOcrText('');
 
     try {
-      // Strip the data URL prefix to get raw base64
       const base64 = capturedImage.split(',')[1];
       const response = await fetch('/api/ocr/extract', {
         method: 'POST',
@@ -76,11 +199,7 @@ export default function CardScanner() {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? 'OCR failed');
-      }
-
+      if (!response.ok) throw new Error(data.error ?? 'OCR failed');
       setOcrText(data.text || '(No text detected)');
     } catch (err) {
       setError(err.message);
@@ -97,9 +216,20 @@ export default function CardScanner() {
 
       {!capturedImage ? (
         <>
-          <video ref={videoRef} autoPlay playsInline style={styles.video} />
+          <div style={styles.videoWrapper}>
+            <video ref={videoRef} autoPlay playsInline style={styles.video} />
+            <canvas ref={overlayCanvasRef} style={styles.overlay} />
+          </div>
+
+          {stableProgress > 0 && (
+            <div style={styles.progressBar}>
+              <div style={{ ...styles.progressFill, width: `${stableProgress}%` }} />
+            </div>
+          )}
+          <p style={styles.hint}>Hold the card steady inside the frame</p>
+
           <button onClick={capture} disabled={!!cameraError} style={styles.button}>
-            Capture
+            Capture now
           </button>
         </>
       ) : (
@@ -114,7 +244,8 @@ export default function CardScanner() {
         </>
       )}
 
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <canvas ref={captureCanvasRef} style={{ display: 'none' }} />
+      <canvas ref={compareCanvasRef} width={SAMPLE_W} height={SAMPLE_H} style={{ display: 'none' }} />
 
       {error && <p style={styles.error}>Error: {error}</p>}
 
@@ -139,10 +270,43 @@ const styles = {
     fontSize: '1.5rem',
     marginBottom: '1rem',
   },
-  video: {
+  videoWrapper: {
+    position: 'relative',
     width: '100%',
     borderRadius: 8,
+    overflow: 'hidden',
     background: '#000',
+  },
+  video: {
+    width: '100%',
+    display: 'block',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+  },
+  progressBar: {
+    marginTop: '0.5rem',
+    height: 4,
+    background: '#e2e8f0',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    background: '#22c55e',
+    borderRadius: 2,
+    transition: 'width 0.2s ease',
+  },
+  hint: {
+    textAlign: 'center',
+    fontSize: '0.85rem',
+    color: '#64748b',
+    margin: '0.4rem 0 0',
   },
   button: {
     marginTop: '0.75rem',
