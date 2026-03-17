@@ -218,8 +218,8 @@ export default function CardScanner() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'OCR failed');
       setOcrText(data.text || '(No text detected)');
-      setParsedName(data.potential_name);
-      setParsedNumber(data.potential_number);
+      setParsedName(data.parsed_name);
+      setParsedNumber(data.parsed_number);
     } catch (err) {
       setError(err.message);
     } finally {

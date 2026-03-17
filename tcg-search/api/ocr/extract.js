@@ -63,8 +63,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       text,
-      potential_number: parseCardNumber(text),
-      potential_name: parsePokemonName(text),
+      parsed_number: parseCardNumber(text),
+      parsed_name: parsePokemonName(text),
     });
   } catch (error) {
     console.error('Server error:', error);
