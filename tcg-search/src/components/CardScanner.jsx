@@ -27,6 +27,8 @@ export default function CardScanner() {
 
   const [capturedImage, setCapturedImage] = useState(null);
   const [ocrText, setOcrText] = useState('');
+  const [parsedName, setParsedName] = useState(null);
+  const [parsedNumber, setParsedNumber] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cameraError, setCameraError] = useState(null);
@@ -192,6 +194,8 @@ export default function CardScanner() {
   function retake() {
     setCapturedImage(null);
     setOcrText('');
+    setParsedName(null);
+    setParsedNumber(null);
     setError(null);
     startCamera();
   }
@@ -214,6 +218,8 @@ export default function CardScanner() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'OCR failed');
       setOcrText(data.text || '(No text detected)');
+      setParsedName(data.potential_name);
+      setParsedNumber(data.potential_number);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -262,8 +268,22 @@ export default function CardScanner() {
 
       {ocrText && (
         <div style={styles.results}>
-          <h2 style={styles.resultsTitle}>Extracted Text</h2>
-          <pre style={styles.ocrText}>{ocrText}</pre>
+          <table style={styles.table}>
+            <tbody>
+              <tr>
+                <td style={styles.label}>Name</td>
+                <td style={styles.value}>{parsedName ?? '—'}</td>
+              </tr>
+              <tr>
+                <td style={styles.label}>Number</td>
+                <td style={styles.value}>{parsedNumber ?? '—'}</td>
+              </tr>
+            </tbody>
+          </table>
+          <details style={styles.details}>
+            <summary style={styles.summary}>Raw OCR text</summary>
+            <pre style={styles.ocrText}>{ocrText}</pre>
+          </details>
         </div>
       )}
     </div>
@@ -347,10 +367,36 @@ const styles = {
     fontSize: '1rem',
     marginBottom: '0.5rem',
   },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginBottom: '0.75rem',
+  },
+  label: {
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    color: '#64748b',
+    paddingRight: '1rem',
+    paddingBottom: '0.25rem',
+    whiteSpace: 'nowrap',
+  },
+  value: {
+    fontSize: '1rem',
+    paddingBottom: '0.25rem',
+  },
+  details: {
+    marginTop: '0.5rem',
+  },
+  summary: {
+    fontSize: '0.8rem',
+    color: '#94a3b8',
+    cursor: 'pointer',
+  },
   ocrText: {
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
-    fontSize: '0.875rem',
-    margin: 0,
+    fontSize: '0.75rem',
+    margin: '0.5rem 0 0',
+    color: '#475569',
   },
 };
