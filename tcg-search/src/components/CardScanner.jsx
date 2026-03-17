@@ -8,9 +8,9 @@ const GUIDE_SCALE = 0.80;
 const SAMPLE_W = 80;
 const SAMPLE_H = Math.round(SAMPLE_W / CARD_RATIO);
 // Mean pixel diff threshold (0-255) below which we consider the image stable
-const STABLE_THRESHOLD = 6;
+const STABLE_THRESHOLD = 15;
 // Number of consecutive stable samples before auto-capture
-const STABLE_COUNT_NEEDED = 4;
+const STABLE_COUNT_NEEDED = 3;
 // Sampling interval in ms
 const SAMPLE_INTERVAL = 200;
 
