@@ -12,8 +12,6 @@ The challenge: **the `<Chat>` component from `react-instantsearch` has no docume
 
 **The `<Chat>` component props** — We started by reading the component source at `node_modules/react-instantsearch/dist/es/widgets/Chat.js`. The accepted props are documented in the `_excluded` array at the top. Nothing for pre-populating or auto-sending a message.
 
-**The `messages` and `sendAutomaticallyWhen` approach** — Our initial plan was to pass a `messages` array and a `sendAutomaticallyWhen` predicate directly to `<Chat>`. This crashed with `TypeError: Cannot read properties of undefined (reading 'map')` — the component doesn't accept those props and its internal state was undefined.
-
 **The InstantSearch team** — We asked directly. The advice from the team:
 
 > "With the `renderState` you can access from `useInstantSearch`, you can use `openChat` and `sendMessage`. Check how we implemented prompt suggestions."
