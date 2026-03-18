@@ -191,7 +191,7 @@ describe('CardScanner — mobile', () => {
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith(
           '/foo-nyc-2026',
-          expect.objectContaining({ state: { searchQuery: 'Pikachu' } })
+          expect.objectContaining({ replace: true, state: { searchQuery: 'Pikachu' } })
         );
       });
     });
