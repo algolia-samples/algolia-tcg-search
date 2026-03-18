@@ -4,6 +4,14 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/vitest';
 
+// jsdom doesn't implement scrollIntoView or ResizeObserver
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+window.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Mock environment variables for tests
 process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
 process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'test-publishable-key';

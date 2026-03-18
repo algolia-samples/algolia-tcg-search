@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { searchClient, getIndexNames, userToken, chatAgentId } from '../utilities/algolia';
 import { useEvent } from '../context/EventContext';
+import { scrollToSearchBox } from '../utilities/dom';
 import {
   Configure,
   Hits,
@@ -9,7 +11,8 @@ import {
   PoweredBy,
   SearchBox,
   SortBy,
-  useHits
+  useHits,
+  useSearchBox,
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import Header from './Header';
@@ -21,6 +24,17 @@ import ChatAgent from './ChatAgent';
 
 // Set user token for insights
 aa('setUserToken', userToken);
+
+// Sits inside InstantSearch — sets the query and scrolls to results on mount
+function ScanQuerySetter({ query }) {
+  const { refine } = useSearchBox();
+  useEffect(() => {
+    if (!query) return;
+    refine(query);
+    scrollToSearchBox();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
 
 function HitsWithNoResults() {
   const { results } = useHits();
@@ -49,6 +63,15 @@ function HitsWithNoResults() {
 
 export default function Search() {
   const { eventConfig, loading, error } = useEvent();
+  const location = useLocation();
+  // Capture in useState — location.state is wiped by InstantSearch's routing on mount
+  const [searchQuery] = useState(location.state?.searchQuery ?? '');
+  const [shouldScrollToSearch] = useState(location.state?.scrollToSearch ?? false);
+
+  useEffect(() => {
+    if (!shouldScrollToSearch) return;
+    scrollToSearchBox();
+  }, [shouldScrollToSearch]);
 
   // Override mobile browser's default scroll-to-center behavior on input focus
   useEffect(() => {
@@ -90,6 +113,7 @@ export default function Search() {
             hitsPerPage={12}
             clickAnalytics={true}
           />
+          {searchQuery && <ScanQuerySetter query={searchQuery} />}
 
           {/* Powered by Algolia */}
           <div className="powered-by-container">
