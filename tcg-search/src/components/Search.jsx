@@ -79,6 +79,13 @@ export default function Search() {
     return () => document.removeEventListener('focus', handleFocus, true);
   }, []);
 
+  // Scroll to search results when arriving from the card scanner
+  useEffect(() => {
+    if (!searchQuery) return;
+    const el = document.querySelector('.search-header');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [searchQuery]);
+
   if (loading) return <div className="event-loading">Loading event…</div>;
   if (error || !eventConfig) return <div className="event-error">Event not found.</div>;
 
@@ -152,7 +159,7 @@ export default function Search() {
             isOpen={!autoHitClosing}
             onClose={handleAutoHitClose}
             hit={autoOpenHit}
-            origin={null}
+            origin={{ x: window.innerWidth / 2, y: window.innerHeight / 2 }}
             rotation={0}
             isClosing={autoHitClosing}
             isClaimed={!autoOpenHit.machine_quantity || autoOpenHit.machine_quantity <= 0}
