@@ -20,7 +20,8 @@ function parsePokemonName(text) {
     const stripped = line.replace(STAGE_PREFIX, '');
     // Strip trailing HP digits (e.g. "RevavroomX280" → "RevavroomX")
     const name = stripped.replace(/\s*\d{2,3}$/, '').trim();
-    if (/^[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name) && name.length >= 2) return name;
+    // Reject if digits remain — indicates noise or HP not fully stripped
+    if (/^[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name) && name.length >= 2 && !/\d/.test(name)) return name;
   }
 
   return null;
