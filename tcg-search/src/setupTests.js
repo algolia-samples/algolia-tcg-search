@@ -5,7 +5,7 @@
 import '@testing-library/jest-dom/vitest';
 
 // jsdom doesn't implement scrollIntoView
-window.HTMLElement.prototype.scrollIntoView = vi.fn(); // eslint-disable-line no-undef
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 // Mock environment variables for tests
 process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
