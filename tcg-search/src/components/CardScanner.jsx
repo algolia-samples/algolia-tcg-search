@@ -233,12 +233,7 @@ export default function CardScanner() {
         return;
       }
 
-      const state = { searchQuery: result.query };
-      if (result.hits.length === 1 && result.strategy === 'name_number') {
-        state.autoOpenHit = result.hits[0];
-      }
-
-      navigate(`/${eventId}`, { state });
+      navigate(`/${eventId}`, { state: { searchQuery: result.query } });
     } catch {
       setSearchFailed(true);
       setStatus('idle');

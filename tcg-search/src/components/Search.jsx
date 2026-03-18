@@ -16,7 +16,6 @@ import {
 import aa from 'search-insights';
 import Header from './Header';
 import Hit from './Hit';
-import CardModal from './CardModal';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
@@ -67,18 +66,8 @@ function HitsWithNoResults() {
 export default function Search() {
   const { eventConfig, loading, error } = useEvent();
   const location = useLocation();
-  const [autoOpenHit, setAutoOpenHit] = useState(location.state?.autoOpenHit ?? null);
-  const [autoHitClosing, setAutoHitClosing] = useState(false);
   // Capture in useState — location.state is wiped by InstantSearch's routing on mount
   const [searchQuery] = useState(location.state?.searchQuery ?? '');
-
-  function handleAutoHitClose() {
-    setAutoHitClosing(true);
-    setTimeout(() => {
-      setAutoOpenHit(null);
-      setAutoHitClosing(false);
-    }, 250);
-  }
 
   // Override mobile browser's default scroll-to-center behavior on input focus
   useEffect(() => {
@@ -162,18 +151,6 @@ export default function Search() {
           {/* AI Chat Agent */}
           <ChatAgent agentId={agentId} />
         </InstantSearch>
-
-        {autoOpenHit && (
-          <CardModal
-            isOpen={!autoHitClosing}
-            onClose={handleAutoHitClose}
-            hit={autoOpenHit}
-            origin={{ x: window.innerWidth / 2, y: window.innerHeight / 2 }}
-            rotation={0}
-            isClosing={autoHitClosing}
-            isClaimed={!autoOpenHit.machine_quantity || autoOpenHit.machine_quantity <= 0}
-          />
-        )}
       </div>
     </div>
   );
