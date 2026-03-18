@@ -52,7 +52,7 @@ export default async function handler(req, res) {
           requests: [
             {
               image: { content: image },
-              features: [{ type: 'TEXT_DETECTION' }],
+              features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
             },
           ],
         }),
