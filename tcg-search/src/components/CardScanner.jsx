@@ -328,7 +328,7 @@ export default function CardScanner() {
             )}
             <p className="card-scanner-hint">Hold the card steady inside the frame</p>
 
-            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError || !videoReady}>
+            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError}>
               Capture now
             </button>
           </>
