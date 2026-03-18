@@ -1,20 +1,22 @@
 function parseCardNumber(text) {
-  const match = text.match(/\b(\d{1,3}\/\d{2,4})\b/);
-  return match ? match[1] : null;
+  // No word boundaries — the number is often embedded in surrounding digits (e.g. "300156/137")
+  // Take the last match since the card number is printed at the bottom of the card
+  const matches = [...text.matchAll(/(\d{1,3}\/\d{2,4})/g)];
+  return matches.length > 0 ? matches[matches.length - 1][1] : null;
 }
+
+// Stage/type labels that appear before the Pokemon name
+const STAGE_LABEL = /^(basic|stage\s*\d*|vmax|vstar|v\b|tag\s*team)/i;
 
 function parsePokemonName(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  // Try: find a line containing "HP" and extract the name before it
   for (const line of lines) {
-    const match = line.match(/^([A-Za-z][A-Za-z\s\-'.éÉ]+?)\s+\d+\s*HP\b/i);
-    if (match) return match[1].trim();
-  }
-
-  // Fallback: return the line immediately before the first line matching "^\d+\s*HP"
-  for (let i = 1; i < lines.length; i++) {
-    if (/^\d+\s*HP\b/i.test(lines[i])) return lines[i - 1];
+    if (STAGE_LABEL.test(line)) continue;
+    // GCV concatenates name + HP digits with no space — strip trailing digits
+    const name = line.replace(/\s*\d{2,3}$/, '').trim();
+    // Must start with a letter and be at least 2 chars
+    if (/^[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name) && name.length >= 2) return name;
   }
 
   return null;
