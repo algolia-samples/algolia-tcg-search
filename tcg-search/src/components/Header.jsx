@@ -1,10 +1,11 @@
 import { useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import logo from '../assets/tcg-search-logo.svg';
 
 export default function Header() {
   const navigate = useNavigate();
   const { eventId } = useParams();
+  const [searchParams] = useSearchParams();
 
   const scrollToSearch = useCallback(() => {
     const searchBox = document.querySelector('.ais-SearchBox-input');
@@ -44,7 +45,7 @@ export default function Header() {
       <div className="header-buttons">
         <button
           className="header-search-button"
-          onClick={() => navigate(`/${eventId}/scan`)}
+          onClick={() => navigate({ pathname: `/${eventId}/scan`, search: searchParams.toString() ? `?${searchParams.toString()}` : '' })}
           aria-label="Scan a card"
           title="Scan a card"
         >
