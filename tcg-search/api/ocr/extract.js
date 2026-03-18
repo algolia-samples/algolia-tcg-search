@@ -1,21 +1,25 @@
 function parseCardNumber(text) {
-  // No word boundaries — the number is often embedded in surrounding digits (e.g. "300156/137")
-  // Take the last match since the card number is printed at the bottom of the card
-  const matches = [...text.matchAll(/(\d{1,3}\/\d{2,4})/g)];
+  // Support standard (156/167) and trainer gallery (TG01/TG30) formats
+  // No word boundaries — number is often embedded in surrounding digits
+  // Take the last match since the card number is printed at the bottom
+  const matches = [...text.matchAll(/([A-Z]{0,2}\d{1,3}\/[A-Z]{0,2}\d{2,4})/gi)];
   return matches.length > 0 ? matches[matches.length - 1][1] : null;
 }
 
-// Stage/type labels that appear before the Pokemon name
-const STAGE_LABEL = /^(basic|stage\s*\d*|vmax|vstar|v\b|tag\s*team)/i;
+// Prefixes that appear inline before the Pokemon name
+const STAGE_PREFIX = /^(basic|stage\s*\d*|vmax|vstar|v\b|tag\s*team)\s*/i;
+// Lines to skip entirely
+const SKIP_LINE = /^(evolves from|ability|retreat|weakness|resistance)/i;
 
 function parsePokemonName(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
   for (const line of lines) {
-    if (STAGE_LABEL.test(line)) continue;
-    // GCV concatenates name + HP digits with no space — strip trailing digits
-    const name = line.replace(/\s*\d{2,3}$/, '').trim();
-    // Must start with a letter and be at least 2 chars
+    if (SKIP_LINE.test(line)) continue;
+    // Strip inline stage prefix (e.g. "STAGE1 Parasect" → "Parasect")
+    const stripped = line.replace(STAGE_PREFIX, '');
+    // Strip trailing HP digits (e.g. "RevavroomX280" → "RevavroomX")
+    const name = stripped.replace(/\s*\d{2,3}$/, '').trim();
     if (/^[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name) && name.length >= 2) return name;
   }
 
