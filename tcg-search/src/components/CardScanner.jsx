@@ -314,7 +314,7 @@ export default function CardScanner() {
                 : "Couldn't read this card clearly."}
             </p>
             <p style={styles.apologyHint}>Try searching manually:</p>
-            <button onClick={() => navigate(`/${eventId}`, { state: { scrollToSearch: true } })} style={styles.button}>
+            <button onClick={() => navigate(`/${eventId}`, { state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })} style={styles.button}>
               Go to search
             </button>
 
