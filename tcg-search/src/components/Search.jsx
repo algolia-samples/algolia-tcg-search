@@ -67,6 +67,7 @@ export default function Search() {
   // Capture in useState — location.state is wiped by InstantSearch's routing on mount
   const [searchQuery] = useState(location.state?.searchQuery ?? '');
   const [shouldScrollToSearch] = useState(location.state?.scrollToSearch ?? false);
+  const [initialChatMessage] = useState(location.state?.initialChatMessage ?? null);
 
   useEffect(() => {
     if (!shouldScrollToSearch) return;
@@ -153,7 +154,7 @@ export default function Search() {
           </div>
 
           {/* AI Chat Agent */}
-          <ChatAgent agentId={agentId} />
+          <ChatAgent agentId={agentId} initialMessage={initialChatMessage} />
         </InstantSearch>
       </div>
     </div>
