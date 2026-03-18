@@ -333,6 +333,13 @@ em {
   text-align: center;
 }
 
+@media (max-width: 768px) {
+  .no-results {
+    min-height: unset;
+    padding: 1.5rem 1rem;
+  }
+}
+
 .no-results-title {
   font-family: 'Righteous', cursive;
   font-size: 1.5rem;
