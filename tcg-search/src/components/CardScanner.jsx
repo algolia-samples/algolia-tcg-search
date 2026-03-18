@@ -277,7 +277,7 @@ export default function CardScanner() {
         return;
       }
 
-      navigate(`/${eventId}`, { state: { searchQuery: result.query } });
+      navigate(`/${eventId}`, { replace: true, state: { searchQuery: result.query } });
     } catch {
       setSearchFailed(true);
       setStatus('idle');
@@ -326,7 +326,9 @@ export default function CardScanner() {
                 <div className="card-scanner-progress-fill" style={{ width: `${stableProgress}%` }} />
               </div>
             )}
-            <p className="card-scanner-hint">Hold the card steady inside the frame</p>
+            <p className="card-scanner-hint">
+              {videoReady ? 'Hold the card steady inside the frame' : 'Starting camera…'}
+            </p>
 
             <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError || !videoReady}>
               Capture now
