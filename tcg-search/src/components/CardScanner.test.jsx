@@ -133,8 +133,16 @@ describe('CardScanner — mobile', () => {
 
   describe('after capture', () => {
     async function captureCard() {
-      renderScanner();
-      await waitFor(() => screen.getByRole('button', { name: /capture now/i }));
+      const { container } = renderScanner();
+      // Wait for video to mount, then fire loadedmetadata to set videoReady
+      await waitFor(() => container.querySelector('video'));
+      await act(async () => {
+        fireEvent(container.querySelector('video'), new Event('loadedmetadata'));
+      });
+      // Button is now enabled
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /capture now/i })).not.toBeDisabled();
+      });
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /capture now/i }));
       });
