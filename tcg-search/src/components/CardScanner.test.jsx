@@ -94,8 +94,8 @@ describe('CardScanner — desktop', () => {
   });
 
   test('does not render video element', () => {
-    renderScanner();
-    expect(screen.queryByRole('video')).not.toBeInTheDocument();
+    const { container } = renderScanner();
+    expect(container.querySelector('video')).not.toBeInTheDocument();
   });
 });
 

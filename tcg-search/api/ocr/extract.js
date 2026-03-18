@@ -33,8 +33,12 @@ export default async function handler(req, res) {
   }
 
   const { image } = req.body;
-  if (!image) {
+  if (!image || typeof image !== 'string') {
     return res.status(400).json({ error: 'Missing required field: image' });
+  }
+  // ~10MB base64 limit (~7.5MB image) — guard against abuse and unexpected GCV spend
+  if (image.length > 10 * 1024 * 1024 * (4 / 3)) {
+    return res.status(413).json({ error: 'Image too large' });
   }
 
   const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY;

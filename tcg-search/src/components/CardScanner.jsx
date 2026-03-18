@@ -3,6 +3,24 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import { cascadeSearch } from '../utilities/searchCard';
 
+// roundRect polyfill for browsers that don't support it (pre-Chrome 99, pre-Firefox 112)
+function roundRectPath(ctx, x, y, w, h, r) {
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, w, h, r);
+    return;
+  }
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 // Pokemon card aspect ratio: 2.5" x 3.5"
 const CARD_RATIO = 2.5 / 3.5;
 // Guide frame takes up 80% of the viewport width
@@ -173,7 +191,7 @@ export default function CardScanner() {
     ctx.fillRect(0, 0, vw, vh);
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
-    ctx.roundRect(x, y, guideW, guideH, r);
+    roundRectPath(ctx, x, y, guideW, guideH, r);
     ctx.fill();
     ctx.restore();
 
@@ -181,7 +199,7 @@ export default function CardScanner() {
     ctx.strokeStyle = '#d4a017';
     ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.roundRect(x, y, guideW, guideH, r);
+    roundRectPath(ctx, x, y, guideW, guideH, r);
     ctx.stroke();
 
     // Black inner border
@@ -189,7 +207,7 @@ export default function CardScanner() {
     ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.roundRect(x + inset, y + inset, guideW - inset * 2, guideH - inset * 2, Math.max(r - inset, 2));
+    roundRectPath(ctx, x + inset, y + inset, guideW - inset * 2, guideH - inset * 2, Math.max(r - inset, 2));
     ctx.stroke();
 
     // Gold accent line
@@ -197,7 +215,7 @@ export default function CardScanner() {
     ctx.strokeStyle = '#c8991f';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(x + inset2, y + inset2, guideW - inset2 * 2, guideH - inset2 * 2, Math.max(r - inset2, 2));
+    roundRectPath(ctx, x + inset2, y + inset2, guideW - inset2 * 2, guideH - inset2 * 2, Math.max(r - inset2, 2));
     ctx.stroke();
   }
 

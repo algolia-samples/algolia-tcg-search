@@ -11,11 +11,13 @@ export async function cascadeSearch(eventId, { parsedName, parsedNumber }) {
   const { primary } = getIndexNames(eventId);
 
   if (parsedName && parsedNumber) {
+    // Sanitize: card numbers are alphanumeric + slash only (e.g. "25/102", "TG01/TG30")
+    const safeNumber = parsedNumber.replace(/[^A-Za-z0-9/]/g, '');
     const result = await searchClient.searchSingleIndex({
       indexName: primary,
       searchParams: {
         query: parsedName,
-        filters: `number:"${parsedNumber}"`,
+        filters: `number:"${safeNumber}"`,
         hitsPerPage: 5,
       },
     });
