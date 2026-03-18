@@ -11,7 +11,7 @@ export default function Header() {
 
   const scrollToSearch = useCallback(() => {
     if (isOnScanPage) {
-      navigate(`/${eventId}`, { state: { scrollToSearch: true } });
+      navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } });
       return;
     }
     const searchBox = document.querySelector('.ais-SearchBox-input');

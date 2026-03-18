@@ -272,7 +272,7 @@ export default function CardScanner() {
         {!isMobile && (
           <div style={styles.apology}>
             <p style={styles.apologyText}>Card scanning is only available on mobile devices.</p>
-            <button onClick={() => navigate(`/${eventId}`, { state: { scrollToSearch: true } })} style={styles.button}>
+            <button onClick={() => navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } })} style={styles.button}>
               Go to search
             </button>
           </div>
@@ -329,7 +329,7 @@ export default function CardScanner() {
                 : "Couldn't read this card clearly."}
             </p>
             <p style={styles.apologyHint}>Try searching manually:</p>
-            <button onClick={() => navigate(`/${eventId}`, { state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })} style={styles.button}>
+            <button onClick={() => navigate(`/${eventId}`, { replace: true, state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })} style={styles.button}>
               Go to search
             </button>
 
