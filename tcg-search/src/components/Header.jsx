@@ -1,19 +1,25 @@
 import { useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import logo from '../assets/tcg-search-logo.svg';
 
 export default function Header() {
   const navigate = useNavigate();
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const isOnScanPage = pathname.endsWith('/scan');
 
   const scrollToSearch = useCallback(() => {
+    if (isOnScanPage) {
+      navigate(`/${eventId}`, { state: { scrollToSearch: true } });
+      return;
+    }
     const searchBox = document.querySelector('.ais-SearchBox-input');
     if (searchBox) {
       searchBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
       searchBox.focus();
     }
-  }, []);
+  }, [isOnScanPage, navigate, eventId]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
