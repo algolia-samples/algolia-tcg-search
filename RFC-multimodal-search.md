@@ -35,7 +35,7 @@ The constraints:
 
 ### Cons
 - Regex parsing is brittle — OCR noise, unexpected card layouts, non-English sets all cause failures
-- Cascade logic lives in client code and needs maintenance as edge cases surface
+- Cascade logic lives in the client by default, but could be moved server-side (e.g. into the OCR endpoint or a dedicated `/api/search/card` endpoint) to keep the client thin
 - No ability to ask a clarifying question when the scan is ambiguous
 - Apology UX is a dead end (user has to start over manually)
 
