@@ -279,7 +279,7 @@ export default function CardScanner() {
         )}
         {isMobile && cameraError && <p style={styles.error}>{cameraError}</p>}
 
-        {isMobile && !capturedImage ? (
+        {isMobile && !capturedImage && (
           <>
             <div style={styles.videoWrapper}>
               <video ref={videoRef} autoPlay playsInline style={styles.video} />
@@ -297,7 +297,9 @@ export default function CardScanner() {
               Capture now
             </button>
           </>
-        ) : (
+        )}
+
+        {isMobile && capturedImage && (
           <>
             <div style={styles.videoWrapper}>
               <img src={capturedImage} alt="Captured card" style={styles.video} />
