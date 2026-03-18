@@ -68,6 +68,15 @@ export default function Search() {
   const location = useLocation();
   // Capture in useState — location.state is wiped by InstantSearch's routing on mount
   const [searchQuery] = useState(location.state?.searchQuery ?? '');
+  const [scrollToSearch] = useState(location.state?.scrollToSearch ?? false);
+
+  useEffect(() => {
+    if (!scrollToSearch) return;
+    setTimeout(() => {
+      document.querySelector('.ais-SearchBox-input')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, [scrollToSearch]);
 
   // Override mobile browser's default scroll-to-center behavior on input focus
   useEffect(() => {
