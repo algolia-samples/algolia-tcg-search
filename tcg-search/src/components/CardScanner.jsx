@@ -277,7 +277,7 @@ export default function CardScanner() {
         return;
       }
 
-      navigate(`/${eventId}`, { state: { searchQuery: result.query } });
+      navigate(`/${eventId}`, { replace: true, state: { searchQuery: result.query } });
     } catch {
       setSearchFailed(true);
       setStatus('idle');
