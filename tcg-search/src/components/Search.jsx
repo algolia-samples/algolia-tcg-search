@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { searchClient, getIndexNames, userToken, chatAgentId } from '../utilities/algolia';
 import { useEvent } from '../context/EventContext';
 import {
@@ -14,6 +15,7 @@ import {
 import aa from 'search-insights';
 import Header from './Header';
 import Hit from './Hit';
+import CardModal from './CardModal';
 import FilterDropdown from './FilterDropdown';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
@@ -49,6 +51,18 @@ function HitsWithNoResults() {
 
 export default function Search() {
   const { eventConfig, loading, error } = useEvent();
+  const location = useLocation();
+  const [autoOpenHit, setAutoOpenHit] = useState(location.state?.autoOpenHit ?? null);
+  const [autoHitClosing, setAutoHitClosing] = useState(false);
+  const searchQuery = location.state?.searchQuery ?? '';
+
+  function handleAutoHitClose() {
+    setAutoHitClosing(true);
+    setTimeout(() => {
+      setAutoOpenHit(null);
+      setAutoHitClosing(false);
+    }, 250);
+  }
 
   // Override mobile browser's default scroll-to-center behavior on input focus
   useEffect(() => {
@@ -79,6 +93,7 @@ export default function Search() {
           searchClient={searchClient}
           indexName={priceDesc}
           routing={true}
+          initialUiState={searchQuery ? { [priceDesc]: { query: searchQuery } } : undefined}
           insights={{
             insightsClient: aa,
             insightsInitParams: {
@@ -131,6 +146,18 @@ export default function Search() {
           {/* AI Chat Agent */}
           <ChatAgent agentId={agentId} />
         </InstantSearch>
+
+        {autoOpenHit && (
+          <CardModal
+            isOpen={!autoHitClosing}
+            onClose={handleAutoHitClose}
+            hit={autoOpenHit}
+            origin={null}
+            rotation={0}
+            isClosing={autoHitClosing}
+            isClaimed={!autoOpenHit.machine_quantity || autoOpenHit.machine_quantity <= 0}
+          />
+        )}
       </div>
     </div>
   );

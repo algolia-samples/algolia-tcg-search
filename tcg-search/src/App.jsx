@@ -32,7 +32,10 @@ function EventLayout() {
   const { eventId } = useParams();
   return (
     <EventProvider eventId={eventId}>
-      <Search />
+      <Routes>
+        <Route path="scan" element={<CardScanner />} />
+        <Route path="" element={<Search />} />
+      </Routes>
     </EventProvider>
   );
 }
@@ -42,8 +45,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/" element={<CurrentEventRedirect />} />
-        <Route path="/scan" element={<CardScanner />} />
-        <Route path="/:eventId" element={<EventLayout />} />
+        <Route path="/:eventId/*" element={<EventLayout />} />
       </Routes>
     </div>
   );

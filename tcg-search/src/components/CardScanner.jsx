@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import Header from './Header';
+import { cascadeSearch } from '../utilities/searchCard';
 
 // Pokemon card aspect ratio: 2.5" x 3.5"
 const CARD_RATIO = 2.5 / 3.5;
@@ -15,24 +18,29 @@ const STABLE_COUNT_NEEDED = 3;
 const SAMPLE_INTERVAL = 200;
 
 export default function CardScanner() {
+  const { eventId } = useParams();
+  const navigate = useNavigate();
+
   const videoRef = useRef(null);
-  const overlayCanvasRef = useRef(null); // guide rectangle drawn here
-  const captureCanvasRef = useRef(null); // full-res capture
-  const compareCanvasRef = useRef(null); // small canvas for diff
+  const overlayCanvasRef = useRef(null);
+  const captureCanvasRef = useRef(null);
+  const compareCanvasRef = useRef(null);
   const streamRef = useRef(null);
   const prevFrameDataRef = useRef(null);
   const stableCountRef = useRef(0);
   const samplingRef = useRef(null);
-  const capturedRef = useRef(false); // prevent double-capture
+  const capturedRef = useRef(false);
 
   const [capturedImage, setCapturedImage] = useState(null);
-  const [ocrText, setOcrText] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | scanning | searching
+  const [stableProgress, setStableProgress] = useState(0);
+  const [cameraError, setCameraError] = useState(null);
+
+  // Debug info — shown on failure
   const [parsedName, setParsedName] = useState(null);
   const [parsedNumber, setParsedNumber] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [cameraError, setCameraError] = useState(null);
-  const [stableProgress, setStableProgress] = useState(0); // 0-100 for indicator
+  const [ocrText, setOcrText] = useState('');
+  const [searchFailed, setSearchFailed] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -40,7 +48,7 @@ export default function CardScanner() {
   }, []);
 
   useEffect(() => {
-    if (capturedImage) scanCard();
+    if (capturedImage) runScanAndSearch(capturedImage);
   }, [capturedImage]);
 
   async function startCamera() {
@@ -112,7 +120,6 @@ export default function CardScanner() {
 
   function meanAbsDiff(a, b) {
     let sum = 0;
-    // Only sample every 4th pixel (R channel) for speed
     for (let i = 0; i < a.length; i += 16) {
       sum += Math.abs(a[i] - b[i]);
     }
@@ -133,12 +140,11 @@ export default function CardScanner() {
     const guideH = guideW / CARD_RATIO;
     const x = (vw - guideW) / 2;
     const y = (vh - guideH) / 2;
-    const r = guideW * 0.04; // rounded corners matching card ~4% of width
+    const r = guideW * 0.04;
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, vw, vh);
 
-    // Dim everything outside the guide using rounded clip
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(0, 0, vw, vh);
@@ -148,14 +154,12 @@ export default function CardScanner() {
     ctx.fill();
     ctx.restore();
 
-    // Outer gold border (Pokemon card outer rim)
     ctx.strokeStyle = '#d4a017';
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.roundRect(x, y, guideW, guideH, r);
     ctx.stroke();
 
-    // Inner black border
     const inset = 8;
     ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 3;
@@ -163,7 +167,6 @@ export default function CardScanner() {
     ctx.roundRect(x + inset, y + inset, guideW - inset * 2, guideH - inset * 2, Math.max(r - inset, 2));
     ctx.stroke();
 
-    // Inner gold accent line
     const inset2 = 13;
     ctx.strokeStyle = '#c8991f';
     ctx.lineWidth = 1.5;
@@ -186,106 +189,153 @@ export default function CardScanner() {
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
     setCapturedImage(dataUrl);
-    setOcrText('');
-    setError(null);
     stopEverything();
   }
 
-  function retake() {
-    setCapturedImage(null);
-    setOcrText('');
-    setParsedName(null);
-    setParsedNumber(null);
-    setError(null);
-    startCamera();
-  }
+  async function runScanAndSearch(imageDataUrl) {
+    setStatus('scanning');
+    setSearchFailed(false);
 
-  async function scanCard() {
-    if (!capturedImage) return;
-
-    setLoading(true);
-    setError(null);
-    setOcrText('');
+    let name = null;
+    let number = null;
+    let rawText = '';
 
     try {
-      const base64 = capturedImage.split(',')[1];
+      const base64 = imageDataUrl.split(',')[1];
       const response = await fetch('/api/ocr/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64 }),
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'OCR failed');
-      setOcrText(data.text || '(No text detected)');
-      setParsedName(data.parsed_name);
-      setParsedNumber(data.parsed_number);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+
+      name = data.parsed_name;
+      number = data.parsed_number;
+      rawText = data.text ?? '';
+      setParsedName(name);
+      setParsedNumber(number);
+      setOcrText(rawText);
+    } catch {
+      setStatus('idle');
+      setSearchFailed(true);
+      return;
+    }
+
+    setStatus('searching');
+
+    try {
+      const result = await cascadeSearch(eventId, { parsedName: name, parsedNumber: number });
+
+      if (result.strategy === 'none') {
+        setSearchFailed(true);
+        setStatus('idle');
+        return;
+      }
+
+      const state = { searchQuery: result.query };
+      if (result.hits.length === 1 && result.strategy === 'name_number') {
+        state.autoOpenHit = result.hits[0];
+      }
+
+      navigate(`/${eventId}`, { state });
+    } catch {
+      setSearchFailed(true);
+      setStatus('idle');
     }
   }
 
+  function retake() {
+    setCapturedImage(null);
+    setParsedName(null);
+    setParsedNumber(null);
+    setOcrText('');
+    setSearchFailed(false);
+    setStatus('idle');
+    startCamera();
+  }
+
+  const isProcessing = status === 'scanning' || status === 'searching';
+
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>Card Scanner</h1>
+    <div>
+      <Header />
+      <div style={styles.container}>
+        {cameraError && <p style={styles.error}>{cameraError}</p>}
 
-      {cameraError && <p style={styles.error}>{cameraError}</p>}
-
-      {!capturedImage ? (
-        <>
-          <div style={styles.videoWrapper}>
-            <video ref={videoRef} autoPlay playsInline style={styles.video} />
-            <canvas ref={overlayCanvasRef} style={styles.overlay} />
-          </div>
-
-          {stableProgress > 0 && (
-            <div style={styles.progressBar}>
-              <div style={{ ...styles.progressFill, width: `${stableProgress}%` }} />
+        {!capturedImage ? (
+          <>
+            <div style={styles.videoWrapper}>
+              <video ref={videoRef} autoPlay playsInline style={styles.video} />
+              <canvas ref={overlayCanvasRef} style={styles.overlay} />
             </div>
-          )}
-          <p style={styles.hint}>Hold the card steady inside the frame</p>
 
-          <button onClick={capture} disabled={!!cameraError} style={styles.button}>
-            Capture now
-          </button>
-        </>
-      ) : (
-        <>
-          <img src={capturedImage} alt="Captured card" style={styles.video} />
-          <div style={styles.buttonRow}>
-            <button onClick={retake} disabled={loading} style={styles.button}>Retake</button>
-            {loading && <p style={styles.hint}>Scanning…</p>}
+            {stableProgress > 0 && (
+              <div style={styles.progressBar}>
+                <div style={{ ...styles.progressFill, width: `${stableProgress}%` }} />
+              </div>
+            )}
+            <p style={styles.hint}>Hold the card steady inside the frame</p>
+
+            <button onClick={capture} disabled={!!cameraError} style={styles.button}>
+              Capture now
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={styles.videoWrapper}>
+              <img src={capturedImage} alt="Captured card" style={styles.video} />
+              {isProcessing && (
+                <div style={styles.processingOverlay}>
+                  <p style={styles.processingText}>
+                    {status === 'scanning' ? 'Reading card…' : 'Finding card…'}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {!isProcessing && (
+              <button onClick={retake} style={styles.button}>Retake</button>
+            )}
+          </>
+        )}
+
+        <canvas ref={captureCanvasRef} style={{ display: 'none' }} />
+        <canvas ref={compareCanvasRef} width={SAMPLE_W} height={SAMPLE_H} style={{ display: 'none' }} />
+
+        {searchFailed && (
+          <div style={styles.apology}>
+            <p style={styles.apologyText}>
+              {parsedName || parsedNumber
+                ? `Couldn't find "${parsedName || parsedNumber}" in the inventory.`
+                : "Couldn't read this card clearly."}
+            </p>
+            <p style={styles.apologyHint}>Try searching manually:</p>
+            <button onClick={() => navigate(`/${eventId}`)} style={styles.button}>
+              Go to search
+            </button>
+
+            {(parsedName || parsedNumber || ocrText) && (
+              <details style={styles.details}>
+                <summary style={styles.summary}>Debug info</summary>
+                <table style={styles.table}>
+                  <tbody>
+                    <tr>
+                      <td style={styles.label}>Name</td>
+                      <td style={styles.value}>{parsedName ?? '—'}</td>
+                    </tr>
+                    <tr>
+                      <td style={styles.label}>Number</td>
+                      <td style={styles.value}>{parsedNumber ?? '—'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                {ocrText && <pre style={styles.ocrText}>{ocrText}</pre>}
+              </details>
+            )}
           </div>
-        </>
-      )}
-
-      <canvas ref={captureCanvasRef} style={{ display: 'none' }} />
-      <canvas ref={compareCanvasRef} width={SAMPLE_W} height={SAMPLE_H} style={{ display: 'none' }} />
-
-      {error && <p style={styles.error}>Error: {error}</p>}
-
-      {ocrText && (
-        <div style={styles.results}>
-          <table style={styles.table}>
-            <tbody>
-              <tr>
-                <td style={styles.label}>Name</td>
-                <td style={styles.value}>{parsedName ?? '—'}</td>
-              </tr>
-              <tr>
-                <td style={styles.label}>Number</td>
-                <td style={styles.value}>{parsedNumber ?? '—'}</td>
-              </tr>
-            </tbody>
-          </table>
-          <details style={styles.details}>
-            <summary style={styles.summary}>Raw OCR text</summary>
-            <pre style={styles.ocrText}>{ocrText}</pre>
-          </details>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -296,10 +346,6 @@ const styles = {
     margin: '0 auto',
     padding: '1rem',
     fontFamily: 'sans-serif',
-  },
-  title: {
-    fontSize: '1.5rem',
-    marginBottom: '1rem',
   },
   videoWrapper: {
     position: 'relative',
@@ -319,6 +365,19 @@ const styles = {
     width: '100%',
     height: '100%',
     pointerEvents: 'none',
+  },
+  processingOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(0,0,0,0.55)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  processingText: {
+    color: '#fff',
+    fontSize: '1.1rem',
+    fontWeight: 600,
   },
   progressBar: {
     marginTop: '0.5rem',
@@ -348,29 +407,41 @@ const styles = {
     border: 'none',
     background: '#3b82f6',
     color: '#fff',
-  },
-  buttonRow: {
-    display: 'flex',
-    gap: '0.75rem',
+    display: 'block',
   },
   error: {
     color: '#ef4444',
     marginTop: '0.5rem',
   },
-  results: {
+  apology: {
     marginTop: '1.5rem',
     padding: '1rem',
-    background: '#f1f5f9',
+    background: '#fef2f2',
     borderRadius: 8,
+    borderLeft: '4px solid #ef4444',
   },
-  resultsTitle: {
-    fontSize: '1rem',
-    marginBottom: '0.5rem',
+  apologyText: {
+    margin: '0 0 0.25rem',
+    fontWeight: 600,
+    color: '#b91c1c',
+  },
+  apologyHint: {
+    margin: '0 0 0.25rem',
+    fontSize: '0.9rem',
+    color: '#64748b',
+  },
+  details: {
+    marginTop: '1rem',
+  },
+  summary: {
+    fontSize: '0.8rem',
+    color: '#94a3b8',
+    cursor: 'pointer',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    marginBottom: '0.75rem',
+    margin: '0.5rem 0',
   },
   label: {
     fontWeight: 600,
@@ -381,16 +452,8 @@ const styles = {
     whiteSpace: 'nowrap',
   },
   value: {
-    fontSize: '1rem',
+    fontSize: '0.9rem',
     paddingBottom: '0.25rem',
-  },
-  details: {
-    marginTop: '0.5rem',
-  },
-  summary: {
-    fontSize: '0.8rem',
-    color: '#94a3b8',
-    cursor: 'pointer',
   },
   ocrText: {
     whiteSpace: 'pre-wrap',
