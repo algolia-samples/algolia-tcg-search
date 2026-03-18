@@ -53,7 +53,6 @@ export default function CardScanner() {
   const capturedRef = useRef(false);
 
   const [capturedImage, setCapturedImage] = useState(null);
-  const [videoReady, setVideoReady] = useState(false);
   const [status, setStatus] = useState('idle'); // idle | scanning | searching
   const [stableProgress, setStableProgress] = useState(0);
   const [cameraError, setCameraError] = useState(null);
@@ -84,7 +83,6 @@ export default function CardScanner() {
 
   async function startCamera() {
     setCameraError(null);
-    setVideoReady(false);
     capturedRef.current = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -94,7 +92,6 @@ export default function CardScanner() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          setVideoReady(true);
           drawGuide();
           startSampling();
           // Redraw guide on resize/orientation change
