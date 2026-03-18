@@ -2,11 +2,11 @@
 
 ## The Problem
 
-I built a Pokemon card scanner that uses Google Cloud Vision OCR to read text off a physical card. The natural next step was to pass that OCR text directly to an Algolia AI Agent — already configured with search tools — rather than maintaining a brittle regex parser and a waterfall of fallback searches.
+I built a Pokemon card scanner that uses Google Cloud Vision OCR to read text off a physical card. The initial implementation used regex to extract the card name and number, then ran a waterfall of Algolia searches until it found a match. It worked, but the parsing logic was fragile — OCR noise, unusual card layouts, and edge cases meant constant maintenance.
 
-The plan felt straightforward: when the scan completes, open the chat widget and auto-send a prompt containing the OCR text. The agent handles parsing, searching, and fallbacks conversationally.
+The app already had an Algolia AI Agent configured with search tools, so the cleaner approach seemed obvious: skip the regex entirely and pass the raw OCR text straight to the agent. Let it handle parsing, searching, and fallbacks conversationally.
 
-Then I hit a wall. **The `<Chat>` component from `react-instantsearch` has no documented API for this.** There's no `initialMessage`, `defaultValue`, or `autoSubmit` prop. The docs don't cover it. I was going to have to dig.
+The plan was simple — open the chat widget after the scan and auto-send a prompt with the OCR text. But I hit a wall immediately. **The `<Chat>` component from `react-instantsearch` has no documented API for this.** There's no `initialMessage`, `defaultValue`, or `autoSubmit` prop, and the docs don't cover it. I was going to have to dig.
 
 ## What I Investigated
 
