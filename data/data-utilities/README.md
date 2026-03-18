@@ -2,6 +2,8 @@
 
 Scripts for managing Algolia indices and card data across multiple TCG events.
 
+For end-to-end event setup, re-ingestion, and switching the active event, see the [Event Management](../../README.md#event-management) section in the root README.
+
 ## Prerequisites
 
 Install dependencies and configure credentials:
@@ -21,85 +23,22 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 
 ---
 
-## Event Management
+## Scripts
 
-### Setting Up a New Event
+| Script | Description |
+|---|---|
+| `reset_and_ingest.sh` | Re-ingest card data for an existing event (clear + ingest + enrich) |
+| `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events` |
+| `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
+| `ingest.py` | Reads CSVs, enriches via TCGdex API, uploads records to Algolia |
+| `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
+| `clear_index.py` | Wipes all records from the index (preserves settings) |
+| `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
+| `validate_csv.py` | Validates CSV files against the expected column schema |
 
-Use `setup_event.sh` to bootstrap a new event end-to-end:
+### Running Scripts Directly
 
-```bash
-./setup_event.sh <event_id> <event_name> <booth> [venue]
-
-# Example:
-./setup_event.sh etail-palm-springs-2026 "eTail Palm Springs 2026" 701 "JW Marriott Desert Springs Resort"
-```
-
-The script runs five steps:
-
-**Step 1 — Create indices and event record** (`create_event.py`)
-
-Creates the primary card index `tcg_cards_{event_id}` and two virtual replica indices
-(`_price_asc`, `_price_desc`) in Algolia, applies settings from `algolia-config.json`
-to the primary (replicas inherit automatically), and inserts a record into `tcg_events`
-with `current: false`.
-
-**Step 2 — Activate the event** (`set_active_event.py`)
-
-Sets the new event to `current: true` in `tcg_events`, clearing `current` from any
-previously active event. The frontend reads this to determine which event to display.
-
-**Step 3 — Clear the index** (`clear_index.py`)
-
-Wipes any existing card records from `tcg_cards_{event_id}`. Preserves index settings.
-(Useful when re-running setup after a partial failure.)
-
-**Step 4 — Ingest card data** (`ingest.py`)
-
-Reads all CSV files from `data-files/{event_id}/`, enriches each card with image URLs and type data
-from the TCGdex API, and uploads records to `tcg_cards_{event_id}`.
-
-> If no CSVs are found, setup exits cleanly with instructions to add files and run
-> `reset_and_ingest.sh` when ready.
-
-**Step 5 — Enrich chase cards** (`enrich_chase_cards.py`)
-
-Reads the master XLSX spreadsheet to identify chase cards, then applies partial updates
-to the correct records already in Algolia.
-
----
-
-### Re-ingesting an Existing Event
-
-When card CSVs change but the event already exists, use `reset_and_ingest.sh` to
-re-run Steps 3–5 without recreating indices or touching the events record:
-
-```bash
-./reset_and_ingest.sh <event_id>
-
-# Example:
-./reset_and_ingest.sh etail-palm-springs-2026
-```
-
----
-
-### Switching the Active Event
-
-To make a different (already set-up) event the active one:
-
-```bash
-poetry run python set_active_event.py list          # see all events
-poetry run python set_active_event.py set <event_id>
-```
-
-This is a safe, non-destructive operation — it only updates the `current` field in
-`tcg_events`. The frontend will redirect to the new event on next load.
-
----
-
-### Running Individual Scripts
-
-All scripts read `ALGOLIA_EVENT_ID` from `data/.env` to determine which index to target.
-Set it before running scripts directly:
+All scripts read `ALGOLIA_EVENT_ID` from `data/.env` to determine which index to target. Set it before running scripts directly:
 
 ```bash
 # In data/.env:
@@ -110,9 +49,7 @@ ALGOLIA_EVENT_ID=etail-palm-springs-2026
 
 ## CSV Format
 
-Place CSV files in `data-files/{event_id}/` — each event has its own subdirectory.
-Files are exported from the master spreadsheet
-(`data-files/{event_id}/TCG Search Website - Raw List.xlsx`).
+Place CSV files in `data-files/{event_id}/` — each event has its own subdirectory. Files are exported from the master spreadsheet (`data-files/{event_id}/TCG Search Website - Raw List.xlsx`).
 
 ### Filename Convention
 
@@ -124,8 +61,7 @@ Examples:
 - `TCG Search Website - Raw List - Scarlet & Violet_ Surging Sparks (191).csv`
 - `TCG Search Website - Raw List - Mega Evolution (132).csv`
 
-The set name is parsed from the filename — underscores are converted to `: `
-(e.g., `Scarlet & Violet_` → `Scarlet & Violet:`).
+The set name is parsed from the filename — underscores are converted to `: ` (e.g., `Scarlet & Violet_` → `Scarlet & Violet:`).
 
 ### Required Columns
 
@@ -178,26 +114,7 @@ Each card record uploaded to Algolia contains:
 
 ## Algolia Index Settings
 
-Index configuration (searchable attributes, facets, ranking, etc.) is defined in
-[`data/algolia-config.json`](../algolia-config.json). `create_event.py` applies this
-to the primary index when scaffolding a new event; virtual replicas inherit it
-automatically. To reapply settings to an existing index manually, use `configure_index.py`.
-
----
-
-## Utilities
-
-| Script | Description |
-|---|---|
-| `setup_event.sh` | **End-to-end new event setup** — creates indices, activates event, ingests data |
-| `reset_and_ingest.sh` | Re-ingest card data for an existing event (Steps 3–5 of setup) |
-| `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events` |
-| `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
-| `ingest.py` | Reads CSVs, enriches via TCGdex API, uploads records to Algolia |
-| `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
-| `clear_index.py` | Wipes all records from the index (preserves settings) |
-| `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
-| `validate_csv.py` | Validates CSV files against the expected column schema |
+Index configuration (searchable attributes, facets, ranking, etc.) is defined in [`data/algolia-config.json`](../algolia-config.json). `create_event.py` applies this to the primary index when scaffolding a new event; virtual replicas inherit it automatically. To reapply settings to an existing index manually, use `configure_index.py`.
 
 ---
 

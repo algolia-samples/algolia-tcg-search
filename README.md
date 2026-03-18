@@ -88,15 +88,89 @@ SUPABASE_SECRET_KEY=your_secret_key  # server-side only, not exposed to browser
 ALGOLIA_WRITE_API_KEY=your_write_key  # server-side only, used by claims API
 ```
 
-## Data Pipeline
+## Event Management
 
-Card inventory is managed via CSV exports from the master spreadsheet, ingested into Algolia via Python scripts in `data/data-utilities/`.
+Card inventory is managed via CSV exports from the master spreadsheet, ingested into Algolia via Python scripts in `data/data-utilities/`. See [`data/data-utilities/README.md`](data/data-utilities/README.md) for details on individual scripts, CSV format, and output schema.
 
-See [`data/data-utilities/README.md`](data/data-utilities/README.md) for full details on CSV format, column definitions, and output schema.
+### Prerequisites
 
-**Quick reference — CSV columns:** `Pokemon Name`, `Number`, `Card Type`, `# in Machine`, `Estimated Value`, `Is Chase Card?`, `Is top 10 chase card?`, `Is classic Pokemon?`, `Is Full Art?`
+Install Python dependencies and configure credentials:
 
-**Filename convention:** `TCG Search Website - Raw List - {Set Name} ({Count}).csv`
+```bash
+cd data/data-utilities
+poetry install
+```
+
+Create `data/.env` from `data/.env.example`:
+
+```
+ALGOLIA_APP_ID=your-app-id
+ALGOLIA_API_KEY=your-admin-api-key
+ALGOLIA_EVENTS_INDEX=tcg_events
+ALGOLIA_EVENT_ID=my-event-2026  # only needed when running scripts directly
+```
+
+### Setting Up a New Event
+
+Run `setup_event.sh` from the repo root to bootstrap a new event end-to-end:
+
+```bash
+./setup_event.sh <event_id> <event_name> <booth> [venue] [--no-activate]
+
+# Example:
+./setup_event.sh etail-palm-springs-2026 "eTail Palm Springs 2026" 701 "JW Marriott Desert Springs Resort"
+```
+
+The script runs six steps:
+
+**Step 1 — Create indices and event record** (`create_event.py`)
+
+Creates the primary card index `tcg_cards_{event_id}` and two virtual replica indices (`_price_asc`, `_price_desc`) in Algolia, applies settings from `algolia-config.json` to the primary (replicas inherit automatically), and inserts a record into `tcg_events` with `current: false`.
+
+**Step 2 — Clear the index** (`clear_index.py`)
+
+Wipes any existing card records from `tcg_cards_{event_id}`. Preserves index settings. (Useful when re-running setup after a partial failure.)
+
+**Step 3 — Ingest card data** (`ingest.py`)
+
+Reads all CSV files from `data/data-files/{event_id}/`, enriches each card with image URLs and type data from the TCGdex API, and uploads records to `tcg_cards_{event_id}`.
+
+> If no CSVs are found, setup exits cleanly with instructions to add files and run `reset_and_ingest.sh` when ready.
+
+**Step 4 — Enrich chase cards** (`enrich_chase_cards.py`)
+
+Reads the master XLSX spreadsheet to identify chase cards, then applies partial updates to the correct records already in Algolia. Skipped if no XLSX is present.
+
+**Step 5 — Create Agent Studio agent** (`agent/agent.py`)
+
+Creates an Algolia Agent Studio agent configured for the new event.
+
+**Step 6 — Activate the event** (`set_active_event.py`)
+
+Sets the new event to `current: true` in `tcg_events`, clearing `current` from any previously active event. The frontend reads this to determine which event to display. Pass `--no-activate` to skip this step and activate manually later.
+
+### Re-ingesting an Existing Event
+
+When card CSVs change but the event already exists, use `reset_and_ingest.sh` to re-run Steps 2–4 without recreating indices or touching the events record:
+
+```bash
+data/data-utilities/reset_and_ingest.sh <event_id>
+
+# Example:
+data/data-utilities/reset_and_ingest.sh etail-palm-springs-2026
+```
+
+### Switching the Active Event
+
+To make a different (already set-up) event the active one:
+
+```bash
+cd data/data-utilities
+poetry run python set_active_event.py list          # see all events
+poetry run python set_active_event.py set <event_id>
+```
+
+This is a safe, non-destructive operation — it only updates the `current` field in `tcg_events`. The frontend will redirect to the new event on next load.
 
 ## Testing
 
