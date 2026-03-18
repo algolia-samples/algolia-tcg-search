@@ -44,7 +44,7 @@ export default function Header() {
       </div>
       <div className="header-buttons">
         <button
-          className="header-search-button"
+          className="header-search-button header-scan-button"
           onClick={() => navigate({ pathname: `/${eventId}/scan`, search: searchParams.toString() ? `?${searchParams.toString()}` : '' })}
           aria-label="Scan a card"
           title="Scan a card"

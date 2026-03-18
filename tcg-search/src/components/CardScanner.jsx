@@ -44,10 +44,13 @@ export default function CardScanner() {
   const [ocrText, setOcrText] = useState('');
   const [searchFailed, setSearchFailed] = useState(false);
 
+  const isMobile = window.matchMedia('(pointer: coarse)').matches;
+
   useEffect(() => {
+    if (!isMobile) return;
     startCamera();
     return () => stopEverything();
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (capturedImage) runScanAndSearch(capturedImage);
@@ -266,9 +269,17 @@ export default function CardScanner() {
     <div>
       <Header />
       <div style={styles.container}>
-        {cameraError && <p style={styles.error}>{cameraError}</p>}
+        {!isMobile && (
+          <div style={styles.apology}>
+            <p style={styles.apologyText}>Card scanning is only available on mobile devices.</p>
+            <button onClick={() => navigate(`/${eventId}`, { state: { scrollToSearch: true } })} style={styles.button}>
+              Go to search
+            </button>
+          </div>
+        )}
+        {isMobile && cameraError && <p style={styles.error}>{cameraError}</p>}
 
-        {!capturedImage ? (
+        {isMobile && !capturedImage ? (
           <>
             <div style={styles.videoWrapper}>
               <video ref={videoRef} autoPlay playsInline style={styles.video} />
