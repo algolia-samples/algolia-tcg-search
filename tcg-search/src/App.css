@@ -2615,13 +2615,3 @@ button.carousel-nav-right {
   transition: width 0.3s ease;
 }
 
-/* Truncate user messages to a single line so the raw OCR dump from card
-   scans doesn't dominate the chat. Follow-up typed queries are typically
-   short enough to fit on one line anyway. */
-.ais-ChatMessage--right .ais-ChatMessage-message {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
