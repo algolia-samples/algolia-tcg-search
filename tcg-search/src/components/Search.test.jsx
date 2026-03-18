@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useEvent } from '../context/EventContext';
 import Search from './Search';
 
@@ -31,6 +32,7 @@ vi.mock('react-instantsearch', () => ({
   SearchBox: () => null,
   SortBy: () => null,
   useHits: () => ({ results: { hits: [] } }),
+  useSearchBox: () => ({ refine: vi.fn() }),
 }));
 
 vi.mock('search-insights', () => ({ default: vi.fn() }));
@@ -51,7 +53,7 @@ describe('Search — agentId derivation', () => {
       error: null,
     });
 
-    render(<Search />);
+    render(<MemoryRouter initialEntries={['/test-event']}><Routes><Route path="/:eventId" element={<Search />} /></Routes></MemoryRouter>);
     expect(screen.getByTestId('chat-agent')).toHaveAttribute('data-agent-id', 'event-specific-agent');
   });
 
@@ -62,7 +64,7 @@ describe('Search — agentId derivation', () => {
       error: null,
     });
 
-    render(<Search />);
+    render(<MemoryRouter initialEntries={['/test-event']}><Routes><Route path="/:eventId" element={<Search />} /></Routes></MemoryRouter>);
     expect(screen.getByTestId('chat-agent')).toHaveAttribute('data-agent-id', FALLBACK_AGENT_ID);
   });
 });

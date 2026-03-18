@@ -1,4 +1,4 @@
-function parseCardNumber(text) {
+export function parseCardNumber(text) {
   // Support standard (156/167) and trainer gallery (TG01/TG30) formats
   // No word boundaries — number is often embedded in surrounding digits
   // Take the last match since the card number is printed at the bottom
@@ -11,7 +11,7 @@ const STAGE_PREFIX = /^(basic|stage\s*\d*|vmax|vstar|v\b|tag\s*team)\s*/i;
 // Lines to skip entirely
 const SKIP_LINE = /^(evolves from|ability|retreat|weakness|resistance)/i;
 
-function parsePokemonName(text) {
+export function parsePokemonName(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
   for (const line of lines) {
