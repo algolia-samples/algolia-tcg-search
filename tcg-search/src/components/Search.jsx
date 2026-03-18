@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { searchClient, getIndexNames, userToken, chatAgentId } from '../utilities/algolia';
 import { useEvent } from '../context/EventContext';
+import { scrollToSearchBox } from '../utilities/dom';
 import {
   Configure,
   Hits,
@@ -30,10 +31,7 @@ function ScanQuerySetter({ query }) {
   useEffect(() => {
     if (!query) return;
     refine(query);
-    setTimeout(() => {
-      const el = document.querySelector('.ais-SearchBox-input');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    scrollToSearchBox();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
@@ -68,15 +66,12 @@ export default function Search() {
   const location = useLocation();
   // Capture in useState — location.state is wiped by InstantSearch's routing on mount
   const [searchQuery] = useState(location.state?.searchQuery ?? '');
-  const [scrollToSearch] = useState(location.state?.scrollToSearch ?? false);
+  const [shouldScrollToSearch] = useState(location.state?.scrollToSearch ?? false);
 
   useEffect(() => {
-    if (!scrollToSearch) return;
-    setTimeout(() => {
-      document.querySelector('.ais-SearchBox-input')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  }, [scrollToSearch]);
+    if (!shouldScrollToSearch) return;
+    scrollToSearchBox();
+  }, [shouldScrollToSearch]);
 
   // Override mobile browser's default scroll-to-center behavior on input focus
   useEffect(() => {

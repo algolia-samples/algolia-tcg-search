@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import { cascadeSearch } from '../utilities/searchCard';
@@ -22,6 +22,7 @@ export default function CardScanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isDebug = searchParams.get('debug') === 'true';
+  const isMobile = useMemo(() => window.matchMedia('(pointer: coarse)').matches, []);
 
   const videoRef = useRef(null);
   const overlayCanvasRef = useRef(null);
@@ -38,23 +39,21 @@ export default function CardScanner() {
   const [stableProgress, setStableProgress] = useState(0);
   const [cameraError, setCameraError] = useState(null);
 
-  // Debug info — shown on failure
+  // Only used for debug display on failure
   const [parsedName, setParsedName] = useState(null);
   const [parsedNumber, setParsedNumber] = useState(null);
   const [ocrText, setOcrText] = useState('');
   const [searchFailed, setSearchFailed] = useState(false);
 
-  const isMobile = window.matchMedia('(pointer: coarse)').matches;
-
   useEffect(() => {
     if (!isMobile) return;
     startCamera();
     return () => stopEverything();
-  }, [isMobile]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (capturedImage) runScanAndSearch(capturedImage);
-  }, [capturedImage]);
+  }, [capturedImage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!searchFailed) return;
@@ -77,6 +76,10 @@ export default function CardScanner() {
         videoRef.current.onloadedmetadata = () => {
           drawGuide();
           startSampling();
+          // Redraw guide on resize/orientation change
+          const observer = new ResizeObserver(drawGuide);
+          observer.observe(videoRef.current);
+          videoRef.current._resizeObserver = observer;
         };
       }
     } catch {
@@ -86,6 +89,9 @@ export default function CardScanner() {
 
   function stopEverything() {
     stopSampling();
+    if (videoRef.current?._resizeObserver) {
+      videoRef.current._resizeObserver.disconnect();
+    }
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
   }
@@ -117,14 +123,15 @@ export default function CardScanner() {
       const diff = meanAbsDiff(prevFrameDataRef.current, current);
       if (diff < STABLE_THRESHOLD) {
         stableCountRef.current += 1;
-        setStableProgress(Math.min(100, (stableCountRef.current / STABLE_COUNT_NEEDED) * 100));
+        const next = Math.min(100, (stableCountRef.current / STABLE_COUNT_NEEDED) * 100);
+        setStableProgress(prev => prev === next ? prev : next);
         if (stableCountRef.current >= STABLE_COUNT_NEEDED && !capturedRef.current) {
           capturedRef.current = true;
           capture();
         }
       } else {
         stableCountRef.current = 0;
-        setStableProgress(0);
+        setStableProgress(prev => prev === 0 ? prev : 0);
       }
     }
 
@@ -133,6 +140,7 @@ export default function CardScanner() {
 
   function meanAbsDiff(a, b) {
     let sum = 0;
+    // Sample every 4th pixel (R channel only) for performance
     for (let i = 0; i < a.length; i += 16) {
       sum += Math.abs(a[i] - b[i]);
     }
@@ -146,6 +154,7 @@ export default function CardScanner() {
 
     const vw = video.clientWidth;
     const vh = video.clientHeight;
+    if (!vw || !vh) return;
     canvas.width = vw;
     canvas.height = vh;
 
@@ -158,6 +167,7 @@ export default function CardScanner() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, vw, vh);
 
+    // Dim area outside the guide
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(0, 0, vw, vh);
@@ -167,12 +177,14 @@ export default function CardScanner() {
     ctx.fill();
     ctx.restore();
 
+    // Gold outer border
     ctx.strokeStyle = '#d4a017';
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.roundRect(x, y, guideW, guideH, r);
     ctx.stroke();
 
+    // Black inner border
     const inset = 8;
     ctx.strokeStyle = '#1a1a1a';
     ctx.lineWidth = 3;
@@ -180,6 +192,7 @@ export default function CardScanner() {
     ctx.roundRect(x + inset, y + inset, guideW - inset * 2, guideH - inset * 2, Math.max(r - inset, 2));
     ctx.stroke();
 
+    // Gold accent line
     const inset2 = 13;
     ctx.strokeStyle = '#c8991f';
     ctx.lineWidth = 1.5;
@@ -200,8 +213,7 @@ export default function CardScanner() {
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    setCapturedImage(dataUrl);
+    setCapturedImage(canvas.toDataURL('image/jpeg', 0.8));
     stopEverything();
   }
 
@@ -211,7 +223,6 @@ export default function CardScanner() {
 
     let name = null;
     let number = null;
-    let rawText = '';
 
     try {
       const base64 = imageDataUrl.split(',')[1];
@@ -225,10 +236,9 @@ export default function CardScanner() {
 
       name = data.parsed_name;
       number = data.parsed_number;
-      rawText = data.text ?? '';
       setParsedName(name);
       setParsedNumber(number);
-      setOcrText(rawText);
+      setOcrText(data.text ?? '');
     } catch {
       setStatus('idle');
       setSearchFailed(true);
@@ -268,32 +278,36 @@ export default function CardScanner() {
   return (
     <div>
       <Header />
-      <div style={styles.container}>
+      <div className="card-scanner">
         {!isMobile && (
-          <div style={styles.apology}>
-            <p style={styles.apologyText}>Card scanning is only available on mobile devices.</p>
-            <button onClick={() => navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } })} style={styles.button}>
+          <div className="card-scanner-apology">
+            <p className="card-scanner-apology-title">Card scanning is only available on mobile devices.</p>
+            <button
+              className="card-scanner-btn"
+              onClick={() => navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } })}
+            >
               Go to search
             </button>
           </div>
         )}
-        {isMobile && cameraError && <p style={styles.error}>{cameraError}</p>}
+
+        {isMobile && cameraError && <p className="card-scanner-error">{cameraError}</p>}
 
         {isMobile && !capturedImage && (
           <>
-            <div style={styles.videoWrapper}>
-              <video ref={videoRef} autoPlay playsInline style={styles.video} />
-              <canvas ref={overlayCanvasRef} style={styles.overlay} />
+            <div className="card-scanner-video-wrapper">
+              <video ref={videoRef} autoPlay playsInline className="card-scanner-video" />
+              <canvas ref={overlayCanvasRef} className="card-scanner-overlay" />
             </div>
 
             {stableProgress > 0 && (
-              <div style={styles.progressBar}>
-                <div style={{ ...styles.progressFill, width: `${stableProgress}%` }} />
+              <div className="card-scanner-progress-bar">
+                <div className="card-scanner-progress-fill" style={{ width: `${stableProgress}%` }} />
               </div>
             )}
-            <p style={styles.hint}>Hold the card steady inside the frame</p>
+            <p className="card-scanner-hint">Hold the card steady inside the frame</p>
 
-            <button onClick={capture} disabled={!!cameraError} style={styles.button}>
+            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError}>
               Capture now
             </button>
           </>
@@ -301,11 +315,11 @@ export default function CardScanner() {
 
         {isMobile && capturedImage && (
           <>
-            <div style={styles.videoWrapper}>
-              <img src={capturedImage} alt="Captured card" style={styles.video} />
+            <div className="card-scanner-video-wrapper">
+              <img src={capturedImage} alt="Captured card" className="card-scanner-video" />
               {isProcessing && (
-                <div style={styles.processingOverlay}>
-                  <p style={styles.processingText}>
+                <div className="card-scanner-processing-overlay">
+                  <p className="card-scanner-processing-text">
                     {status === 'scanning' ? 'Reading card…' : 'Finding card…'}
                   </p>
                 </div>
@@ -313,42 +327,45 @@ export default function CardScanner() {
             </div>
 
             {!isProcessing && (
-              <button onClick={retake} style={styles.button}>Retake</button>
+              <button className="card-scanner-btn" onClick={retake}>Retake</button>
             )}
           </>
         )}
 
-        <canvas ref={captureCanvasRef} style={{ display: 'none' }} />
-        <canvas ref={compareCanvasRef} width={SAMPLE_W} height={SAMPLE_H} style={{ display: 'none' }} />
+        <canvas ref={captureCanvasRef} hidden />
+        <canvas ref={compareCanvasRef} width={SAMPLE_W} height={SAMPLE_H} hidden />
 
         {searchFailed && (
-          <div style={styles.apology} data-scan-apology>
-            <p style={styles.apologyText}>
+          <div className="card-scanner-apology" data-scan-apology>
+            <p className="card-scanner-apology-title">
               {parsedName || parsedNumber
                 ? `Couldn't find "${parsedName || parsedNumber}" in the inventory.`
                 : "Couldn't read this card clearly."}
             </p>
-            <p style={styles.apologyHint}>Try searching manually:</p>
-            <button onClick={() => navigate(`/${eventId}`, { replace: true, state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })} style={styles.button}>
+            <p className="card-scanner-apology-hint">Try searching manually:</p>
+            <button
+              className="card-scanner-btn"
+              onClick={() => navigate(`/${eventId}`, { replace: true, state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })}
+            >
               Go to search
             </button>
 
             {isDebug && (parsedName || parsedNumber || ocrText) && (
-              <details style={styles.details}>
-                <summary style={styles.summary}>Debug info</summary>
-                <table style={styles.table}>
+              <details className="card-scanner-debug">
+                <summary>Debug info</summary>
+                <table className="card-scanner-debug-table">
                   <tbody>
                     <tr>
-                      <td style={styles.label}>Name</td>
-                      <td style={styles.value}>{parsedName ?? '—'}</td>
+                      <td className="card-scanner-debug-label">Name</td>
+                      <td className="card-scanner-debug-value">{parsedName ?? '—'}</td>
                     </tr>
                     <tr>
-                      <td style={styles.label}>Number</td>
-                      <td style={styles.value}>{parsedNumber ?? '—'}</td>
+                      <td className="card-scanner-debug-label">Number</td>
+                      <td className="card-scanner-debug-value">{parsedNumber ?? '—'}</td>
                     </tr>
                   </tbody>
                 </table>
-                {ocrText && <pre style={styles.ocrText}>{ocrText}</pre>}
+                {ocrText && <pre className="card-scanner-ocr-text">{ocrText}</pre>}
               </details>
             )}
           </div>
@@ -357,127 +374,3 @@ export default function CardScanner() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: 600,
-    margin: '0 auto',
-    padding: '1rem',
-    fontFamily: 'sans-serif',
-  },
-  videoWrapper: {
-    position: 'relative',
-    width: '100%',
-    borderRadius: 8,
-    overflow: 'hidden',
-    background: '#000',
-  },
-  video: {
-    width: '100%',
-    display: 'block',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none',
-  },
-  processingOverlay: {
-    position: 'absolute',
-    inset: 0,
-    background: 'rgba(0,0,0,0.55)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  processingText: {
-    color: '#fff',
-    fontSize: '1.1rem',
-    fontWeight: 600,
-  },
-  progressBar: {
-    marginTop: '0.5rem',
-    height: 4,
-    background: '#e2e8f0',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    background: '#22c55e',
-    borderRadius: 2,
-    transition: 'width 0.2s ease',
-  },
-  hint: {
-    textAlign: 'center',
-    fontSize: '0.85rem',
-    color: '#64748b',
-    margin: '0.4rem 0 0',
-  },
-  button: {
-    marginTop: '0.75rem',
-    padding: '0.6rem 1.4rem',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    borderRadius: 6,
-    border: 'none',
-    background: '#3b82f6',
-    color: '#fff',
-    display: 'block',
-  },
-  error: {
-    color: '#ef4444',
-    marginTop: '0.5rem',
-  },
-  apology: {
-    marginTop: '1.5rem',
-    padding: '1rem',
-    background: '#fef2f2',
-    borderRadius: 8,
-    borderLeft: '4px solid #ef4444',
-  },
-  apologyText: {
-    margin: '0 0 0.25rem',
-    fontWeight: 600,
-    color: '#b91c1c',
-  },
-  apologyHint: {
-    margin: '0 0 0.25rem',
-    fontSize: '0.9rem',
-    color: '#64748b',
-  },
-  details: {
-    marginTop: '1rem',
-  },
-  summary: {
-    fontSize: '0.8rem',
-    color: '#94a3b8',
-    cursor: 'pointer',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    margin: '0.5rem 0',
-  },
-  label: {
-    fontWeight: 600,
-    fontSize: '0.85rem',
-    color: '#64748b',
-    paddingRight: '1rem',
-    paddingBottom: '0.25rem',
-    whiteSpace: 'nowrap',
-  },
-  value: {
-    fontSize: '0.9rem',
-    paddingBottom: '0.25rem',
-  },
-  ocrText: {
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    fontSize: '0.75rem',
-    margin: '0.5rem 0 0',
-    color: '#475569',
-  },
-};
