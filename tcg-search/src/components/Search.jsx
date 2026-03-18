@@ -10,7 +10,8 @@ import {
   PoweredBy,
   SearchBox,
   SortBy,
-  useHits
+  useHits,
+  useSearchBox,
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import Header from './Header';
@@ -23,6 +24,20 @@ import ChatAgent from './ChatAgent';
 
 // Set user token for insights
 aa('setUserToken', userToken);
+
+// Sits inside InstantSearch — sets the query and scrolls to results on mount
+function ScanQuerySetter({ query }) {
+  const { refine } = useSearchBox();
+  useEffect(() => {
+    if (!query) return;
+    refine(query);
+    setTimeout(() => {
+      const el = document.querySelector('.ais-SearchBox-input');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
 
 function HitsWithNoResults() {
   const { results } = useHits();
@@ -54,7 +69,8 @@ export default function Search() {
   const location = useLocation();
   const [autoOpenHit, setAutoOpenHit] = useState(location.state?.autoOpenHit ?? null);
   const [autoHitClosing, setAutoHitClosing] = useState(false);
-  const searchQuery = location.state?.searchQuery ?? '';
+  // Capture in useState — location.state is wiped by InstantSearch's routing on mount
+  const [searchQuery] = useState(location.state?.searchQuery ?? '');
 
   function handleAutoHitClose() {
     setAutoHitClosing(true);
@@ -79,13 +95,6 @@ export default function Search() {
     return () => document.removeEventListener('focus', handleFocus, true);
   }, []);
 
-  // Scroll to search results when arriving from the card scanner
-  useEffect(() => {
-    if (!searchQuery) return;
-    const el = document.querySelector('.search-header');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [searchQuery]);
-
   if (loading) return <div className="event-loading">Loading event…</div>;
   if (error || !eventConfig) return <div className="event-error">Event not found.</div>;
 
@@ -100,7 +109,6 @@ export default function Search() {
           searchClient={searchClient}
           indexName={priceDesc}
           routing={true}
-          initialUiState={searchQuery ? { [priceDesc]: { query: searchQuery } } : undefined}
           insights={{
             insightsClient: aa,
             insightsInitParams: {
@@ -112,6 +120,7 @@ export default function Search() {
             hitsPerPage={12}
             clickAnalytics={true}
           />
+          {searchQuery && <ScanQuerySetter query={searchQuery} />}
 
           {/* Powered by Algolia */}
           <div className="powered-by-container">
