@@ -658,7 +658,7 @@ em {
   border-color: #e2e8f0;
 }
 
-button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
+button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn) {
   border: none;
   cursor: pointer;
   appearance: none;

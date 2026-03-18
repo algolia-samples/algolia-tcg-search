@@ -328,7 +328,7 @@ export default function CardScanner() {
             )}
             <p className="card-scanner-hint">Hold the card steady inside the frame</p>
 
-            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError || !videoReady}>
+            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError}>
               Capture now
             </button>
           </>
@@ -363,7 +363,8 @@ export default function CardScanner() {
                 ? `Couldn't find "${parsedName || parsedNumber}" in the inventory.`
                 : "Couldn't read this card clearly."}
             </p>
-            <p className="card-scanner-apology-hint">Try searching manually:</p>
+            <button className="card-scanner-btn" onClick={retake}>Try again</button>
+            <p className="card-scanner-apology-hint">Or search manually:</p>
             <button
               className="card-scanner-btn"
               onClick={() => navigate(`/${eventId}`, { replace: true, state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })}
