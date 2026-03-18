@@ -51,6 +51,14 @@ export default function CardScanner() {
     if (capturedImage) runScanAndSearch(capturedImage);
   }, [capturedImage]);
 
+  useEffect(() => {
+    if (!searchFailed) return;
+    setTimeout(() => {
+      document.querySelector('[data-scan-apology]')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, [searchFailed]);
+
   async function startCamera() {
     setCameraError(null);
     capturedRef.current = false;
@@ -299,7 +307,7 @@ export default function CardScanner() {
         <canvas ref={compareCanvasRef} width={SAMPLE_W} height={SAMPLE_H} style={{ display: 'none' }} />
 
         {searchFailed && (
-          <div style={styles.apology}>
+          <div style={styles.apology} data-scan-apology>
             <p style={styles.apologyText}>
               {parsedName || parsedNumber
                 ? `Couldn't find "${parsedName || parsedNumber}" in the inventory.`
