@@ -53,6 +53,7 @@ export default function CardScanner() {
   const capturedRef = useRef(false);
 
   const [capturedImage, setCapturedImage] = useState(null);
+  const [videoReady, setVideoReady] = useState(false);
   const [status, setStatus] = useState('idle'); // idle | scanning | searching
   const [stableProgress, setStableProgress] = useState(0);
   const [cameraError, setCameraError] = useState(null);
@@ -83,6 +84,7 @@ export default function CardScanner() {
 
   async function startCamera() {
     setCameraError(null);
+    setVideoReady(false);
     capturedRef.current = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -92,6 +94,7 @@ export default function CardScanner() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
+          setVideoReady(true);
           drawGuide();
           startSampling();
           // Redraw guide on resize/orientation change
@@ -323,9 +326,11 @@ export default function CardScanner() {
                 <div className="card-scanner-progress-fill" style={{ width: `${stableProgress}%` }} />
               </div>
             )}
-            <p className="card-scanner-hint">Hold the card steady inside the frame</p>
+            <p className="card-scanner-hint">
+              {videoReady ? 'Hold the card steady inside the frame' : 'Starting camera…'}
+            </p>
 
-            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError}>
+            <button className="card-scanner-btn" onClick={capture} disabled={!!cameraError || !videoReady}>
               Capture now
             </button>
           </>
@@ -360,8 +365,7 @@ export default function CardScanner() {
                 ? `Couldn't find "${parsedName || parsedNumber}" in the inventory.`
                 : "Couldn't read this card clearly."}
             </p>
-            <button className="card-scanner-btn" onClick={retake}>Try again</button>
-            <p className="card-scanner-apology-hint">Or search manually:</p>
+            <p className="card-scanner-apology-hint">Try searching manually:</p>
             <button
               className="card-scanner-btn"
               onClick={() => navigate(`/${eventId}`, { replace: true, state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })}

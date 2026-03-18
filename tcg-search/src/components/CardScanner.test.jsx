@@ -109,8 +109,19 @@ describe('CardScanner — mobile', () => {
     vi.stubGlobal('fetch', vi.fn());
   });
 
-  test('shows camera hint when camera is active', async () => {
+  test('shows "Starting camera…" hint before video is ready', async () => {
     renderScanner();
+    await waitFor(() => {
+      expect(screen.getByText(/Starting camera/i)).toBeInTheDocument();
+    });
+  });
+
+  test('shows "Hold the card steady" hint after video is ready', async () => {
+    const { container } = renderScanner();
+    await waitFor(() => container.querySelector('video'));
+    await act(async () => {
+      fireEvent(container.querySelector('video'), new Event('loadedmetadata'));
+    });
     await waitFor(() => {
       expect(screen.getByText(/Hold the card steady/i)).toBeInTheDocument();
     });
