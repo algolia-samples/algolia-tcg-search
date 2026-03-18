@@ -244,7 +244,7 @@ export default function CardScanner() {
       const data = await response.json();
       if (!response.ok || !data.text) throw new Error('OCR failed');
 
-      const prompt = `I photographed a Pokemon card. The text scanned from the card is:\n\n${data.text}\n\nPlease search for this card and show me the results.`;
+      const prompt = `I photographed a Pokemon card. The text scanned from the card is:\n\n${data.text}\n\nSearch for this card now.`;
       navigate(`/${eventId}`, { replace: true, state: { initialChatMessage: prompt } });
     } catch {
       setSearchFailed(true);
