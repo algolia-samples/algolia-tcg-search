@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import { cascadeSearch } from '../utilities/searchCard';
 
@@ -20,6 +20,8 @@ const SAMPLE_INTERVAL = 200;
 export default function CardScanner() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isDebug = searchParams.get('debug') === 'true';
 
   const videoRef = useRef(null);
   const overlayCanvasRef = useRef(null);
@@ -318,7 +320,7 @@ export default function CardScanner() {
               Go to search
             </button>
 
-            {(parsedName || parsedNumber || ocrText) && (
+            {isDebug && (parsedName || parsedNumber || ocrText) && (
               <details style={styles.details}>
                 <summary style={styles.summary}>Debug info</summary>
                 <table style={styles.table}>
