@@ -103,16 +103,6 @@ em {
   height: 18px;
 }
 
-.header-scan-button {
-  display: none;
-}
-
-@media (pointer: coarse) {
-  .header-scan-button {
-    display: flex;
-  }
-}
-
 .header-buttons {
   display: flex;
   align-items: center;
@@ -143,6 +133,16 @@ em {
 
 .header-search-button:active {
   transform: scale(0.95);
+}
+
+.header-scan-button {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .header-scan-button {
+    display: flex;
+  }
 }
 
 .container {
