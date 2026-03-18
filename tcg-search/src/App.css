@@ -333,6 +333,13 @@ em {
   text-align: center;
 }
 
+@media (max-width: 768px) {
+  .no-results {
+    min-height: unset;
+    padding: 0.75rem 1rem;
+  }
+}
+
 .no-results-title {
   font-family: 'Righteous', cursive;
   font-size: 1.5rem;
@@ -658,7 +665,7 @@ em {
   border-color: #e2e8f0;
 }
 
-button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
+button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn) {
   border: none;
   cursor: pointer;
   appearance: none;
