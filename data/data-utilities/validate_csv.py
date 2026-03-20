@@ -37,6 +37,14 @@ BOOLEAN_COLUMNS = ["Is Chase Card?", "Is top 10 chase card?", "Is classic Pokemo
 VALID_BOOLEANS = {"TRUE", "FALSE"}
 
 
+def is_valid_boolean(cell) -> bool:
+    if isinstance(cell, bool) or pd.isna(cell):
+        return True
+    if isinstance(cell, (int, float)):
+        return cell in (0, 1)
+    return str(cell).strip().upper() in VALID_BOOLEANS
+
+
 def validate_dataframe(df: pd.DataFrame) -> list[str]:
     """Validate a dataframe of card rows. Returns list of error strings."""
     errors = []
@@ -84,15 +92,8 @@ def validate_dataframe(df: pd.DataFrame) -> list[str]:
 
         # Boolean columns — handle native bool, 0/1 int (XLSX), or TRUE/FALSE string (CSV)
         for col in BOOLEAN_COLUMNS:
-            cell = row[col]
-            if isinstance(cell, bool):
-                pass  # valid native bool
-            elif isinstance(cell, (int, float)) and not pd.isna(cell) and cell in (0, 1):
-                pass  # valid 0/1 integer
-            elif pd.isna(cell):
-                pass  # treated as False
-            elif str(cell).strip().upper() not in VALID_BOOLEANS:
-                errors.append(f"Row {row_num} ({name}): Invalid boolean '{cell}' in '{col}'")
+            if not is_valid_boolean(row[col]):
+                errors.append(f"Row {row_num} ({name}): Invalid boolean '{row[col]}' in '{col}'")
 
     return errors
 
