@@ -152,7 +152,11 @@ echo ""
 echo "========================================"
 echo "Step 5/6: Creating Agent Studio agent"
 echo "========================================"
-(cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
+if [ "$NO_ACTIVATE" = true ]; then
+  (cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH")
+else
+  (cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
+fi
 
 # ── Step 6: Set event as active ────────────────────────────────────────────────
 
