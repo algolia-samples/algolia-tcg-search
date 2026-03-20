@@ -46,7 +46,7 @@ XLSX_FILE="$SCRIPT_DIR/../data-files/$ALGOLIA_EVENT_ID/TCG Search Website - Raw 
 if [ -f "$XLSX_FILE" ]; then
   poetry run python enrich_chase_cards.py
 else
-  echo "  Skipped — no chase cards XLSX found for this event"
+  echo "  Skipped — TCG Search Website - Raw List.xlsx not found for this event"
 fi
 
 echo ""

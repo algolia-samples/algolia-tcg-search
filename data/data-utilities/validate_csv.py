@@ -131,6 +131,9 @@ def validate_xlsx_file(file_path: Path) -> dict[str, list[str]]:
 
         results[sheet_name] = validate_dataframe(df)
 
+    if not results:
+        results["(file)"] = ["No sheets to validate — all sheets are marked (OLD)"]
+
     return results
 
 
