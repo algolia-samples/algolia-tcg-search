@@ -103,6 +103,13 @@ em {
   height: 18px;
 }
 
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+}
+
 .header-search-button {
   background: #ffffff;
   border: none;
@@ -115,7 +122,6 @@ em {
   justify-content: center;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  margin-right: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -127,6 +133,16 @@ em {
 
 .header-search-button:active {
   transform: scale(0.95);
+}
+
+.header-scan-button {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .header-scan-button {
+    display: flex;
+  }
 }
 
 .container {
@@ -315,6 +331,13 @@ em {
   min-height: 400px;
   padding: 3rem 1rem;
   text-align: center;
+}
+
+@media (max-width: 768px) {
+  .no-results {
+    min-height: unset;
+    padding: 0.75rem 1rem;
+  }
 }
 
 .no-results-title {
@@ -642,11 +665,152 @@ em {
   border-color: #e2e8f0;
 }
 
-button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav) {
+button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn) {
   border: none;
   cursor: pointer;
   appearance: none;
   background-color: inherit;
+}
+
+/* ── Card Scanner ─────────────────────────────────────────── */
+.card-scanner {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.card-scanner-video-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+}
+
+.card-scanner-video {
+  width: 100%;
+  display: block;
+}
+
+.card-scanner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.card-scanner-processing-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-scanner-processing-text {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card-scanner-progress-bar {
+  margin-top: 0.5rem;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.card-scanner-progress-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+.card-scanner-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.4rem 0 0;
+}
+
+.card-scanner-btn {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+}
+
+.card-scanner-error {
+  color: #ef4444;
+  margin-top: 0.5rem;
+}
+
+.card-scanner-apology {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fef2f2;
+  border-radius: 8px;
+  border-left: 4px solid #ef4444;
+}
+
+.card-scanner-apology-title {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.card-scanner-apology-hint {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.card-scanner-debug {
+  margin-top: 1rem;
+}
+
+.card-scanner-debug summary {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.card-scanner-debug-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.card-scanner-debug-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #64748b;
+  padding-right: 1rem;
+  padding-bottom: 0.25rem;
+  white-space: nowrap;
+}
+
+.card-scanner-debug-value {
+  font-size: 0.9rem;
+  padding-bottom: 0.25rem;
+}
+
+.card-scanner-ocr-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.75rem;
+  margin: 0.5rem 0 0;
+  color: #475569;
 }
 
 .back-button {
@@ -1038,8 +1202,8 @@ article {
     font-size: 1.15rem;
   }
 
-  /* Tighter spacing for search button on mobile */
-  .header-search-button {
+  /* Tighter spacing for header buttons on mobile */
+  .header-buttons {
     margin-right: 0.5rem;
   }
 
