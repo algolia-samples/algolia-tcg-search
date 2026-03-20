@@ -37,7 +37,7 @@ FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
 def extract_card_set_from_sheet_name(sheet_name: str) -> str:
     """
     Extract card set name from XLSX sheet name.
-    Example: "Ascended Heros (217)" -> "Ascended Heros"
+    Example: "Ascended Heroes (217)" -> "Ascended Heroes"
     """
     card_set = re.sub(r'\s*\(\d+\)\s*$', '', sheet_name).strip()
     card_set = card_set.replace("_", ": ")
@@ -135,12 +135,15 @@ def parse_estimated_value(value) -> Optional[float]:
 
 def parse_boolean(value) -> bool:
     """Parse boolean — handles native bool, 0/1 int (XLSX), or TRUE/FALSE string (CSV)."""
+    if pd.isna(value):
+        return False
     if isinstance(value, bool):
         return value
     if isinstance(value, (int, float)):
-        return bool(value)
-    if pd.isna(value):
-        return False
+        if value == 1:
+            return True
+        if value == 0:
+            return False
     return str(value).strip().upper() == "TRUE"
 
 
