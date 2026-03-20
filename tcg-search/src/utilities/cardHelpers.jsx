@@ -6,7 +6,11 @@ export function getCardTypeColor(cardType) {
     'Gold': '#f39c12',
     'Secret Art': '#9b59b6',
     'Holo': '#3498db',
-    'Reverse Holo': '#1abc9c'
+    'Reverse Holo': '#1abc9c',
+    'Double Rare': '#2980b9',
+    'Ultra Rare': '#8e44ad',
+    'Illustration Rare': '#e67e22',
+    'Special Illustration Rare': '#c0392b',
   };
   return colors[cardType] || '#3B4CCA';
 }
