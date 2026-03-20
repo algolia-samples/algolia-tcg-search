@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
+import openpyxl
 import pandas as pd
 import requests
 from algoliasearch.search.client import SearchClientSync
@@ -32,6 +33,16 @@ TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 
 # File name pattern to extract card set
 FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
+
+
+def extract_card_set_from_sheet_name(sheet_name: str) -> str:
+    """
+    Extract card set name from XLSX sheet name.
+    Example: "Ascended Heroes (217)" -> "Ascended Heroes"
+    """
+    card_set = re.sub(r'\s*\(\d+\)\s*$', '', sheet_name).strip()
+    card_set = card_set.replace("_", ": ")
+    return " ".join(card_set.split())
 
 
 def extract_card_set_from_filename(filename: str) -> str:
@@ -111,21 +122,45 @@ def fetch_tcgdex_set_info(set_name: str) -> Optional[dict]:
             return None
 
 
-def parse_estimated_value(value: str) -> Optional[float]:
-    """Parse estimated value from string format like "$20.60" to float."""
+def parse_estimated_value(value) -> Optional[float]:
+    """Parse estimated value — handles native float (XLSX) or string like "$20.60" (CSV)."""
+    if isinstance(value, (int, float)) and not pd.isna(value):
+        return float(value)
     if pd.isna(value) or value == "":
         return None
     try:
-        return float(value.replace("$", "").strip())
+        return float(str(value).replace("$", "").strip())
     except (ValueError, AttributeError):
         return None
 
 
-def parse_boolean(value: str) -> bool:
-    """Parse TRUE/FALSE strings to boolean."""
+def parse_boolean(value) -> bool:
+    """Parse boolean — handles native bool, 0/1 int (XLSX), or TRUE/FALSE string (CSV)."""
     if pd.isna(value):
         return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
     return str(value).strip().upper() == "TRUE"
+
+
+TCGPLAYER_PRODUCT_RE = re.compile(r'/product/(\d+)/')
+
+
+def extract_tcgplayer_images(url: str) -> dict:
+    """Extract image_small and image_large from a TCGPlayer product URL."""
+    m = TCGPLAYER_PRODUCT_RE.search(url)
+    if not m:
+        return {}
+    pid = m.group(1)
+    return {
+        "image_small": f"https://tcgplayer-cdn.tcgplayer.com/product/{pid}_200w.jpg",
+        "image_large": f"https://tcgplayer-cdn.tcgplayer.com/product/{pid}_in_1000x1000.jpg",
+    }
 
 
 def fetch_card_details(set_id: str, local_id: str) -> Optional[dict]:
@@ -260,7 +295,11 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
                 # Fallback if no set_id available
                 object_id = f"{set_name.replace(' ', '-').replace(':', '').lower()}-{card_number}"
 
-            machine_qty = int(row["# in Machine"])
+            raw_qty = row["# in Machine"]
+            if pd.isna(raw_qty):
+                print(f"  Skipping {pokemon_name} #{card_number} — not in machine")
+                continue
+            machine_qty = int(raw_qty)
             record = {
                 "objectID": object_id,
                 "pokemon_name": pokemon_name,
@@ -319,6 +358,150 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
         print(f"  ⚠ No valid records to upload")
 
 
+def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str, enrich: bool = True):
+    """
+    Process a single XLSX file and upload records to Algolia.
+    Each sheet is treated as a separate card set. Sheets prefixed with (OLD) are skipped.
+    Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
+    """
+    print(f"\nProcessing XLSX: {file_path.name}")
+
+    try:
+        wb = openpyxl.load_workbook(file_path)  # for hyperlinks
+        xl = pd.ExcelFile(file_path)            # for data
+    except Exception as e:
+        print(f"  Error reading XLSX: {e}")
+        return
+
+    for sheet_name in xl.sheet_names:
+        if sheet_name.strip().upper().startswith("(OLD)"):
+            print(f"  Skipping sheet: {sheet_name}")
+            continue
+
+        set_name = extract_card_set_from_sheet_name(sheet_name)
+        print(f"\n  Sheet: {sheet_name}  ->  Set: {set_name}")
+
+        # Build hyperlink map: {data_row_index: url} from column A
+        # Row 1 is the header, data starts at row 2 → pandas index 0
+        ws = wb[sheet_name]
+        hyperlinks = {}
+        for row in ws.iter_rows(min_row=2, max_col=1):
+            cell = row[0]
+            if cell.hyperlink:
+                hyperlinks[cell.row - 2] = cell.hyperlink.target  # -2: header + 0-index
+
+        try:
+            df = pd.read_excel(xl, sheet_name=sheet_name)
+            df.columns = df.columns.str.strip()
+            print(f"  Sheet records: {len(df)}")
+        except Exception as e:
+            print(f"  Error reading sheet '{sheet_name}': {e}")
+            continue
+
+        # Get set info from TCGdex
+        set_id = None
+        tcgdex_cards = []
+
+        if enrich:
+            set_info = fetch_tcgdex_set_info(set_name)
+            if set_info:
+                set_id = set_info.get("id")
+                tcgdex_cards = set_info.get("cards", [])
+                print(f"  Found TCGdex set ID: {set_id}")
+                print(f"  TCGdex cards available: {len(tcgdex_cards)}")
+            else:
+                print(f"  ✗ Could not find TCGdex set for '{set_name}'")
+                print(f"  Continuing without enrichment...")
+
+        # Process records
+        records = []
+        enriched_count = 0
+
+        for idx, row in df.iterrows():
+            try:
+                raw_number = row["Number"]
+                if pd.isna(raw_number):
+                    continue
+                if isinstance(raw_number, float):
+                    card_number = str(int(raw_number)).strip()
+                else:
+                    card_number = str(raw_number).strip()
+
+                pokemon_name = str(row["Pokemon Name"]).strip()
+
+                if not pokemon_name or pokemon_name.lower() == 'nan':
+                    continue
+
+                if set_id:
+                    object_id = f"{set_id}-{card_number}"
+                else:
+                    object_id = f"{set_name.replace(' ', '-').replace(':', '').lower()}-{card_number}"
+
+                raw_qty = row["# in Machine"]
+                if pd.isna(raw_qty):
+                    print(f"  Skipping {pokemon_name} #{card_number} — not in machine")
+                    continue
+                machine_qty = int(raw_qty)
+                record = {
+                    "objectID": object_id,
+                    "pokemon_name": pokemon_name,
+                    "number": card_number,
+                    "card_type": str(row["Card Type"]).strip(),
+                    "machine_quantity": machine_qty,
+                    "initial_quantity": machine_qty,
+                    "estimated_value": parse_estimated_value(row["Estimated Value"]),
+                    "is_chase_card": parse_boolean(row["Is Chase Card?"]),
+                    "is_top_10_chase_card": parse_boolean(row["Is top 10 chase card?"]),
+                    "is_classic_pokemon": parse_boolean(row["Is classic Pokemon?"]),
+                    "is_full_art": parse_boolean(row["Is Full Art?"]),
+                    "set_name": set_name,
+                }
+
+                if set_id:
+                    record["set_id"] = set_id
+
+                if enrich and tcgdex_cards:
+                    debug = (idx < 5)
+                    enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, set_id=set_id, debug=debug)
+                    record.update(enriched_data)
+                    if enriched_data.get("image_small"):
+                        enriched_count += 1
+
+                # Override TCGdex images with TCGPlayer images from hyperlink if present
+                url = hyperlinks.get(idx)
+                if url:
+                    tcgplayer_images = extract_tcgplayer_images(url)
+                    if tcgplayer_images:
+                        record.update(tcgplayer_images)
+
+                records.append(record)
+
+                if (idx + 1) % 25 == 0:
+                    print(f"  Progress: {idx + 1}/{len(df)} cards processed ({enriched_count} enriched)")
+
+            except KeyError as e:
+                print(f"  ⚠ Row {idx + 1}: Missing column {e}")
+                continue
+            except ValueError as e:
+                print(f"  ⚠ Row {idx + 1}: Invalid data format - {e}")
+                continue
+            except Exception as e:
+                print(f"  ⚠ Row {idx + 1}: Unexpected error - {e}")
+                continue
+
+        print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
+
+        if records:
+            print(f"  Uploading {len(records)} records to Algolia...")
+            try:
+                client.save_objects(index_name=index_name, objects=records)
+                print(f"  ✓ Successfully uploaded {len(records)} records")
+            except Exception as e:
+                print(f"  ✗ Error uploading to Algolia: {e}")
+        else:
+            print(f"  ⚠ No valid records to upload")
+
+
 def main():
     """Main execution."""
     parser = argparse.ArgumentParser(
@@ -332,7 +515,7 @@ def main():
     parser.add_argument(
         "--file",
         type=str,
-        help="Process only a specific CSV file"
+        help="Process only a specific file (CSV or XLSX)"
     )
 
     args = parser.parse_args()
@@ -363,23 +546,28 @@ def main():
 
     # Process files
     if args.file:
-        # Process single file
         file_path = DATA_DIR / args.file
         if not file_path.exists():
             print(f"Error: File not found: {file_path}")
             return
-        process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        if file_path.suffix.lower() == ".xlsx":
+            process_xlsx_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        else:
+            process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
     else:
-        # Process all CSV files
         csv_files = list(DATA_DIR.glob("*.csv"))
-        if not csv_files:
-            print(f"No CSV files found in {DATA_DIR}")
-            return
-
-        print(f"Found {len(csv_files)} CSV files")
-
-        for csv_file in csv_files:
-            process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        if csv_files:
+            print(f"Found {len(csv_files)} CSV files")
+            for csv_file in csv_files:
+                process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        else:
+            xlsx_files = list(DATA_DIR.glob("*.xlsx"))
+            if not xlsx_files:
+                print(f"No CSV or XLSX files found in {DATA_DIR}")
+                return
+            print(f"No CSVs found. Processing {len(xlsx_files)} XLSX file(s)")
+            for xlsx_file in xlsx_files:
+                process_xlsx_file(xlsx_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
 
     print("\n" + "=" * 60)
     print("Ingestion complete!")

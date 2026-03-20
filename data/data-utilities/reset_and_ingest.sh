@@ -42,7 +42,12 @@ echo ""
 echo "========================================"
 echo "Step 3/3: Enriching chase cards"
 echo "========================================"
-poetry run python enrich_chase_cards.py
+XLSX_FILE="$SCRIPT_DIR/../data-files/$ALGOLIA_EVENT_ID/TCG Search Website - Raw List.xlsx"
+if [ -f "$XLSX_FILE" ]; then
+  poetry run python enrich_chase_cards.py
+else
+  echo "  Skipped — TCG Search Website - Raw List.xlsx not found for this event"
+fi
 
 echo ""
 echo "========================================"
