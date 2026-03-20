@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Header from './Header';
-import { cascadeSearch } from '../utilities/searchCard';
 
 // roundRect polyfill for browsers that don't support it (pre-Chrome 99, pre-Firefox 112)
 function roundRectPath(ctx, x, y, w, h, r) {
@@ -38,8 +37,6 @@ const SAMPLE_INTERVAL = 200;
 export default function CardScanner() {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isDebug = searchParams.get('debug') === 'true';
   const isMobile = useMemo(() => window.matchMedia('(pointer: coarse)').matches, []);
 
   const videoRef = useRef(null);
@@ -54,14 +51,9 @@ export default function CardScanner() {
 
   const [capturedImage, setCapturedImage] = useState(null);
   const [videoReady, setVideoReady] = useState(false);
-  const [status, setStatus] = useState('idle'); // idle | scanning | searching
+  const [status, setStatus] = useState('idle'); // idle | scanning
   const [stableProgress, setStableProgress] = useState(0);
   const [cameraError, setCameraError] = useState(null);
-
-  // Only used for debug display on failure
-  const [parsedName, setParsedName] = useState(null);
-  const [parsedNumber, setParsedNumber] = useState(null);
-  const [ocrText, setOcrText] = useState('');
   const [searchFailed, setSearchFailed] = useState(false);
 
   useEffect(() => {
@@ -242,9 +234,6 @@ export default function CardScanner() {
     setStatus('scanning');
     setSearchFailed(false);
 
-    let name = null;
-    let number = null;
-
     try {
       const base64 = imageDataUrl.split(',')[1];
       const response = await fetch('/api/ocr/extract', {
@@ -253,31 +242,10 @@ export default function CardScanner() {
         body: JSON.stringify({ image: base64 }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'OCR failed');
+      if (!response.ok || !data.text) throw new Error('OCR failed');
 
-      name = data.parsed_name;
-      number = data.parsed_number;
-      setParsedName(name);
-      setParsedNumber(number);
-      setOcrText(data.text ?? '');
-    } catch {
-      setStatus('idle');
-      setSearchFailed(true);
-      return;
-    }
-
-    setStatus('searching');
-
-    try {
-      const result = await cascadeSearch(eventId, { parsedName: name, parsedNumber: number });
-
-      if (result.strategy === 'none') {
-        setSearchFailed(true);
-        setStatus('idle');
-        return;
-      }
-
-      navigate(`/${eventId}`, { replace: true, state: { searchQuery: result.query } });
+      const prompt = `I photographed a Pokemon card. The text scanned from the card is:\n\n${data.text}\n\nSearch for this card now.`;
+      navigate(`/${eventId}`, { replace: true, state: { initialChatMessage: prompt } });
     } catch {
       setSearchFailed(true);
       setStatus('idle');
@@ -286,15 +254,12 @@ export default function CardScanner() {
 
   function retake() {
     setCapturedImage(null);
-    setParsedName(null);
-    setParsedNumber(null);
-    setOcrText('');
     setSearchFailed(false);
     setStatus('idle');
     startCamera();
   }
 
-  const isProcessing = status === 'scanning' || status === 'searching';
+  const isProcessing = status === 'scanning';
 
   return (
     <div>
@@ -342,9 +307,7 @@ export default function CardScanner() {
               <img src={capturedImage} alt="Captured card" className="card-scanner-video" />
               {isProcessing && (
                 <div className="card-scanner-processing-overlay">
-                  <p className="card-scanner-processing-text">
-                    {status === 'scanning' ? 'Reading card…' : 'Finding card…'}
-                  </p>
+                  <p className="card-scanner-processing-text">Reading card…</p>
                 </div>
               )}
             </div>
@@ -360,37 +323,13 @@ export default function CardScanner() {
 
         {searchFailed && (
           <div className="card-scanner-apology" data-scan-apology>
-            <p className="card-scanner-apology-title">
-              {parsedName || parsedNumber
-                ? `Couldn't find "${parsedName || parsedNumber}" in the inventory.`
-                : "Couldn't read this card clearly."}
-            </p>
-            <p className="card-scanner-apology-hint">Try searching manually:</p>
+            <p className="card-scanner-apology-title">Couldn&apos;t read this card. Try retaking the photo.</p>
             <button
               className="card-scanner-btn"
-              onClick={() => navigate(`/${eventId}`, { replace: true, state: parsedName ? { searchQuery: parsedName } : { scrollToSearch: true } })}
+              onClick={() => navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } })}
             >
               Go to search
             </button>
-
-            {isDebug && (parsedName || parsedNumber || ocrText) && (
-              <details className="card-scanner-debug">
-                <summary>Debug info</summary>
-                <table className="card-scanner-debug-table">
-                  <tbody>
-                    <tr>
-                      <td className="card-scanner-debug-label">Name</td>
-                      <td className="card-scanner-debug-value">{parsedName ?? '—'}</td>
-                    </tr>
-                    <tr>
-                      <td className="card-scanner-debug-label">Number</td>
-                      <td className="card-scanner-debug-value">{parsedNumber ?? '—'}</td>
-                    </tr>
-                  </tbody>
-                </table>
-                {ocrText && <pre className="card-scanner-ocr-text">{ocrText}</pre>}
-              </details>
-            )}
           </div>
         )}
       </div>

@@ -32,9 +32,6 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
 }));
 HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/jpeg;base64,test');
 
-const mockCascadeSearch = vi.fn();
-vi.mock('../utilities/searchCard', () => ({ cascadeSearch: (...args) => mockCascadeSearch(...args) }));
-
 // matchMedia helper — call before each test to set mobile/desktop
 function setPointerCoarse(isCoarse) {
   Object.defineProperty(window, 'matchMedia', {
@@ -70,7 +67,6 @@ beforeEach(async () => {
   vi.resetModules();
   ({ default: CardScanner } = await import('./CardScanner.jsx'));
   mockNavigate.mockReset();
-  mockCascadeSearch.mockReset();
 });
 
 // --- Tests ---
@@ -166,61 +162,22 @@ describe('CardScanner — mobile', () => {
       expect(screen.getByText(/Reading card/i)).toBeInTheDocument();
     });
 
-    test('shows "Finding card…" when OCR succeeds and search starts', async () => {
+    test('navigates to event with initialChatMessage when OCR succeeds', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: 'Pikachu', parsed_number: '25/102', text: 'Pikachu\n25/102\n' }),
+        json: async () => ({ text: 'Pikachu\n25/102\n' }),
       });
-      // Keep cascade search pending so we stay in the 'searching' state
-      mockCascadeSearch.mockReturnValue(new Promise(() => {}));
-      await captureCard();
-      await waitFor(() => {
-        expect(screen.getByText(/Finding card/i)).toBeInTheDocument();
-      });
-    });
-
-    test('navigates to event search with query when cascade search succeeds', async () => {
-      fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ parsed_name: 'Pikachu', parsed_number: '25/102', text: '' }),
-      });
-      mockCascadeSearch.mockResolvedValue({ strategy: 'name', query: 'Pikachu', hits: [{}] });
 
       await captureCard();
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith(
           '/foo-nyc-2026',
-          expect.objectContaining({ replace: true, state: { searchQuery: 'Pikachu' } })
+          expect.objectContaining({
+            replace: true,
+            state: { initialChatMessage: expect.stringContaining('Pikachu') },
+          })
         );
-      });
-    });
-
-    test('shows apology with card name when cascade search finds nothing', async () => {
-      fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ parsed_name: 'Pikachu', parsed_number: null, text: '' }),
-      });
-      mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
-
-      await captureCard();
-
-      await waitFor(() => {
-        expect(screen.getByText(/Couldn't find "Pikachu"/i)).toBeInTheDocument();
-      });
-    });
-
-    test('shows generic apology when OCR finds no name or number', async () => {
-      fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ parsed_name: null, parsed_number: null, text: '' }),
-      });
-      mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
-
-      await captureCard();
-
-      await waitFor(() => {
-        expect(screen.getByText(/Couldn't read this card clearly/i)).toBeInTheDocument();
       });
     });
 
@@ -230,16 +187,25 @@ describe('CardScanner — mobile', () => {
       await captureCard();
 
       await waitFor(() => {
-        expect(screen.getByText(/Couldn't read this card clearly/i)).toBeInTheDocument();
+        expect(screen.getByText(/Couldn't read this card/i)).toBeInTheDocument();
       });
     });
 
-    test('"Go to search" in apology navigates with parsed name as query', async () => {
+    test('shows apology when OCR returns empty text', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: 'Charizard', parsed_number: null, text: '' }),
+        json: async () => ({ text: '' }),
       });
-      mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
+
+      await captureCard();
+
+      await waitFor(() => {
+        expect(screen.getByText(/Couldn't read this card/i)).toBeInTheDocument();
+      });
+    });
+
+    test('"Go to search" in apology navigates to search', async () => {
+      fetch.mockResolvedValue({ ok: false, json: async () => ({}) });
 
       await captureCard();
 
@@ -248,16 +214,12 @@ describe('CardScanner — mobile', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith(
         '/foo-nyc-2026',
-        expect.objectContaining({ state: { searchQuery: 'Charizard' } })
+        expect.objectContaining({ state: { scrollToSearch: true } })
       );
     });
 
-    test('shows "Retake" button after processing completes without navigation', async () => {
-      fetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ parsed_name: null, parsed_number: null, text: '' }),
-      });
-      mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
+    test('shows "Retake" button after processing fails', async () => {
+      fetch.mockResolvedValue({ ok: false, json: async () => ({}) });
 
       await captureCard();
 
