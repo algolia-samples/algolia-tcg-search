@@ -169,7 +169,7 @@ describe('CardScanner — mobile', () => {
     test('shows "Finding card…" when OCR succeeds and search starts', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: 'Pikachu', parsed_number: '25/102', text: 'Pikachu\n25/102\n' }),
+        json: async () => ({ name: 'Pikachu', number: '25/102', set: 'Base Set' }),
       });
       // Keep cascade search pending so we stay in the 'searching' state
       mockCascadeSearch.mockReturnValue(new Promise(() => {}));
@@ -182,7 +182,7 @@ describe('CardScanner — mobile', () => {
     test('navigates to event search with query when cascade search succeeds', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: 'Pikachu', parsed_number: '25/102', text: '' }),
+        json: async () => ({ name: 'Pikachu', number: '25/102', set: null }),
       });
       mockCascadeSearch.mockResolvedValue({ strategy: 'name', query: 'Pikachu', hits: [{}] });
 
@@ -199,7 +199,7 @@ describe('CardScanner — mobile', () => {
     test('shows apology with card name when cascade search finds nothing', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: 'Pikachu', parsed_number: null, text: '' }),
+        json: async () => ({ name: 'Pikachu', number: null, set: null }),
       });
       mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
 
@@ -213,7 +213,7 @@ describe('CardScanner — mobile', () => {
     test('shows generic apology when OCR finds no name or number', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: null, parsed_number: null, text: '' }),
+        json: async () => ({ name: null, number: null, set: null }),
       });
       mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
 
@@ -237,7 +237,7 @@ describe('CardScanner — mobile', () => {
     test('"Go to search" in apology navigates with parsed name as query', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: 'Charizard', parsed_number: null, text: '' }),
+        json: async () => ({ name: 'Charizard', number: null, set: null }),
       });
       mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
 
@@ -255,7 +255,7 @@ describe('CardScanner — mobile', () => {
     test('shows "Retake" button after processing completes without navigation', async () => {
       fetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ parsed_name: null, parsed_number: null, text: '' }),
+        json: async () => ({ name: null, number: null, set: null }),
       });
       mockCascadeSearch.mockResolvedValue({ strategy: 'none', query: '', hits: [] });
 

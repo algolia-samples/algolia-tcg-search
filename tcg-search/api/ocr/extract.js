@@ -1,81 +1,55 @@
-export function parseCardNumber(text) {
-  // Support standard (156/167) and trainer gallery (TG01/TG30) formats
-  // No word boundaries — number is often embedded in surrounding digits
-  // Take the last match since the card number is printed at the bottom
-  const matches = [...text.matchAll(/([A-Z]{0,2}\d{1,3}\/[A-Z]{0,2}\d{2,4})/gi)];
-  return matches.length > 0 ? matches[matches.length - 1][1] : null;
-}
+import Anthropic from '@anthropic-ai/sdk';
 
-// Prefixes that appear inline before the Pokemon name
-const STAGE_PREFIX = /^(basic|stage\s*\d*|vmax|vstar|v\b|tag\s*team)\s*/i;
-// Lines to skip entirely
-const SKIP_LINE = /^(evolves from|ability|retreat|weakness|resistance)/i;
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export function parsePokemonName(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+const SYSTEM_PROMPT = `You are a Pokemon card expert. When shown a photo of a Pokemon card, identify it.
 
-  for (const line of lines) {
-    if (SKIP_LINE.test(line)) continue;
-    // Strip inline stage prefix (e.g. "STAGE1 Parasect" → "Parasect")
-    const stripped = line.replace(STAGE_PREFIX, '');
-    // Strip trailing HP digits (e.g. "RevavroomX280" → "RevavroomX")
-    const name = stripped.replace(/\s*\d{2,3}$/, '').trim();
-    // Reject if digits remain — indicates noise or HP not fully stripped
-    if (/^[A-Za-zÀ-ÖØ-öø-ÿ]/.test(name) && name.length >= 4 && !/\d/.test(name)) return name;
-  }
+Respond with ONLY a valid JSON object, no explanation, no markdown fences:
+{"name":"<Pokemon name, e.g. Pikachu or Charizard ex>","number":"<card number, e.g. 25/102 or TG01/TG30>","set":"<set name, e.g. Base Set>"}
 
-  return null;
-}
+Use null for any field you cannot identify. Example: {"name":"Pikachu","number":"25/102","set":"Base Set"}`;
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { image } = req.body;
-  if (!image || typeof image !== 'string') {
+  if (!image || typeof image !== 'string')
     return res.status(400).json({ error: 'Missing required field: image' });
-  }
-  // Limit base64 string to 10MB (≈ 7.5MB raw image) — guard against abuse and unexpected GCV spend
-  if (image.length > 10 * 1024 * 1024) {
+  if (image.length > 10 * 1024 * 1024)
     return res.status(413).json({ error: 'Image too large' });
-  }
-
-  const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY)
     return res.status(500).json({ error: 'OCR service not configured' });
-  }
 
   try {
-    const gcvResponse = await fetch(
-      `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [
-            {
-              image: { content: image },
-              features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
-            },
-          ],
-        }),
-      }
-    );
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      system: SYSTEM_PROMPT,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
+          { type: 'text', text: 'What Pokemon card is this?' },
+        ],
+      }],
+    });
 
-    if (!gcvResponse.ok) {
-      const errorBody = await gcvResponse.text();
-      console.error('GCV error:', gcvResponse.status, errorBody);
-      return res.status(500).json({ error: 'OCR request failed' });
+    let raw = message.content[0]?.text ?? '';
+    // Strip markdown fences the model occasionally adds despite instructions
+    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      console.error('Claude returned non-JSON:', raw);
+      return res.status(500).json({ error: 'Card identification failed' });
     }
 
-    const data = await gcvResponse.json();
-    const text = data.responses?.[0]?.fullTextAnnotation?.text ?? '';
-
     return res.status(200).json({
-      text,
-      parsed_number: parseCardNumber(text),
-      parsed_name: parsePokemonName(text),
+      name: parsed.name ?? null,
+      number: parsed.number ?? null,
+      set: parsed.set ?? null,
     });
   } catch (error) {
     console.error('Server error:', error);
