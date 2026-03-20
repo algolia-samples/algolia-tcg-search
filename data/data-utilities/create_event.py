@@ -66,7 +66,7 @@ def main():
         print(f"Configuring {replica_name}...")
         client.set_settings(
             index_name=replica_name,
-            index_settings={"ranking": [f"{sort_direction}(estimated_value)"]},
+            index_settings={"customRanking": [f"{sort_direction}(estimated_value)"]},
         )
         print(f"  ✓ {replica_name}")
 
