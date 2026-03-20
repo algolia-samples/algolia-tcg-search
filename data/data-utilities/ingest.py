@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
+import openpyxl
 import pandas as pd
 import requests
 from algoliasearch.search.client import SearchClientSync
@@ -363,7 +364,6 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
     Each sheet is treated as a separate card set. Sheets prefixed with (OLD) are skipped.
     Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
     """
-    import openpyxl
     print(f"\nProcessing XLSX: {file_path.name}")
 
     try:
@@ -515,7 +515,7 @@ def main():
     parser.add_argument(
         "--file",
         type=str,
-        help="Process only a specific CSV file"
+        help="Process only a specific file (CSV or XLSX)"
     )
 
     args = parser.parse_args()
