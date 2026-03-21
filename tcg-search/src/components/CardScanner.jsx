@@ -40,7 +40,10 @@ export default function CardScanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isDebug = searchParams.get('debug') === 'true';
-  const isMobile = useMemo(() => window.matchMedia('(pointer: coarse)').matches, []);
+  const isMobile = useMemo(
+    () => searchParams.get('scan') === 'web' || window.matchMedia('(pointer: coarse)').matches,
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const videoRef = useRef(null);
   const overlayCanvasRef = useRef(null);
