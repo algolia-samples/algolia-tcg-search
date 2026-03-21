@@ -136,13 +136,7 @@ em {
 }
 
 .header-scan-button {
-  display: none;
-}
-
-@media (pointer: coarse) {
-  .header-scan-button {
-    display: flex;
-  }
+  display: flex;
 }
 
 .container {
