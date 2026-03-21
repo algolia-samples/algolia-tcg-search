@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Routes, Route, useParams, useLocation, useSearchParams } from 'react-router-dom';
+import { Navigate, Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { EventProvider } from './context/EventContext';
 import { fetchCurrentEvent } from './utilities/events';
 import Search from './components/Search';
@@ -31,14 +31,6 @@ function CurrentEventRedirect() {
 
 function EventLayout() {
   const { eventId } = useParams();
-  const [searchParams] = useSearchParams();
-
-  // Capture ?scan=true synchronously during render — before InstantSearch's
-  // routing effect fires and rewrites the URL, stripping unknown params
-  if (searchParams.get('scan') === 'true') {
-    sessionStorage.setItem('scan_enabled', 'true');
-  }
-
   return (
     <EventProvider eventId={eventId}>
       <Routes>
