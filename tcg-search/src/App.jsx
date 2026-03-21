@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Routes, Route, useParams, useLocation } from 'react-router-dom';
+import { Navigate, Routes, Route, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { EventProvider } from './context/EventContext';
 import { fetchCurrentEvent } from './utilities/events';
 import Search from './components/Search';
@@ -31,6 +31,15 @@ function CurrentEventRedirect() {
 
 function EventLayout() {
   const { eventId } = useParams();
+  const [searchParams] = useSearchParams();
+
+  // Persist ?scan=true to sessionStorage before InstantSearch rewrites the URL
+  useEffect(() => {
+    if (searchParams.get('scan') === 'true') {
+      sessionStorage.setItem('scan_enabled', 'true');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <EventProvider eventId={eventId}>
       <Routes>
