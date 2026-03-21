@@ -41,7 +41,7 @@ export default function CardScanner() {
   const [searchParams] = useSearchParams();
   const isDebug = searchParams.get('debug') === 'true';
   const isMobile = useMemo(
-    () => searchParams.get('scan') === 'web' || window.matchMedia('(pointer: coarse)').matches,
+    () => searchParams.get('scan') === 'true' || window.matchMedia('(pointer: coarse)').matches,
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
