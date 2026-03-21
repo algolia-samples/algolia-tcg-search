@@ -60,7 +60,6 @@ export default function CardScanner() {
   // Only used for debug display on failure
   const [parsedName, setParsedName] = useState(null);
   const [parsedNumber, setParsedNumber] = useState(null);
-  const [ocrText, setOcrText] = useState('');
   const [searchFailed, setSearchFailed] = useState(false);
 
   useEffect(() => {
@@ -253,11 +252,10 @@ export default function CardScanner() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'OCR failed');
 
-      name = data.parsed_name;
-      number = data.parsed_number;
+      name = data.name;
+      number = data.number;
       setParsedName(name);
       setParsedNumber(number);
-      setOcrText(data.text ?? '');
     } catch {
       setStatus('idle');
       setSearchFailed(true);
@@ -286,7 +284,6 @@ export default function CardScanner() {
     setCapturedImage(null);
     setParsedName(null);
     setParsedNumber(null);
-    setOcrText('');
     setSearchFailed(false);
     setStatus('idle');
     startCamera();
@@ -359,7 +356,7 @@ export default function CardScanner() {
               Go to search
             </button>
 
-            {isDebug && (parsedName || parsedNumber || ocrText) && (
+            {isDebug && (parsedName || parsedNumber) && (
               <details className="card-scanner-debug">
                 <summary>Debug info</summary>
                 <table className="card-scanner-debug-table">
@@ -374,7 +371,6 @@ export default function CardScanner() {
                     </tr>
                   </tbody>
                 </table>
-                {ocrText && <pre className="card-scanner-ocr-text">{ocrText}</pre>}
               </details>
             )}
           </div>
