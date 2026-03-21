@@ -33,12 +33,11 @@ function EventLayout() {
   const { eventId } = useParams();
   const [searchParams] = useSearchParams();
 
-  // Persist ?scan=true to sessionStorage before InstantSearch rewrites the URL
-  useEffect(() => {
-    if (searchParams.get('scan') === 'true') {
-      sessionStorage.setItem('scan_enabled', 'true');
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Capture ?scan=true synchronously during render — before InstantSearch's
+  // routing effect fires and rewrites the URL, stripping unknown params
+  if (searchParams.get('scan') === 'true') {
+    sessionStorage.setItem('scan_enabled', 'true');
+  }
 
   return (
     <EventProvider eventId={eventId}>
