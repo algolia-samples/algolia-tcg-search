@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import { cascadeSearch } from '../utilities/searchCard';
@@ -40,10 +40,6 @@ export default function CardScanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isDebug = searchParams.get('debug') === 'true';
-  const isMobile = useMemo(
-    () => searchParams.get('scan') === 'true' || sessionStorage.getItem('scan_enabled') === 'true' || window.matchMedia('(pointer: coarse)').matches,
-    [] // eslint-disable-line react-hooks/exhaustive-deps
-  );
 
   const videoRef = useRef(null);
   const overlayCanvasRef = useRef(null);
@@ -68,7 +64,6 @@ export default function CardScanner() {
   const [searchFailed, setSearchFailed] = useState(false);
 
   useEffect(() => {
-    if (!isMobile) return;
     startCamera();
     return () => stopEverything();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -303,21 +298,9 @@ export default function CardScanner() {
     <div>
       <Header />
       <div className="card-scanner">
-        {!isMobile && (
-          <div className="card-scanner-apology">
-            <p className="card-scanner-apology-title">Card scanning is only available on mobile devices.</p>
-            <button
-              className="card-scanner-btn"
-              onClick={() => navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } })}
-            >
-              Go to search
-            </button>
-          </div>
-        )}
+        {cameraError && <p className="card-scanner-error">{cameraError}</p>}
 
-        {isMobile && cameraError && <p className="card-scanner-error">{cameraError}</p>}
-
-        {isMobile && !capturedImage && (
+        {!capturedImage && (
           <>
             <div className="card-scanner-video-wrapper">
               <video ref={videoRef} autoPlay playsInline className="card-scanner-video" />
@@ -339,7 +322,7 @@ export default function CardScanner() {
           </>
         )}
 
-        {isMobile && capturedImage && (
+        {capturedImage && (
           <>
             <div className="card-scanner-video-wrapper">
               <img src={capturedImage} alt="Captured card" className="card-scanner-video" />
