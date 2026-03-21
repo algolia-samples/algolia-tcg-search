@@ -35,20 +35,6 @@ HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/jpeg;base64,test
 const mockCascadeSearch = vi.fn();
 vi.mock('../utilities/searchCard', () => ({ cascadeSearch: (...args) => mockCascadeSearch(...args) }));
 
-// matchMedia helper — call before each test to set mobile/desktop
-function setPointerCoarse(isCoarse) {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: vi.fn().mockImplementation((query) => ({
-      matches: isCoarse && query === '(pointer: coarse)',
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })),
-  });
-}
-
 // Fake stream returned by getUserMedia
 function makeFakeStream() {
   return { getTracks: () => [{ stop: vi.fn() }] };
@@ -75,33 +61,8 @@ beforeEach(async () => {
 
 // --- Tests ---
 
-describe('CardScanner — desktop', () => {
-  beforeEach(() => setPointerCoarse(false));
-
-  test('shows mobile-only message', () => {
-    renderScanner();
-    expect(screen.getByText(/Card scanning is only available on mobile/i)).toBeInTheDocument();
-  });
-
-  test('shows "Go to search" button that navigates to event search', () => {
-    renderScanner();
-    const btn = screen.getByRole('button', { name: /go to search/i });
-    fireEvent.click(btn);
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining('foo-nyc-2026'),
-      expect.objectContaining({ replace: true })
-    );
-  });
-
-  test('does not render video element', () => {
-    const { container } = renderScanner();
-    expect(container.querySelector('video')).not.toBeInTheDocument();
-  });
-});
-
-describe('CardScanner — mobile', () => {
+describe('CardScanner', () => {
   beforeEach(() => {
-    setPointerCoarse(true);
     Object.defineProperty(navigator, 'mediaDevices', {
       writable: true,
       value: { getUserMedia: vi.fn().mockResolvedValue(makeFakeStream()) },
