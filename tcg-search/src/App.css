@@ -1409,6 +1409,14 @@ article {
     order: 3;
   }
 
+  /* Mobile: Clear is just ✕ — keep it tight and always last */
+  .filter-clear-btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0.75rem 0.625rem;
+    order: 4;
+  }
+
   /* Ensure all controls in row 2 have same height */
   .search-controls-row {
     align-items: stretch;
