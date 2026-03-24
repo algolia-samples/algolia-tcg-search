@@ -11,6 +11,7 @@ import {
   PoweredBy,
   SearchBox,
   SortBy,
+  useClearRefinements,
   useHits,
   useSearchBox,
 } from 'react-instantsearch';
@@ -18,6 +19,7 @@ import aa from 'search-insights';
 import Header from './Header';
 import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
+import FilterToggle from './FilterToggle';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
 import ChatAgent from './ChatAgent';
@@ -34,6 +36,16 @@ function ScanQuerySetter({ query }) {
     scrollToSearchBox();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
+}
+
+function ClearFiltersButton() {
+  const { refine, canRefine } = useClearRefinements();
+  if (!canRefine) return null;
+  return (
+    <button className="filter-clear-btn" onClick={refine}>
+      Clear filters
+    </button>
+  );
 }
 
 function HitsWithNoResults() {
@@ -135,7 +147,9 @@ export default function Search() {
             <div className="search-controls-row">
               <SearchBox placeholder="Search for cards" className="searchbox" />
               <FilterDropdown attribute="set_name" placeholder="All Sets" />
-              <FilterDropdown attribute="card_type" placeholder="All Types" />
+              <FilterToggle attribute="is_chase_card" label="Chase Cards" />
+              <FilterToggle attribute="is_classic_pokemon" label="Classic" />
+              <ClearFiltersButton />
               <SortBy
                 items={[
                   { label: 'Relevance', value: primary },

@@ -385,6 +385,63 @@ em {
   box-shadow: 0 0 0 3px rgba(59, 76, 202, 0.1);
 }
 
+.filter-toggle {
+  flex: 0 0 auto;
+  padding: 0.75rem 0.875rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3B4CCA;
+  background-color: white;
+  border: 2px solid #3B4CCA;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-toggle:hover {
+  border-color: #00aeff;
+  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
+}
+
+.filter-toggle--active {
+  background-color: #3B4CCA;
+  color: white;
+}
+
+.filter-toggle--active:hover {
+  background-color: #2a3ab5;
+  border-color: #2a3ab5;
+}
+
+.filter-toggle-count {
+  margin-left: 0.25rem;
+  font-weight: 400;
+  opacity: 0.8;
+  font-size: 12px;
+}
+
+.filter-clear-btn {
+  flex: 0 0 auto;
+  padding: 0.75rem 0.875rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #718096;
+  background-color: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-clear-btn:hover {
+  border-color: #cbd5e0;
+  color: #4a5568;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .ais-SortBy-select {
   padding: 0.75rem 2rem 0.75rem 0.875rem;
   font-size: 16px;
