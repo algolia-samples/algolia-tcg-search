@@ -53,7 +53,8 @@ function ClearButton({ defaultSort, sortItems }) {
 
   return (
     <button className="filter-clear-btn" onClick={handleClear} aria-label="Clear filters">
-      ✕ Clear
+      <span className="label-full">✕ Clear</span>
+      <span className="label-short">✕</span>
     </button>
   );
 }
@@ -162,7 +163,7 @@ export default function Search() {
             <div className="search-controls-row">
               <SearchBox placeholder="Search for cards" className="searchbox" />
               <FilterDropdown attribute="set_name" placeholder="All Sets" />
-              <FilterToggle attribute="is_chase_card" label="Chase Cards" />
+              <FilterToggle attribute="is_chase_card" label="Chase Cards" shortLabel="Chase" />
               <SortBy items={sortItems} />
               <ClearButton defaultSort={primary} sortItems={sortItems} />
             </div>

@@ -444,6 +444,13 @@ em {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Responsive labels: show full on desktop, short on mobile */
+.label-short { display: none; }
+@media (max-width: 768px) {
+  .label-full { display: none; }
+  .label-short { display: inline; }
+}
+
 .ais-SortBy-select {
   padding: 0.75rem 2rem 0.75rem 0.875rem;
   font-size: 16px;

@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useToggleRefinement } from 'react-instantsearch';
 
-export default function FilterToggle({ attribute, label }) {
+export default function FilterToggle({ attribute, label, shortLabel }) {
   const { value, refine } = useToggleRefinement({ attribute });
 
   return (
@@ -10,7 +10,8 @@ export default function FilterToggle({ attribute, label }) {
       onClick={() => refine(value)}
       aria-pressed={value.isRefined}
     >
-      {label}
+      <span className="label-full">{label}</span>
+      <span className="label-short">{shortLabel ?? label}</span>
     </button>
   );
 }
@@ -18,4 +19,5 @@ export default function FilterToggle({ attribute, label }) {
 FilterToggle.propTypes = {
   attribute: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
+  shortLabel: PropTypes.string,
 };
