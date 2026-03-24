@@ -35,6 +35,7 @@ vi.mock('react-instantsearch', () => ({
   useSearchBox: () => ({ refine: vi.fn() }),
   useToggleRefinement: () => ({ value: { isRefined: false, count: 0 }, refine: vi.fn() }),
   useClearRefinements: () => ({ refine: vi.fn(), canRefine: false }),
+  useSortBy: () => ({ currentRefinement: 'primary', refine: vi.fn() }),
 }));
 
 vi.mock('search-insights', () => ({ default: vi.fn() }));

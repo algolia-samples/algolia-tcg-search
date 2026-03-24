@@ -11,9 +11,6 @@ export default function FilterToggle({ attribute, label }) {
       aria-pressed={value.isRefined}
     >
       {label}
-      {value.count != null && (
-        <span className="filter-toggle-count">({value.count})</span>
-      )}
     </button>
   );
 }
