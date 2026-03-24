@@ -1401,20 +1401,26 @@ article {
     width: 100% !important;
   }
 
-  /* Mobile: Sort on second line with filters */
+  /* Mobile: all controls on one row — compress to fit */
   .search-controls-row .ais-SortBy {
-    flex: 0 1 auto;
-    min-width: 100px;
+    flex: 1 1 auto;
+    min-width: 80px;
     max-width: 130px;
-    order: 3;
   }
 
-  /* Mobile: Clear is just ✕ — keep it tight and always last */
+  .filter-dropdown {
+    min-width: 80px;
+  }
+
+  .filter-toggle {
+    min-width: 70px;
+  }
+
+  /* Mobile: Clear is just ✕ — keep it tight */
   .filter-clear-btn {
     flex: 0 0 auto;
     min-width: 0;
     padding: 0.75rem 0.625rem;
-    order: 4;
   }
 
   /* Ensure all controls in row 2 have same height */
