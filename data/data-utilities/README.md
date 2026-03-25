@@ -30,7 +30,7 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 | `reset_and_ingest.sh` | Re-ingest card data for an existing event (clear + ingest + enrich) |
 | `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events` |
 | `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
-| `ingest.py` | Reads CSVs, enriches via TCGdex API, uploads records to Algolia |
+| `ingest.py` | Reads XLSX (or CSVs as fallback), enriches via TCGdex API, uploads records to Algolia |
 | `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
 | `clear_index.py` | Wipes all records from the index (preserves settings) |
 | `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
@@ -47,35 +47,48 @@ ALGOLIA_EVENT_ID=etail-palm-springs-2026
 
 ---
 
-## CSV Format
+## Data Format
 
-Place CSV files in `data-files/{event_id}/` — each event has its own subdirectory. Files are exported from the master spreadsheet (`data-files/{event_id}/TCG Search Website - Raw List.xlsx`).
+Place card data in `data-files/{event_id}/` — each event has its own subdirectory. `ingest.py` prefers a single XLSX file and falls back to individual CSVs if no XLSX is present.
 
-### Filename Convention
+### XLSX (preferred)
+
+One sheet per card set. Sheet names may include a count suffix and/or a prefix separated by ` - ` — both are stripped to derive the set name:
+
+```
+"Ascended Heroes (217)"          → set: Ascended Heroes
+"NEW - Surging Sparks (191)"     → set: Surging Sparks
+"Mega Evolution_ Phantasmal Fla" → set: Mega Evolution: Phantasmal Flames  (truncated at Excel's 31-char limit — suffix fallback used)
+```
+
+Sheets whose names start with `(OLD)` are skipped.
+
+A **chase/summary tab** is detected automatically by content (the sheet that contains both a "Top 10" section header and a "Gold" section header). Cards listed there have `is_chase_card` and/or `is_top_10_chase_card` overlaid after per-sheet processing, regardless of the tab's name or position.
+
+### CSV (fallback)
+
+Used only when no XLSX is present. Files follow this naming convention:
 
 ```
 TCG Search Website - Raw List - {Set Name} ({Count}).csv
 ```
 
-Examples:
-- `TCG Search Website - Raw List - Scarlet & Violet_ Surging Sparks (191).csv`
-- `TCG Search Website - Raw List - Mega Evolution (132).csv`
+The set name is parsed from the filename — underscores are converted to `: `.
 
-The set name is parsed from the filename — underscores are converted to `: ` (e.g., `Scarlet & Violet_` → `Scarlet & Violet:`).
+### Required Columns (both formats)
 
-### Required Columns
-
-| Column | Type | Description | Example |
+| Column | Type | XLSX value format | CSV value format |
 |---|---|---|---|
-| `Pokemon Name` | string | Card name | `Charizard ex` |
-| `Number` | string/int | Card number within the set | `6`, `182` |
-| `Card Type` | string | Variant type | `Full Art`, `Holo`, `Alternative Full Art`, `Gold`, `Secret Art`, `Reverse Holo` |
-| `# in Machine` | integer | Quantity available in vending machine | `3` |
-| `Estimated Value` | string | USD value with `$` prefix (nullable) | `$20.60` |
-| `Is Chase Card?` | boolean | Highly desirable card | `TRUE` / `FALSE` |
-| `Is top 10 chase card?` | boolean | Top 10 most desirable | `TRUE` / `FALSE` |
-| `Is classic Pokemon?` | boolean | Generation 1 Pokemon | `TRUE` / `FALSE` |
-| `Is Full Art?` | boolean | Full art treatment | `TRUE` / `FALSE` |
+| `Pokemon Name` | string | text | text |
+| `Number` | string/int | `182` or `289/217` (denominator stripped) | `6`, `182` |
+| `Card Type` | string | `Full Art`, `Holo`, `Double Rare`, etc. | same |
+| `# in Machine` | integer | integer | integer |
+| `Estimated Value` | float/string | `0.97` (native float) | `$20.60` (with `$`) |
+| `Is Chase Card?` | boolean | `0` / `1` | `TRUE` / `FALSE` |
+| `Is top 10 chase card?` | boolean | `0` / `1` | `TRUE` / `FALSE` |
+| `Is classic Pokemon?` | boolean | `0` / `1` | `TRUE` / `FALSE` |
+
+> `is_full_art` is derived from `Card Type`: any type other than `Double Rare` is treated as full art. The `Is Full Art?` column is not used for XLSX ingestion.
 
 ---
 
@@ -91,11 +104,11 @@ Each card record uploaded to Algolia contains:
 | `card_type` | string | `Card Type` |
 | `machine_quantity` | integer | `# in Machine` |
 | `estimated_value` | float \| null | `Estimated Value` |
-| `is_chase_card` | boolean | `Is Chase Card?` |
-| `is_top_10_chase_card` | boolean | `Is top 10 chase card?` |
+| `is_chase_card` | boolean | `Is Chase Card?` (may be overlaid by chase tab) |
+| `is_top_10_chase_card` | boolean | `Is top 10 chase card?` (may be overlaid by chase tab) |
 | `is_classic_pokemon` | boolean | `Is classic Pokemon?` |
-| `is_full_art` | boolean | `Is Full Art?` |
-| `set_name` | string | Derived from filename |
+| `is_full_art` | boolean | Derived: `Card Type != "Double Rare"` (XLSX) or `Is Full Art?` column (CSV) |
+| `set_name` | string | Derived from sheet name (XLSX) or filename (CSV) |
 
 **From TCGdex API:**
 | Field | Type | Description |
