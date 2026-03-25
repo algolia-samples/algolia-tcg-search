@@ -13,15 +13,37 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Accept event_id as an argument, falling back to env var from .env
+# Accept event_id as an argument, falling back to env var, then interactive selection
 if [ -n "$1" ]; then
   export ALGOLIA_EVENT_ID="$1"
 fi
 
 if [ -z "$ALGOLIA_EVENT_ID" ]; then
-  echo "ERROR: event_id required. Pass it as an argument or set ALGOLIA_EVENT_ID in data/.env"
-  echo "Usage: $0 <event_id>"
-  exit 1
+  DATA_FILES_DIR="$SCRIPT_DIR/../data-files"
+
+  if [ ! -d "$DATA_FILES_DIR" ]; then
+    echo "ERROR: data-files directory not found: $DATA_FILES_DIR"
+    exit 1
+  fi
+
+  events=()
+  while IFS= read -r dir; do
+    events+=("$(basename "$dir")")
+  done < <(find "$DATA_FILES_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+
+  if [ ${#events[@]} -eq 0 ]; then
+    echo "ERROR: No events found in $DATA_FILES_DIR"
+    exit 1
+  fi
+
+  echo "Select an event:"
+  select event in "${events[@]}"; do
+    if [ -n "$event" ]; then
+      export ALGOLIA_EVENT_ID="$event"
+      break
+    fi
+    echo "Invalid selection. Try again."
+  done
 fi
 
 echo "Re-ingesting cards for event: $ALGOLIA_EVENT_ID"
