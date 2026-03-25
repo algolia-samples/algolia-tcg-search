@@ -33,12 +33,16 @@ vi.mock('react-instantsearch', () => ({
   SortBy: () => null,
   useHits: () => ({ results: { hits: [] } }),
   useSearchBox: () => ({ refine: vi.fn() }),
+  useToggleRefinement: () => ({ value: { isRefined: false, count: 0 }, refine: vi.fn() }),
+  useClearRefinements: () => ({ refine: vi.fn(), canRefine: false }),
+  useSortBy: () => ({ currentRefinement: 'primary', refine: vi.fn() }),
 }));
 
 vi.mock('search-insights', () => ({ default: vi.fn() }));
 vi.mock('./Header', () => ({ default: () => null }));
 vi.mock('./Hit', () => ({ default: () => null }));
 vi.mock('./FilterDropdown', () => ({ default: () => null }));
+vi.mock('./FilterToggle', () => ({ default: () => null }));
 vi.mock('./Carousel', () => ({ default: () => null }));
 vi.mock('./ClaimedCarousel', () => ({ default: () => null }));
 vi.mock('./ChatAgent', () => ({

@@ -11,13 +11,16 @@ import {
   PoweredBy,
   SearchBox,
   SortBy,
+  useClearRefinements,
   useHits,
   useSearchBox,
+  useSortBy,
 } from 'react-instantsearch';
 import aa from 'search-insights';
 import Header from './Header';
 import Hit from './Hit';
 import FilterDropdown from './FilterDropdown';
+import FilterToggle from './FilterToggle';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
 import ChatAgent from './ChatAgent';
@@ -34,6 +37,26 @@ function ScanQuerySetter({ query }) {
     scrollToSearchBox();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
+}
+
+function ClearButton({ defaultSort, sortItems }) {
+  const { refine: clearRefinements, canRefine } = useClearRefinements();
+  const { currentRefinement: currentSort, refine: setSort } = useSortBy({ items: sortItems });
+  const sortChanged = currentSort !== defaultSort;
+
+  if (!canRefine && !sortChanged) return null;
+
+  function handleClear() {
+    clearRefinements();
+    if (sortChanged) setSort(defaultSort);
+  }
+
+  return (
+    <button className="filter-clear-btn" onClick={handleClear} aria-label="Clear filters">
+      <span className="label-full">✕ Clear</span>
+      <span className="label-short">✕</span>
+    </button>
+  );
 }
 
 function HitsWithNoResults() {
@@ -93,6 +116,11 @@ export default function Search() {
 
   const { primary, priceAsc, priceDesc } = getIndexNames(eventConfig.event_id);
   const agentId = eventConfig.agent_id || chatAgentId;
+  const sortItems = [
+    { label: 'Relevance', value: primary },
+    { label: 'Sort Price ↑', value: priceAsc },
+    { label: 'Sort Price ↓', value: priceDesc },
+  ];
 
   return (
     <div>
@@ -135,14 +163,9 @@ export default function Search() {
             <div className="search-controls-row">
               <SearchBox placeholder="Search for cards" className="searchbox" />
               <FilterDropdown attribute="set_name" placeholder="All Sets" />
-              <FilterDropdown attribute="card_type" placeholder="All Types" />
-              <SortBy
-                items={[
-                  { label: 'Relevance', value: primary },
-                  { label: 'Sort Price ↑', value: priceAsc },
-                  { label: 'Sort Price ↓', value: priceDesc }
-                ]}
-              />
+              <FilterToggle attribute="is_chase_card" label="Chase Cards" shortLabel="Chase" />
+              <SortBy items={sortItems} />
+              <ClearButton defaultSort={priceDesc} sortItems={sortItems} />
             </div>
           </div>
 
