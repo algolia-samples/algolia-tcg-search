@@ -35,12 +35,82 @@ TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
 
 
+def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
+    """
+    Find and parse the chase/summary tab in an XLSX file.
+    Scans all sheets for one containing 'top 10' and 'gold' section headers —
+    so this works regardless of tab name or position.
+    Returns (top_10_numbers, gold_numbers) — sets of stripped card numbers,
+    or two empty sets if no matching tab is found.
+    """
+    required_columns = {'Pokemon Name', 'Number'}
+
+    for sheet_name in xl.sheet_names:
+        try:
+            df = pd.read_excel(xl, sheet_name=sheet_name)
+            df.columns = df.columns.str.strip()
+        except Exception:
+            continue
+
+        if not required_columns.issubset(set(df.columns)):
+            continue
+
+        # Check if this sheet has both 'top 10' and 'gold' section headers
+        name_col = df['Pokemon Name'].astype(str).str.strip().str.lower()
+        has_top_10 = name_col.str.contains('top 10').any()
+        has_gold = name_col.str.contains('^gold$').any()
+        if not (has_top_10 and has_gold):
+            continue
+
+        # Found the chase tab — parse it
+        print(f"  Found chase tab: '{sheet_name}'")
+        top_10_numbers = set()
+        gold_numbers = set()
+        current_section = None
+
+        for _, row in df.iterrows():
+            name_val = row.get('Pokemon Name')
+            num_val = row.get('Number')
+
+            if pd.isna(num_val):
+                if not pd.isna(name_val) and str(name_val).strip():
+                    label = str(name_val).strip().lower()
+                    if 'top 10' in label:
+                        current_section = 'top_10'
+                    elif 'gold' in label:
+                        current_section = 'gold'
+                    else:
+                        current_section = None
+            elif current_section:
+                num_str = str(num_val).strip()
+                if '/' in num_str:
+                    num_str = num_str.split('/')[0]
+                if num_str and num_str.lower() not in ('nan', '---'):
+                    if current_section == 'top_10':
+                        top_10_numbers.add(num_str)
+                    elif current_section == 'gold':
+                        gold_numbers.add(num_str)
+
+        return top_10_numbers, gold_numbers
+
+    return set(), set()
+
+
 def extract_card_set_from_sheet_name(sheet_name: str) -> str:
     """
     Extract card set name from XLSX sheet name.
-    Example: "Ascended Heroes (217)" -> "Ascended Heroes"
+    Strips trailing (NNN) count and any leading prefixes separated by ' - '
+    so that annotated names like "NEW - Ascended Heroes (217)" still resolve correctly.
+    Examples:
+      "Ascended Heroes (217)"            -> "Ascended Heroes"
+      "NEW - Ascended Heroes (217)"      -> "Ascended Heroes"
+      "Mega Evolution_ Phantasmal Flames" -> "Mega Evolution: Phantasmal Flames"
     """
-    card_set = re.sub(r'\s*\(\d+\)\s*$', '', sheet_name).strip()
+    # Strip trailing (NNN) or truncated (NNN without closing paren (Excel 31-char tab limit)
+    name = re.sub(r'\s*\(\d+\)?\s*$', '', sheet_name).strip()
+    # Take the last segment after any ' - ' prefixes (e.g. "NEW - ")
+    parts = re.split(r'\s+-\s*', name)
+    card_set = parts[-1].strip()
     card_set = card_set.replace("_", ": ")
     return " ".join(card_set.split())
 
@@ -97,14 +167,34 @@ def fetch_tcgdex_set_info(set_name: str) -> Optional[dict]:
                         print(f"  Matched TCGdex set using name without prefix: '{set_name_without_prefix}'")
                         return set_response.json()
 
-            # Try partial match as last resort
-            set_name_lower = set_name.lower()
+            # Try normalized partial match — strips punctuation so truncated names like
+            # "Scarlet & Violet Destined" still match "Scarlet & Violet: Destined Rivals"
+            def normalize(n):
+                return re.sub(r'[^a-z0-9\s]', '', n.lower())
+
+            set_name_norm = normalize(set_name)
             for s in sets:
-                if set_name_lower in s.get("name", "").lower():
+                if set_name_norm in normalize(s.get("name", "")):
                     set_id = s.get("id")
                     set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
                     set_response.raise_for_status()
                     return set_response.json()
+
+            # Suffix fallback for truncated tab names (Excel 31-char limit):
+            # Try progressively shorter leading-word-stripped suffixes.
+            # e.g. "Scarlet & Violet Destined" -> try "Violet Destined", "Destined"
+            #      "Destined" matches TCGdex "Destined Rivals"
+            words = set_name.split()
+            for i in range(1, len(words)):
+                suffix = " ".join(words[i:])
+                suffix_norm = normalize(suffix)
+                for s in sets:
+                    if suffix_norm in normalize(s.get("name", "")):
+                        set_id = s.get("id")
+                        set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
+                        set_response.raise_for_status()
+                        print(f"  Matched TCGdex set using suffix '{suffix}'")
+                        return set_response.json()
 
             return None
 
@@ -373,6 +463,9 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
         print(f"  Error reading XLSX: {e}")
         return
 
+    top_10_numbers, gold_numbers = parse_chase_tab(xl)
+    print(f"  Chase tab: {len(top_10_numbers)} top-10 cards, {len(gold_numbers)} gold cards")
+
     for sheet_name in xl.sheet_names:
         if sheet_name.strip().upper().startswith("(OLD)"):
             print(f"  Skipping sheet: {sheet_name}")
@@ -393,10 +486,17 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
         try:
             df = pd.read_excel(xl, sheet_name=sheet_name)
             df.columns = df.columns.str.strip()
-            print(f"  Sheet records: {len(df)}")
         except Exception as e:
             print(f"  Error reading sheet '{sheet_name}': {e}")
             continue
+
+        # Skip non-card sheets (e.g. "Landing Page Sections", "Most expensive")
+        required_columns = {'Pokemon Name', 'Number', '# in Machine', 'Card Type', 'Estimated Value'}
+        if not required_columns.issubset(set(df.columns)):
+            print(f"  Skipping sheet '{sheet_name}' — not a card set (missing expected columns)")
+            continue
+
+        print(f"  Sheet records: {len(df)}")
 
         # Get set info from TCGdex
         set_id = None
@@ -426,6 +526,9 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
                     card_number = str(int(raw_number)).strip()
                 else:
                     card_number = str(raw_number).strip()
+                # Strip set-size denominator (e.g. "289/217" -> "289")
+                if '/' in card_number:
+                    card_number = card_number.split('/')[0]
 
                 pokemon_name = str(row["Pokemon Name"]).strip()
 
@@ -442,18 +545,19 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
                     print(f"  Skipping {pokemon_name} #{card_number} — not in machine")
                     continue
                 machine_qty = int(raw_qty)
+                card_type = str(row["Card Type"]).strip()
                 record = {
                     "objectID": object_id,
                     "pokemon_name": pokemon_name,
                     "number": card_number,
-                    "card_type": str(row["Card Type"]).strip(),
+                    "card_type": card_type,
                     "machine_quantity": machine_qty,
                     "initial_quantity": machine_qty,
                     "estimated_value": parse_estimated_value(row["Estimated Value"]),
                     "is_chase_card": parse_boolean(row["Is Chase Card?"]),
                     "is_top_10_chase_card": parse_boolean(row["Is top 10 chase card?"]),
                     "is_classic_pokemon": parse_boolean(row["Is classic Pokemon?"]),
-                    "is_full_art": parse_boolean(row["Is Full Art?"]),
+                    "is_full_art": card_type != "Double Rare",
                     "set_name": set_name,
                 }
 
@@ -490,6 +594,20 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
                 continue
 
         print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
+
+        # Overlay top-10 and gold flags from first tab
+        overlay_count = 0
+        for record in records:
+            num = record["number"]
+            if num in top_10_numbers:
+                record["is_top_10_chase_card"] = True
+                record["is_chase_card"] = True
+                overlay_count += 1
+            elif num in gold_numbers:
+                record["is_chase_card"] = True
+                overlay_count += 1
+        if overlay_count:
+            print(f"  Overlay: {overlay_count} records flagged from first tab")
 
         if records:
             print(f"  Uploading {len(records)} records to Algolia...")
