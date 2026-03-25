@@ -747,6 +747,13 @@ button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.c
   background: #000;
 }
 
+/* Mirror the feed on desktop so the webcam behaves like a mirror */
+@media (pointer: fine) {
+  .card-scanner-video-wrapper {
+    transform: scaleX(-1);
+  }
+}
+
 .card-scanner-video {
   width: 100%;
   display: block;
