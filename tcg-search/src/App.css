@@ -747,6 +747,7 @@ button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.c
   background: #000;
 }
 
+
 .card-scanner-video {
   width: 100%;
   display: block;
