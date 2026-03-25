@@ -165,7 +165,7 @@ export default function Search() {
               <FilterDropdown attribute="set_name" placeholder="All Sets" />
               <FilterToggle attribute="is_chase_card" label="Chase Cards" shortLabel="Chase" />
               <SortBy items={sortItems} />
-              <ClearButton defaultSort={primary} sortItems={sortItems} />
+              <ClearButton defaultSort={priceDesc} sortItems={sortItems} />
             </div>
           </div>
 
