@@ -428,20 +428,20 @@ em {
   padding: 0.75rem 0.875rem;
   font-size: 16px;
   font-weight: 600;
-  color: #718096;
-  background-color: white;
-  border: 2px solid #cbd5e0;
+  color: white;
+  background-color: #CC0000;
+  border: 2px solid #CC0000;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(204, 0, 0, 0.3);
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .filter-clear-btn:hover {
-  border-color: #a0aec0;
-  color: #4a5568;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #FF1C1C;
+  border-color: #FF1C1C;
+  box-shadow: 0 4px 8px rgba(204, 0, 0, 0.4);
 }
 
 /* Responsive labels: show full on desktop, short on mobile */
