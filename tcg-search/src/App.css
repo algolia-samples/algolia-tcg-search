@@ -385,6 +385,72 @@ em {
   box-shadow: 0 0 0 3px rgba(59, 76, 202, 0.1);
 }
 
+.filter-toggle {
+  flex: 1;
+  min-width: 90px;
+  max-width: 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  background-color: white;
+  border: 2px solid #3B4CCA;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-toggle:hover {
+  border-color: #00aeff;
+  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
+}
+
+.filter-toggle--active {
+  background-color: #3B4CCA;
+  color: white !important;
+}
+
+.filter-toggle--active:hover {
+  background-color: #2a3ab5;
+  border-color: #2a3ab5;
+}
+
+.filter-clear-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 0.875rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background-color: #CC0000;
+  border: 2px solid #CC0000;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(204, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-clear-btn:hover {
+  background-color: #FF1C1C;
+  border-color: #FF1C1C;
+  box-shadow: 0 4px 8px rgba(204, 0, 0, 0.4);
+}
+
+/* Responsive labels: show full on desktop, short on mobile */
+.label-short { display: none; }
+@media (max-width: 768px) {
+  .label-full { display: none; }
+  .label-short { display: inline; }
+}
+
 .ais-SortBy-select {
   padding: 0.75rem 2rem 0.75rem 0.875rem;
   font-size: 16px;
@@ -659,7 +725,7 @@ em {
   border-color: #e2e8f0;
 }
 
-button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn) {
+button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn):not(.filter-toggle):not(.filter-clear-btn) {
   border: none;
   cursor: pointer;
   appearance: none;
@@ -1335,12 +1401,26 @@ article {
     width: 100% !important;
   }
 
-  /* Mobile: Sort on second line with filters */
+  /* Mobile: all controls on one row — compress to fit */
   .search-controls-row .ais-SortBy {
-    flex: 0 1 auto;
-    min-width: 100px;
+    flex: 1 1 auto;
+    min-width: 80px;
     max-width: 130px;
-    order: 3;
+  }
+
+  .filter-dropdown {
+    min-width: 80px;
+  }
+
+  .filter-toggle {
+    min-width: 70px;
+  }
+
+  /* Mobile: Clear is just ✕ — keep it tight */
+  .filter-clear-btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0.75rem 0.625rem;
   }
 
   /* Ensure all controls in row 2 have same height */
