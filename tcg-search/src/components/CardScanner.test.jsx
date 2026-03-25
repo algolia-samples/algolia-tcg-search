@@ -77,6 +77,36 @@ describe('CardScanner', () => {
     vi.stubGlobal('fetch', vi.fn());
   });
 
+  test('does not start sampling on desktop (pointer: coarse = false)', async () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+    const { container } = renderScanner();
+    await waitFor(() => container.querySelector('video'));
+    const callsBefore = setIntervalSpy.mock.calls.length;
+    await act(async () => {
+      fireEvent(container.querySelector('video'), new Event('loadedmetadata'));
+    });
+    expect(setIntervalSpy.mock.calls.length).toBe(callsBefore);
+    setIntervalSpy.mockRestore();
+  });
+
+  test('starts sampling on touch device (pointer: coarse = true)', async () => {
+    matchMedia.mockImplementation((query) => ({
+      matches: query === '(pointer: coarse)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+    const { container } = renderScanner();
+    await waitFor(() => container.querySelector('video'));
+    const callsBefore = setIntervalSpy.mock.calls.length;
+    await act(async () => {
+      fireEvent(container.querySelector('video'), new Event('loadedmetadata'));
+    });
+    expect(setIntervalSpy.mock.calls.length).toBeGreaterThan(callsBefore);
+    setIntervalSpy.mockRestore();
+  });
+
   test('shows "Starting camera…" hint before video is ready', async () => {
     renderScanner();
     await waitFor(() => {
