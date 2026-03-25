@@ -181,8 +181,13 @@ export default function CardScanner() {
     canvas.width = vw;
     canvas.height = vh;
 
-    const guideW = vw * GUIDE_SCALE;
-    const guideH = guideW / CARD_RATIO;
+    // Constrain by width first, then clamp to height if the video is landscape
+    let guideW = vw * GUIDE_SCALE;
+    let guideH = guideW / CARD_RATIO;
+    if (guideH > vh * GUIDE_SCALE) {
+      guideH = vh * GUIDE_SCALE;
+      guideW = guideH * CARD_RATIO;
+    }
     const x = (vw - guideW) / 2;
     const y = (vh - guideH) / 2;
     const r = guideW * 0.04;
