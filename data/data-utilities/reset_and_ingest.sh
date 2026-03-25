@@ -20,6 +20,12 @@ fi
 
 if [ -z "$ALGOLIA_EVENT_ID" ]; then
   DATA_FILES_DIR="$SCRIPT_DIR/../data-files"
+
+  if [ ! -d "$DATA_FILES_DIR" ]; then
+    echo "ERROR: data-files directory not found: $DATA_FILES_DIR"
+    exit 1
+  fi
+
   events=()
   while IFS= read -r dir; do
     events+=("$(basename "$dir")")

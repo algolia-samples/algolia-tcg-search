@@ -77,12 +77,16 @@ def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
                     label = str(name_val).strip().lower()
                     if 'top 10' in label:
                         current_section = 'top_10'
-                    elif 'gold' in label:
+                    elif label == 'gold':
                         current_section = 'gold'
                     else:
                         current_section = None
             elif current_section:
-                num_str = str(num_val).strip()
+                # Normalize number the same way as process_xlsx_file to ensure overlay matches
+                if isinstance(num_val, float):
+                    num_str = str(int(num_val))
+                else:
+                    num_str = str(num_val).strip()
                 if '/' in num_str:
                     num_str = num_str.split('/')[0]
                 if num_str and num_str.lower() not in ('nan', '---'):
@@ -554,10 +558,10 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
                     "machine_quantity": machine_qty,
                     "initial_quantity": machine_qty,
                     "estimated_value": parse_estimated_value(row["Estimated Value"]),
-                    "is_chase_card": parse_boolean(row["Is Chase Card?"]),
-                    "is_top_10_chase_card": parse_boolean(row["Is top 10 chase card?"]),
-                    "is_classic_pokemon": parse_boolean(row["Is classic Pokemon?"]),
-                    "is_full_art": card_type != "Double Rare",
+                    "is_chase_card": parse_boolean(row.get("Is Chase Card?", False)),
+                    "is_top_10_chase_card": parse_boolean(row.get("Is top 10 chase card?", False)),
+                    "is_classic_pokemon": parse_boolean(row.get("Is classic Pokemon?", False)),
+                    "is_full_art": card_type.lower() != "double rare",
                     "set_name": set_name,
                 }
 
@@ -595,7 +599,7 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
 
         print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
 
-        # Overlay top-10 and gold flags from first tab
+        # Overlay top-10 and gold flags from chase tab (detected by content, not position)
         overlay_count = 0
         for record in records:
             num = record["number"]
