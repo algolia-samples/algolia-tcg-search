@@ -198,3 +198,6 @@ dmypy.json
 
 # Agent factory secrets
 /agent/.env
+
+# macOS
+.DS_Store
