@@ -94,7 +94,11 @@ export default function CardScanner() {
         videoRef.current.onloadedmetadata = () => {
           setVideoReady(true);
           drawGuide();
-          startSampling();
+          // Only auto-capture on touch devices — desktop webcams are already
+          // still and would trigger immediately, which is bad UX.
+          if (window.matchMedia('(pointer: coarse)').matches) {
+            startSampling();
+          }
           // Redraw guide on resize/orientation change
           const observer = new ResizeObserver(drawGuide);
           observer.observe(videoRef.current);

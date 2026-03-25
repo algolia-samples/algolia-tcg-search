@@ -13,6 +13,14 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 
 vi.mock('./Header', () => ({ default: () => null }));
 
+// jsdom doesn't implement matchMedia — stub it (default to non-touch/desktop)
+window.matchMedia = vi.fn((query) => ({
+  matches: false,
+  media: query,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+}));
+
 // jsdom doesn't implement canvas — stub the minimum needed for CardScanner
 HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
   drawImage: vi.fn(),
