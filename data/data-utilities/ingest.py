@@ -216,6 +216,23 @@ def fetch_tcgdex_set_info(set_name: str) -> Optional[dict]:
             return None
 
 
+def find_card_number_by_name(pokemon_name: str, tcgdex_cards: list) -> tuple:
+    """
+    Look up a card's localId from TCGdex by name.
+    Returns (localId, tcgdex_name) or (None, None).
+    Pass 1: exact case-insensitive match. Pass 2: substring match.
+    """
+    name_lower = pokemon_name.lower().strip()
+    for card in tcgdex_cards:
+        if card.get("name", "").lower().strip() == name_lower:
+            return card["localId"], card["name"]
+    for card in tcgdex_cards:
+        tcg_name = card.get("name", "").lower().strip()
+        if name_lower in tcg_name or tcg_name in name_lower:
+            return card["localId"], card["name"]
+    return None, None
+
+
 def parse_estimated_value(value) -> Optional[float]:
     """Parse estimated value — handles native float (XLSX) or string like "$20.60" (CSV)."""
     if isinstance(value, (int, float)) and not pd.isna(value):
@@ -520,24 +537,38 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
         # Process records
         records = []
         enriched_count = 0
+        skipped: dict[str, int] = {}
 
         for idx, row in df.iterrows():
             try:
+                pokemon_name = str(row["Pokemon Name"]).strip()
+
+                if not pokemon_name or pokemon_name.lower() == 'nan':
+                    skipped["blank name"] = skipped.get("blank name", 0) + 1
+                    continue
+
                 raw_number = row["Number"]
                 if pd.isna(raw_number):
-                    continue
-                if isinstance(raw_number, float):
+                    if tcgdex_cards:
+                        local_id, matched_name = find_card_number_by_name(pokemon_name, tcgdex_cards)
+                        if local_id:
+                            print(f"  AUTO-RESOLVED number for '{pokemon_name}': #{local_id} (matched '{matched_name}')")
+                            card_number = local_id
+                        else:
+                            print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex match")
+                            skipped["missing number"] = skipped.get("missing number", 0) + 1
+                            continue
+                    else:
+                        print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex data available")
+                        skipped["missing number"] = skipped.get("missing number", 0) + 1
+                        continue
+                elif isinstance(raw_number, float):
                     card_number = str(int(raw_number)).strip()
                 else:
                     card_number = str(raw_number).strip()
                 # Strip set-size denominator (e.g. "289/217" -> "289")
                 if '/' in card_number:
                     card_number = card_number.split('/')[0]
-
-                pokemon_name = str(row["Pokemon Name"]).strip()
-
-                if not pokemon_name or pokemon_name.lower() == 'nan':
-                    continue
 
                 if set_id:
                     object_id = f"{set_id}-{card_number}"
@@ -546,7 +577,8 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
 
                 raw_qty = row["# in Machine"]
                 if pd.isna(raw_qty):
-                    print(f"  Skipping {pokemon_name} #{card_number} — not in machine")
+                    print(f"  Skipping '{pokemon_name}' #{card_number} — not in machine")
+                    skipped["not in machine"] = skipped.get("not in machine", 0) + 1
                     continue
                 machine_qty = int(raw_qty)
                 card_type = str(row["Card Type"]).strip()
@@ -589,15 +621,20 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
 
             except KeyError as e:
                 print(f"  ⚠ Row {idx + 1}: Missing column {e}")
+                skipped["error"] = skipped.get("error", 0) + 1
                 continue
             except ValueError as e:
                 print(f"  ⚠ Row {idx + 1}: Invalid data format - {e}")
+                skipped["error"] = skipped.get("error", 0) + 1
                 continue
             except Exception as e:
                 print(f"  ⚠ Row {idx + 1}: Unexpected error - {e}")
+                skipped["error"] = skipped.get("error", 0) + 1
                 continue
 
-        print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
+        total_skipped = sum(skipped.values())
+        skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
+        print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
 
         # Overlay top-10 and gold flags from chase tab (detected by content, not position)
         overlay_count = 0
