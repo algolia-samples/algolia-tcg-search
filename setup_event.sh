@@ -140,6 +140,8 @@ echo "========================================"
 XLSX_FILE="$DATA_DIR/TCG Search Website - Raw List.xlsx"
 if [ -f "$XLSX_FILE" ]; then
   (cd "$DATA_UTILS" && poetry run python enrich_chase_cards.py)
+elif [ -e "${XLSX_FILES[0]}" ]; then
+  echo "  Skipped — XLSX-only event (images sourced from column A hyperlinks)"
 else
   echo "  Skipped — no XLSX found in data/data-files/$EVENT_ID/"
   echo "  To enrich later: copy the XLSX then run:"
