@@ -223,13 +223,21 @@ def find_card_number_by_name(pokemon_name: str, tcgdex_cards: list) -> tuple:
     Pass 1: exact case-insensitive match. Pass 2: substring match.
     """
     name_lower = pokemon_name.lower().strip()
+    # Pass 1: exact case-insensitive match
     for card in tcgdex_cards:
-        if card.get("name", "").lower().strip() == name_lower:
-            return card["localId"], card["name"]
+        tcg_name = card.get("name")
+        local_id = card.get("localId")
+        if isinstance(tcg_name, str) and tcg_name.lower().strip() == name_lower and local_id is not None:
+            return str(local_id), tcg_name
+    # Pass 2: substring match
     for card in tcgdex_cards:
-        tcg_name = card.get("name", "").lower().strip()
-        if name_lower in tcg_name or tcg_name in name_lower:
-            return card["localId"], card["name"]
+        tcg_name = card.get("name")
+        local_id = card.get("localId")
+        if not isinstance(tcg_name, str) or local_id is None:
+            continue
+        tcg_name_lower = tcg_name.lower().strip()
+        if name_lower in tcg_name_lower or tcg_name_lower in name_lower:
+            return str(local_id), tcg_name
     return None, None
 
 
@@ -380,24 +388,38 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
     # Process records
     records = []
     enriched_count = 0
+    skipped: dict[str, int] = {}
 
     for idx, row in df.iterrows():
         try:
-            # Validate and extract required fields
-            # Handle card numbers that may be read as floats (e.g., 172.0)
-            raw_number = row["Number"]
-            if pd.isna(raw_number):
-                continue  # Skip rows with no card number
-            if isinstance(raw_number, float):
-                card_number = str(int(raw_number)).strip()
-            else:
-                card_number = str(raw_number).strip()
-
             pokemon_name = str(row["Pokemon Name"]).strip()
 
             # Skip empty rows
             if not pokemon_name or pokemon_name.lower() == 'nan':
+                skipped["blank name"] = skipped.get("blank name", 0) + 1
                 continue
+
+            # Handle card numbers that may be read as floats (e.g., 172.0)
+            raw_number = row["Number"]
+            if pd.isna(raw_number):
+                if tcgdex_cards:
+                    local_id, matched_name = find_card_number_by_name(pokemon_name, tcgdex_cards)
+                    if local_id:
+                        local_id_str = local_id.strip()
+                        card_number = str(int(local_id_str)) if local_id_str.isdigit() else local_id_str
+                        print(f"  AUTO-RESOLVED number for '{pokemon_name}': #{card_number} (matched '{matched_name}')")
+                    else:
+                        print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex match")
+                        skipped["missing number"] = skipped.get("missing number", 0) + 1
+                        continue
+                else:
+                    print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex data available")
+                    skipped["missing number"] = skipped.get("missing number", 0) + 1
+                    continue
+            elif isinstance(raw_number, float):
+                card_number = str(int(raw_number)).strip()
+            else:
+                card_number = str(raw_number).strip()
 
             # Create objectID using set_id-card_number pattern (like Supabase)
             if set_id:
@@ -408,7 +430,8 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
 
             raw_qty = row["# in Machine"]
             if pd.isna(raw_qty):
-                print(f"  Skipping {pokemon_name} #{card_number} — not in machine")
+                print(f"  Skipping '{pokemon_name}' #{card_number} — not in machine")
+                skipped["not in machine"] = skipped.get("not in machine", 0) + 1
                 continue
             machine_qty = int(raw_qty)
             record = {
@@ -446,16 +469,21 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
 
         except KeyError as e:
             print(f"  ⚠ Row {idx + 1}: Missing column {e}")
+            skipped["error"] = skipped.get("error", 0) + 1
             continue
         except ValueError as e:
             print(f"  ⚠ Row {idx + 1}: Invalid data format - {e}")
+            skipped["error"] = skipped.get("error", 0) + 1
             continue
         except Exception as e:
             print(f"  ⚠ Row {idx + 1}: Unexpected error - {e}")
+            skipped["error"] = skipped.get("error", 0) + 1
             continue
 
     # Final progress report
-    print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
+    total_skipped = sum(skipped.values())
+    skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
+    print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
 
     # Upload to Algolia
     if records:
@@ -552,8 +580,9 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
                     if tcgdex_cards:
                         local_id, matched_name = find_card_number_by_name(pokemon_name, tcgdex_cards)
                         if local_id:
-                            print(f"  AUTO-RESOLVED number for '{pokemon_name}': #{local_id} (matched '{matched_name}')")
-                            card_number = local_id
+                            local_id_str = local_id.strip()
+                            card_number = str(int(local_id_str)) if local_id_str.isdigit() else local_id_str
+                            print(f"  AUTO-RESOLVED number for '{pokemon_name}': #{card_number} (matched '{matched_name}')")
                         else:
                             print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex match")
                             skipped["missing number"] = skipped.get("missing number", 0) + 1
