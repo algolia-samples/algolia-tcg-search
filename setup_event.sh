@@ -154,11 +154,7 @@ echo ""
 echo "========================================"
 echo "Step 5/6: Creating Agent Studio agent"
 echo "========================================"
-if [ "$NO_ACTIVATE" = true ]; then
-  (cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH")
-else
-  (cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
-fi
+(cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
 
 # ── Step 6: Set event as active ────────────────────────────────────────────────
 
@@ -185,4 +181,9 @@ echo "  tcg_cards_${EVENT_ID}"
 echo "  tcg_cards_${EVENT_ID}_price_asc"
 echo "  tcg_cards_${EVENT_ID}_price_desc"
 echo ""
-echo "The app at / will now redirect to /$EVENT_ID"
+if [ "$NO_ACTIVATE" = true ]; then
+  echo "To activate when ready:"
+  echo "  cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
+else
+  echo "The app at / will now redirect to /$EVENT_ID"
+fi
