@@ -38,9 +38,11 @@ FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
 def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
     """
     Find and parse the chase/summary tab in an XLSX file.
-    Scans all sheets for one containing 'top 10' and 'gold' section headers —
+    Scans all sheets for one containing a 'top 10' section header —
     so this works regardless of tab name or position.
-    Returns (top_10_numbers, gold_numbers) — sets of stripped card numbers,
+    Cards in the 'top 10' section → top_10_numbers (also chase).
+    Cards in any other section → chase_numbers only.
+    Returns (top_10_numbers, chase_numbers) — sets of stripped card numbers,
     or two empty sets if no matching tab is found.
     """
     required_columns = {'Pokemon Name', 'Number'}
@@ -55,17 +57,15 @@ def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
         if not required_columns.issubset(set(df.columns)):
             continue
 
-        # Check if this sheet has both 'top 10' and 'gold' section headers
+        # Check if this sheet has a 'top 10' section header
         name_col = df['Pokemon Name'].astype(str).str.strip().str.lower()
-        has_top_10 = name_col.str.contains('top 10').any()
-        has_gold = name_col.str.contains('^gold$').any()
-        if not (has_top_10 and has_gold):
+        if not name_col.str.contains('top 10').any():
             continue
 
         # Found the chase tab — parse it
         print(f"  Found chase tab: '{sheet_name}'")
         top_10_numbers = set()
-        gold_numbers = set()
+        chase_numbers = set()
         current_section = None
 
         for _, row in df.iterrows():
@@ -77,10 +77,8 @@ def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
                     label = str(name_val).strip().lower()
                     if 'top 10' in label:
                         current_section = 'top_10'
-                    elif label == 'gold':
-                        current_section = 'gold'
                     else:
-                        current_section = None
+                        current_section = 'chase'
             elif current_section:
                 # Normalize number the same way as process_xlsx_file to ensure overlay matches
                 if isinstance(num_val, float):
@@ -92,10 +90,10 @@ def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
                 if num_str and num_str.lower() not in ('nan', '---'):
                     if current_section == 'top_10':
                         top_10_numbers.add(num_str)
-                    elif current_section == 'gold':
-                        gold_numbers.add(num_str)
+                    else:
+                        chase_numbers.add(num_str)
 
-        return top_10_numbers, gold_numbers
+        return top_10_numbers, chase_numbers
 
     return set(), set()
 
@@ -512,8 +510,8 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
         print(f"  Error reading XLSX: {e}")
         return
 
-    top_10_numbers, gold_numbers = parse_chase_tab(xl)
-    print(f"  Chase tab: {len(top_10_numbers)} top-10 cards, {len(gold_numbers)} gold cards")
+    top_10_numbers, chase_numbers = parse_chase_tab(xl)
+    print(f"  Chase tab: {len(top_10_numbers)} top-10 cards, {len(chase_numbers)} chase cards")
 
     for sheet_name in xl.sheet_names:
         if sheet_name.strip().upper().startswith("(OLD)"):
@@ -665,7 +663,7 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
         skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
         print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
 
-        # Overlay top-10 and gold flags from chase tab (detected by content, not position)
+        # Overlay top-10 and chase flags from chase tab (detected by content, not position)
         overlay_count = 0
         for record in records:
             num = record["number"]
@@ -673,7 +671,7 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
                 record["is_top_10_chase_card"] = True
                 record["is_chase_card"] = True
                 overlay_count += 1
-            elif num in gold_numbers:
+            elif num in chase_numbers:
                 record["is_chase_card"] = True
                 overlay_count += 1
         if overlay_count:

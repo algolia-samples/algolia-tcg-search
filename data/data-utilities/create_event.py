@@ -7,10 +7,12 @@ Scaffold a new TCG event:
 4. Inserts record into tcg_events index
 
 Usage:
-    python create_event.py <event_id> <event_name> <booth> [--venue <venue>]
+    python create_event.py <event_id> <event_name> <booth> [--venue <venue>] [--landing-sections <json>]
+    python create_event.py <event_id> --patch --landing-sections <json>
 
-Example:
+Examples:
     python create_event.py shoptalk-2026 "Shoptalk 2026" 314 --venue "Mandalay Bay"
+    python create_event.py adobe-summit-2026 --patch --landing-sections '[{"title":"Top 10","filter":"is_top_10_chase_card:true"}]'
 """
 
 import os
@@ -32,10 +34,17 @@ CARD_CONFIG_FILE = Path(__file__).parent.parent / "algolia-config.json"
 def main():
     parser = argparse.ArgumentParser(description="Scaffold a new TCG event")
     parser.add_argument("event_id", help="Event slug, e.g. shoptalk-2026")
-    parser.add_argument("event_name", help='Human-readable name, e.g. "Shoptalk 2026"')
-    parser.add_argument("booth", help="Booth number, e.g. 314")
+    parser.add_argument("event_name", nargs="?", help='Human-readable name, e.g. "Shoptalk 2026"')
+    parser.add_argument("booth", nargs="?", help="Booth number, e.g. 314")
     parser.add_argument("--venue", default="", help="Venue name (optional)")
+    parser.add_argument("--landing-sections", dest="landing_sections", default=None,
+                        help="JSON array of {title, filter} objects for landing page carousels")
+    parser.add_argument("--patch", action="store_true",
+                        help="Patch an existing event record (skips index creation)")
     args = parser.parse_args()
+
+    if not args.patch and (not args.event_name or not args.booth):
+        parser.error("event_name and booth are required unless --patch is used")
 
     if not ALGOLIA_APP_ID or not ALGOLIA_API_KEY:
         print("ERROR: Missing Algolia credentials in .env file")
@@ -45,7 +54,28 @@ def main():
         print(f"ERROR: Config file not found: {CARD_CONFIG_FILE}")
         sys.exit(1)
 
+    landing_sections = None
+    if args.landing_sections:
+        try:
+            landing_sections = json.loads(args.landing_sections)
+        except json.JSONDecodeError as e:
+            print(f"ERROR: --landing-sections is not valid JSON: {e}")
+            sys.exit(1)
+
     client = SearchClientSync(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
+
+    # Patch mode: update only the landing_sections field on an existing event record
+    if args.patch:
+        if landing_sections is None:
+            print("ERROR: --patch requires --landing-sections")
+            sys.exit(1)
+        print(f"Patching event record '{args.event_id}' in {EVENTS_INDEX}...")
+        client.partial_update_objects(
+            index_name=EVENTS_INDEX,
+            objects=[{"objectID": args.event_id, "landing_sections": landing_sections}],
+        )
+        print(f"  ✓ landing_sections updated ({len(landing_sections)} section(s))")
+        return
 
     primary = f"tcg_cards_{args.event_id}"
     price_asc = f"{primary}_price_asc"
@@ -79,6 +109,8 @@ def main():
         "venue": args.venue,
         "current": False,
     }
+    if landing_sections is not None:
+        event_record["landing_sections"] = landing_sections
 
     print(f"\nAdding event record to {EVENTS_INDEX}...")
     client.save_objects(index_name=EVENTS_INDEX, objects=[event_record])
