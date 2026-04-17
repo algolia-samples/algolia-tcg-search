@@ -12,7 +12,7 @@ Usage:
 
 Examples:
     python create_event.py shoptalk-2026 "Shoptalk 2026" 314 --venue "Mandalay Bay"
-    python create_event.py adobe-summit-2026 --patch --landing-sections '[{"title":"Top 10","filter":"is_top_10_chase_card:true"}]'
+    python create_event.py adobe-summit-2026 --patch --landing-sections '[{"title":"Gold Cards","filter":"is_chase_card:true AND card_type:\"Gold\""}]'
 """
 
 import os
@@ -60,6 +60,12 @@ def main():
             landing_sections = json.loads(args.landing_sections)
         except json.JSONDecodeError as e:
             print(f"ERROR: --landing-sections is not valid JSON: {e}")
+            sys.exit(1)
+        if not isinstance(landing_sections, list) or not all(
+            isinstance(s, dict) and isinstance(s.get("title"), str) and isinstance(s.get("filter"), str)
+            for s in landing_sections
+        ):
+            print("ERROR: --landing-sections must be a JSON array of {title, filter} objects with string values")
             sys.exit(1)
 
     client = SearchClientSync(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
