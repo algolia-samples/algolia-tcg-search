@@ -149,13 +149,13 @@ export default function Search() {
             <PoweredBy />
           </div>
 
-          {/* Landing page carousels — dynamic if event defines sections, else fallback */}
-          {eventConfig.landing_sections
-            ? eventConfig.landing_sections.map(({ title, filter }) => (
-                <Carousel key={title} title={title} filters={filter} hitsPerPage={10} />
-              ))
-            : <Carousel title="⭐ Top 10 Chase Cards" filters="is_top_10_chase_card:true" hitsPerPage={10} />
-          }
+          {/* Top 10 carousel always shown */}
+          <Carousel title="⭐ Top 10 Chase Cards" filters="is_top_10_chase_card:true" hitsPerPage={10} />
+
+          {/* Additional carousels defined per-event */}
+          {eventConfig.landing_sections?.map(({ title, filter }) => (
+            <Carousel key={title} title={title} filters={filter} hitsPerPage={10} />
+          ))}
 
           {/* Recently Claimed Carousel */}
           <ClaimedCarousel />
