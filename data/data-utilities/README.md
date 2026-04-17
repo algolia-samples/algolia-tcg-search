@@ -28,7 +28,7 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 | Script | Description |
 |---|---|
 | `reset_and_ingest.sh` | Re-ingest card data for an existing event (clear + ingest + enrich) |
-| `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events` |
+| `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events`; supports `--landing-sections` and `--patch` |
 | `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
 | `ingest.py` | Reads XLSX (or CSVs as fallback), enriches via TCGdex API, uploads records to Algolia |
 | `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
@@ -63,7 +63,7 @@ One sheet per card set. Sheet names may include a count suffix and/or a prefix s
 
 Sheets whose names start with `(OLD)` are skipped.
 
-A **chase/summary tab** is detected automatically by content (the sheet that contains both a "Top 10" section header and a "Gold" section header). Cards listed there have `is_chase_card` and/or `is_top_10_chase_card` overlaid after per-sheet processing, regardless of the tab's name or position.
+A **chase/summary tab** is detected automatically by content (any sheet containing a "Top 10" section header). Cards listed in the "Top 10" section get both `is_top_10_chase_card` and `is_chase_card` set to `true`. Cards in any other section (e.g. Gold Cards, Special Illustration Rare) get `is_chase_card: true` only. Detection is tab-name agnostic — works regardless of sheet name or position.
 
 ### CSV (fallback)
 
@@ -122,6 +122,36 @@ Each card record uploaded to Algolia contains:
 | Field | Type | Description |
 |---|---|---|
 | `objectID` | string | `{set_id}-{card_number}` (e.g., `sv08-102`) — matches Supabase `card_id` |
+
+---
+
+## Landing Page Sections
+
+Events can define additional carousels on the landing page via a `landing_sections` attribute on the event record in `tcg_events`. The frontend always shows a "Top 10 Chase Cards" carousel; `landing_sections` adds extra carousels below it.
+
+Each section is a `{title, filter}` object using standard Algolia filter syntax:
+
+```json
+[
+  { "title": "Gold Cards",                     "filter": "is_chase_card:true AND card_type:\"Gold\"" },
+  { "title": "Top Special Illustration Cards", "filter": "is_chase_card:true AND card_type:\"Special Illustration Rare\"" },
+  { "title": "Top Illustration Rare Cards",    "filter": "is_chase_card:true AND card_type:\"Illustration Rare\"" }
+]
+```
+
+**At event creation:**
+```bash
+python create_event.py my-event-2026 "My Event 2026" 314 \
+  --landing-sections '[{"title": "Gold Cards", "filter": "is_chase_card:true AND card_type:\"Gold\""}]'
+```
+
+**Patching an existing event:**
+```bash
+python create_event.py my-event-2026 --patch \
+  --landing-sections '[{"title": "Gold Cards", "filter": "is_chase_card:true AND card_type:\"Gold\""}]'
+```
+
+Events without `landing_sections` show only the Top 10 carousel (all legacy events are unaffected).
 
 ---
 
