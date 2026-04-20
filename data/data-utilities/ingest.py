@@ -57,9 +57,10 @@ def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
         if not required_columns.issubset(set(df.columns)):
             continue
 
-        # Check if this sheet has a 'top 10' section header
-        name_col = df['Pokemon Name'].astype(str).str.strip().str.lower()
-        if not name_col.str.contains('top 10').any():
+        # Check if this sheet has a 'top 10' section header row (Number is empty)
+        header_mask = df['Number'].isna()
+        header_names = df.loc[header_mask, 'Pokemon Name'].astype(str).str.strip().str.lower()
+        if not header_names.str.contains('top 10').any():
             continue
 
         # Found the chase tab — parse it
