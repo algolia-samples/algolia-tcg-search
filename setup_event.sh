@@ -102,14 +102,15 @@ echo "Step 2/6: Clearing index tcg_cards_${EVENT_ID}"
 echo "========================================"
 (cd "$DATA_UTILS" && poetry run python clear_index.py --yes)
 
-# ── Step 3 guard: check for CSV files ─────────────────────────────────────────
+# ── Step 3 guard: check for CSV or XLSX files ─────────────────────────────────
 
 CSV_FILES=("$DATA_DIR"/*.csv)
-if [ ! -e "${CSV_FILES[0]}" ]; then
+XLSX_FILES=("$DATA_DIR"/*.xlsx)
+if [ ! -e "${CSV_FILES[0]}" ] && [ ! -e "${XLSX_FILES[0]}" ]; then
   echo ""
-  echo "  ⚠  No CSV files found in data/data-files/$EVENT_ID/"
+  echo "  ⚠  No CSV or XLSX files found in data/data-files/$EVENT_ID/"
   echo ""
-  echo "  Copy card CSVs into that directory, then run:"
+  echo "  Copy card data into that directory, then run:"
   echo "    data/data-utilities/reset_and_ingest.sh $EVENT_ID"
   echo ""
   echo "  Then activate the event when ready:"
@@ -139,6 +140,8 @@ echo "========================================"
 XLSX_FILE="$DATA_DIR/TCG Search Website - Raw List.xlsx"
 if [ -f "$XLSX_FILE" ]; then
   (cd "$DATA_UTILS" && poetry run python enrich_chase_cards.py)
+elif [ -e "${XLSX_FILES[0]}" ]; then
+  echo "  Skipped — XLSX-only event (images sourced from column A hyperlinks)"
 else
   echo "  Skipped — no XLSX found in data/data-files/$EVENT_ID/"
   echo "  To enrich later: copy the XLSX then run:"
@@ -151,7 +154,7 @@ echo ""
 echo "========================================"
 echo "Step 5/6: Creating Agent Studio agent"
 echo "========================================"
-(cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH")
+(cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
 
 # ── Step 6: Set event as active ────────────────────────────────────────────────
 
@@ -178,4 +181,9 @@ echo "  tcg_cards_${EVENT_ID}"
 echo "  tcg_cards_${EVENT_ID}_price_asc"
 echo "  tcg_cards_${EVENT_ID}_price_desc"
 echo ""
-echo "The app at / will now redirect to /$EVENT_ID"
+if [ "$NO_ACTIVATE" = true ]; then
+  echo "To activate when ready:"
+  echo "  cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
+else
+  echo "The app at / will now redirect to /$EVENT_ID"
+fi

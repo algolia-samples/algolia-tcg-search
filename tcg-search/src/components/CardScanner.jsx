@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import { cascadeSearch } from '../utilities/searchCard';
@@ -40,7 +40,6 @@ export default function CardScanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isDebug = searchParams.get('debug') === 'true';
-  const isMobile = useMemo(() => window.matchMedia('(pointer: coarse)').matches, []);
 
   const videoRef = useRef(null);
   const overlayCanvasRef = useRef(null);
@@ -64,7 +63,6 @@ export default function CardScanner() {
   const [searchFailed, setSearchFailed] = useState(false);
 
   useEffect(() => {
-    if (!isMobile) return;
     startCamera();
     return () => stopEverything();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,7 +93,11 @@ export default function CardScanner() {
         videoRef.current.onloadedmetadata = () => {
           setVideoReady(true);
           drawGuide();
-          startSampling();
+          // Only auto-capture on touch devices — desktop webcams are already
+          // still and would trigger immediately, which is bad UX.
+          if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) {
+            startSampling();
+          }
           // Redraw guide on resize/orientation change
           const observer = new ResizeObserver(drawGuide);
           observer.observe(videoRef.current);
@@ -178,8 +180,13 @@ export default function CardScanner() {
     canvas.width = vw;
     canvas.height = vh;
 
-    const guideW = vw * GUIDE_SCALE;
-    const guideH = guideW / CARD_RATIO;
+    // Constrain by width first, then clamp to height if the video is landscape
+    let guideW = vw * GUIDE_SCALE;
+    let guideH = guideW / CARD_RATIO;
+    if (guideH > vh * GUIDE_SCALE) {
+      guideH = vh * GUIDE_SCALE;
+      guideW = guideH * CARD_RATIO;
+    }
     const x = (vw - guideW) / 2;
     const y = (vh - guideH) / 2;
     const r = guideW * 0.04;
@@ -297,21 +304,9 @@ export default function CardScanner() {
     <div>
       <Header />
       <div className="card-scanner">
-        {!isMobile && (
-          <div className="card-scanner-apology">
-            <p className="card-scanner-apology-title">Card scanning is only available on mobile devices.</p>
-            <button
-              className="card-scanner-btn"
-              onClick={() => navigate(`/${eventId}`, { replace: true, state: { scrollToSearch: true } })}
-            >
-              Go to search
-            </button>
-          </div>
-        )}
+        {cameraError && <p className="card-scanner-error">{cameraError}</p>}
 
-        {isMobile && cameraError && <p className="card-scanner-error">{cameraError}</p>}
-
-        {isMobile && !capturedImage && (
+        {!capturedImage && (
           <>
             <div className="card-scanner-video-wrapper">
               <video ref={videoRef} autoPlay playsInline className="card-scanner-video" />
@@ -333,7 +328,7 @@ export default function CardScanner() {
           </>
         )}
 
-        {isMobile && capturedImage && (
+        {capturedImage && (
           <>
             <div className="card-scanner-video-wrapper">
               <img src={capturedImage} alt="Captured card" className="card-scanner-video" />

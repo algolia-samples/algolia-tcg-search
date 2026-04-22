@@ -35,20 +35,6 @@ HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/jpeg;base64,test
 const mockCascadeSearch = vi.fn();
 vi.mock('../utilities/searchCard', () => ({ cascadeSearch: (...args) => mockCascadeSearch(...args) }));
 
-// matchMedia helper — call before each test to set mobile/desktop
-function setPointerCoarse(isCoarse) {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: vi.fn().mockImplementation((query) => ({
-      matches: isCoarse && query === '(pointer: coarse)',
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })),
-  });
-}
-
 // Fake stream returned by getUserMedia
 function makeFakeStream() {
   return { getTracks: () => [{ stop: vi.fn() }] };
@@ -71,42 +57,54 @@ beforeEach(async () => {
   ({ default: CardScanner } = await import('./CardScanner.jsx'));
   mockNavigate.mockReset();
   mockCascadeSearch.mockReset();
+  // Stub matchMedia per-test (non-touch/desktop default) so it doesn't leak
+  vi.stubGlobal('matchMedia', vi.fn((query) => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })));
 });
 
 // --- Tests ---
 
-describe('CardScanner — desktop', () => {
-  beforeEach(() => setPointerCoarse(false));
-
-  test('shows mobile-only message', () => {
-    renderScanner();
-    expect(screen.getByText(/Card scanning is only available on mobile/i)).toBeInTheDocument();
-  });
-
-  test('shows "Go to search" button that navigates to event search', () => {
-    renderScanner();
-    const btn = screen.getByRole('button', { name: /go to search/i });
-    fireEvent.click(btn);
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining('foo-nyc-2026'),
-      expect.objectContaining({ replace: true })
-    );
-  });
-
-  test('does not render video element', () => {
-    const { container } = renderScanner();
-    expect(container.querySelector('video')).not.toBeInTheDocument();
-  });
-});
-
-describe('CardScanner — mobile', () => {
+describe('CardScanner', () => {
   beforeEach(() => {
-    setPointerCoarse(true);
     Object.defineProperty(navigator, 'mediaDevices', {
       writable: true,
       value: { getUserMedia: vi.fn().mockResolvedValue(makeFakeStream()) },
     });
     vi.stubGlobal('fetch', vi.fn());
+  });
+
+  test('does not start sampling on desktop (pointer: coarse = false)', async () => {
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+    const { container } = renderScanner();
+    await waitFor(() => container.querySelector('video'));
+    const callsBefore = setIntervalSpy.mock.calls.length;
+    await act(async () => {
+      fireEvent(container.querySelector('video'), new Event('loadedmetadata'));
+    });
+    expect(setIntervalSpy.mock.calls.length).toBe(callsBefore);
+    setIntervalSpy.mockRestore();
+  });
+
+  test('starts sampling on touch device (pointer: coarse = true)', async () => {
+    matchMedia.mockImplementation((query) => ({
+      matches: query === '(pointer: coarse)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+    const { container } = renderScanner();
+    await waitFor(() => container.querySelector('video'));
+    const callsBefore = setIntervalSpy.mock.calls.length;
+    await act(async () => {
+      fireEvent(container.querySelector('video'), new Event('loadedmetadata'));
+    });
+    expect(setIntervalSpy.mock.calls.length).toBeGreaterThan(callsBefore);
+    setIntervalSpy.mockRestore();
   });
 
   test('shows "Starting camera…" hint before video is ready', async () => {

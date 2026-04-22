@@ -33,17 +33,75 @@ vi.mock('react-instantsearch', () => ({
   SortBy: () => null,
   useHits: () => ({ results: { hits: [] } }),
   useSearchBox: () => ({ refine: vi.fn() }),
+  useToggleRefinement: () => ({ value: { isRefined: false, count: 0 }, refine: vi.fn() }),
+  useClearRefinements: () => ({ refine: vi.fn(), canRefine: false }),
+  useSortBy: () => ({ currentRefinement: 'primary', refine: vi.fn() }),
 }));
 
 vi.mock('search-insights', () => ({ default: vi.fn() }));
 vi.mock('./Header', () => ({ default: () => null }));
 vi.mock('./Hit', () => ({ default: () => null }));
 vi.mock('./FilterDropdown', () => ({ default: () => null }));
-vi.mock('./Carousel', () => ({ default: () => null }));
+vi.mock('./FilterToggle', () => ({ default: () => null }));
+vi.mock('./Carousel', () => ({
+  default: ({ title, filters }) => <div data-testid="carousel" data-title={title} data-filters={filters} />,
+}));
 vi.mock('./ClaimedCarousel', () => ({ default: () => null }));
 vi.mock('./ChatAgent', () => ({
   default: ({ agentId }) => <div data-testid="chat-agent" data-agent-id={agentId} />,
 }));
+
+function renderSearch(eventConfig) {
+  useEvent.mockReturnValue({ eventConfig, loading: false, error: null });
+  render(
+    <MemoryRouter initialEntries={['/test-event']}>
+      <Routes><Route path="/:eventId" element={<Search />} /></Routes>
+    </MemoryRouter>
+  );
+}
+
+describe('Search — landing sections', () => {
+  test('always renders Top 10 carousel', () => {
+    renderSearch({ event_id: 'test-event' });
+    const carousels = screen.getAllByTestId('carousel');
+    expect(carousels[0]).toHaveAttribute('data-title', '⭐ Top 10 Chase Cards');
+    expect(carousels[0]).toHaveAttribute('data-filters', 'is_top_10_chase_card:true');
+  });
+
+  test('renders only Top 10 carousel when landing_sections is absent', () => {
+    renderSearch({ event_id: 'test-event' });
+    expect(screen.getAllByTestId('carousel')).toHaveLength(1);
+  });
+
+  test('renders additional carousels from landing_sections', () => {
+    renderSearch({
+      event_id: 'test-event',
+      landing_sections: [
+        { title: 'Gold Cards', filter: 'is_chase_card:true AND card_type:"Gold"' },
+        { title: 'Top Illustration Rare Cards', filter: 'is_chase_card:true AND card_type:"Illustration Rare"' },
+      ],
+    });
+    const carousels = screen.getAllByTestId('carousel');
+    expect(carousels).toHaveLength(3);
+    expect(carousels[1]).toHaveAttribute('data-title', 'Gold Cards');
+    expect(carousels[2]).toHaveAttribute('data-title', 'Top Illustration Rare Cards');
+  });
+
+  test('renders landing_sections carousels in order', () => {
+    renderSearch({
+      event_id: 'test-event',
+      landing_sections: [
+        { title: 'Section A', filter: 'filter_a:true' },
+        { title: 'Section B', filter: 'filter_b:true' },
+        { title: 'Section C', filter: 'filter_c:true' },
+      ],
+    });
+    const carousels = screen.getAllByTestId('carousel');
+    expect(carousels[1]).toHaveAttribute('data-title', 'Section A');
+    expect(carousels[2]).toHaveAttribute('data-title', 'Section B');
+    expect(carousels[3]).toHaveAttribute('data-title', 'Section C');
+  });
+});
 
 describe('Search — agentId derivation', () => {
   test('passes eventConfig.agent_id to ChatAgent when present', () => {

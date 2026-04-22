@@ -21,7 +21,7 @@ Search and claim cards from the TCG vending machine inventory.
 │   ├── api/             # Vercel serverless API routes
 │   └── public/          # Static assets
 ├── data/                # Algolia index management
-│   ├── data-files/      # CSV inventory data
+│   ├── data-files/      # Card inventory data (XLSX per event)
 │   └── data-utilities/  # Python scripts for indexing
 ├── vercel.json          # Vercel deployment configuration
 └── .vercelignore        # Files excluded from deployment
@@ -90,7 +90,7 @@ ALGOLIA_WRITE_API_KEY=your_write_key  # server-side only, used by claims API
 
 ## Event Management
 
-Card inventory is managed via CSV exports from the master spreadsheet, ingested into Algolia via Python scripts in `data/data-utilities/`. See [`data/data-utilities/README.md`](data/data-utilities/README.md) for details on individual scripts, CSV format, and output schema.
+Card inventory is managed via a per-event XLSX file placed in `data/data-files/{event_id}/`, ingested into Algolia via Python scripts in `data/data-utilities/`. See [`data/data-utilities/README.md`](data/data-utilities/README.md) for details on individual scripts, data format, and output schema.
 
 ### Prerequisites
 
@@ -133,9 +133,9 @@ Wipes any existing card records from `tcg_cards_{event_id}`. Preserves index set
 
 **Step 3 — Ingest card data** (`ingest.py`)
 
-Reads all CSV files from `data/data-files/{event_id}/`, enriches each card with image URLs and type data from the TCGdex API, and uploads records to `tcg_cards_{event_id}`.
+Reads card data from `data/data-files/{event_id}/` — prefers a single XLSX file (one sheet per card set), falls back to individual CSVs. Enriches each card with image URLs and type data from the TCGdex API, and uploads records to `tcg_cards_{event_id}`.
 
-> If no CSVs are found, setup exits cleanly with instructions to add files and run `reset_and_ingest.sh` when ready.
+> If no data files are found, setup exits cleanly with instructions to add files and run `reset_and_ingest.sh` when ready.
 
 **Step 4 — Enrich chase cards** (`enrich_chase_cards.py`)
 
@@ -151,7 +151,7 @@ Sets the new event to `current: true` in `tcg_events`, clearing `current` from a
 
 ### Re-ingesting an Existing Event
 
-When card CSVs change but the event already exists, use `reset_and_ingest.sh` to re-run Steps 2–4 without recreating indices or touching the events record:
+When card data changes (updated XLSX or CSVs) but the event already exists, use `reset_and_ingest.sh` to re-run Steps 2–4 without recreating indices or touching the events record:
 
 ```bash
 data/data-utilities/reset_and_ingest.sh <event_id>

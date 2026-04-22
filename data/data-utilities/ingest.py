@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
+import openpyxl
 import pandas as pd
 import requests
 from algoliasearch.search.client import SearchClientSync
@@ -32,6 +33,89 @@ TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 
 # File name pattern to extract card set
 FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
+
+
+def parse_chase_tab(xl: pd.ExcelFile) -> tuple:
+    """
+    Find and parse the chase/summary tab in an XLSX file.
+    Scans all sheets for one containing a 'top 10' section header —
+    so this works regardless of tab name or position.
+    Cards in the 'top 10' section → top_10_numbers (also chase).
+    Cards in any other section → chase_numbers only.
+    Returns (top_10_numbers, chase_numbers) — sets of stripped card numbers,
+    or two empty sets if no matching tab is found.
+    """
+    required_columns = {'Pokemon Name', 'Number'}
+
+    for sheet_name in xl.sheet_names:
+        try:
+            df = pd.read_excel(xl, sheet_name=sheet_name)
+            df.columns = df.columns.str.strip()
+        except Exception:
+            continue
+
+        if not required_columns.issubset(set(df.columns)):
+            continue
+
+        # Check if this sheet has a 'top 10' section header row (Number is empty)
+        header_mask = df['Number'].isna()
+        header_names = df.loc[header_mask, 'Pokemon Name'].astype(str).str.strip().str.lower()
+        if not header_names.str.contains('top 10').any():
+            continue
+
+        # Found the chase tab — parse it
+        print(f"  Found chase tab: '{sheet_name}'")
+        top_10_numbers = set()
+        chase_numbers = set()
+        current_section = None
+
+        for _, row in df.iterrows():
+            name_val = row.get('Pokemon Name')
+            num_val = row.get('Number')
+
+            if pd.isna(num_val):
+                if not pd.isna(name_val) and str(name_val).strip():
+                    label = str(name_val).strip().lower()
+                    if 'top 10' in label:
+                        current_section = 'top_10'
+                    else:
+                        current_section = 'chase'
+            elif current_section:
+                # Normalize number the same way as process_xlsx_file to ensure overlay matches
+                if isinstance(num_val, float):
+                    num_str = str(int(num_val))
+                else:
+                    num_str = str(num_val).strip()
+                if '/' in num_str:
+                    num_str = num_str.split('/')[0]
+                if num_str and num_str.lower() not in ('nan', '---'):
+                    if current_section == 'top_10':
+                        top_10_numbers.add(num_str)
+                    else:
+                        chase_numbers.add(num_str)
+
+        return top_10_numbers, chase_numbers
+
+    return set(), set()
+
+
+def extract_card_set_from_sheet_name(sheet_name: str) -> str:
+    """
+    Extract card set name from XLSX sheet name.
+    Strips trailing (NNN) count and any leading prefixes separated by ' - '
+    so that annotated names like "NEW - Ascended Heroes (217)" still resolve correctly.
+    Examples:
+      "Ascended Heroes (217)"            -> "Ascended Heroes"
+      "NEW - Ascended Heroes (217)"      -> "Ascended Heroes"
+      "Mega Evolution_ Phantasmal Flames" -> "Mega Evolution: Phantasmal Flames"
+    """
+    # Strip trailing (NNN) or truncated (NNN without closing paren (Excel 31-char tab limit)
+    name = re.sub(r'\s*\(\d+\)?\s*$', '', sheet_name).strip()
+    # Take the last segment after any ' - ' prefixes (e.g. "NEW - ")
+    parts = re.split(r'\s+-\s*', name)
+    card_set = parts[-1].strip()
+    card_set = card_set.replace("_", ": ")
+    return " ".join(card_set.split())
 
 
 def extract_card_set_from_filename(filename: str) -> str:
@@ -86,14 +170,34 @@ def fetch_tcgdex_set_info(set_name: str) -> Optional[dict]:
                         print(f"  Matched TCGdex set using name without prefix: '{set_name_without_prefix}'")
                         return set_response.json()
 
-            # Try partial match as last resort
-            set_name_lower = set_name.lower()
+            # Try normalized partial match — strips punctuation so truncated names like
+            # "Scarlet & Violet Destined" still match "Scarlet & Violet: Destined Rivals"
+            def normalize(n):
+                return re.sub(r'[^a-z0-9\s]', '', n.lower())
+
+            set_name_norm = normalize(set_name)
             for s in sets:
-                if set_name_lower in s.get("name", "").lower():
+                if set_name_norm in normalize(s.get("name", "")):
                     set_id = s.get("id")
                     set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
                     set_response.raise_for_status()
                     return set_response.json()
+
+            # Suffix fallback for truncated tab names (Excel 31-char limit):
+            # Try progressively shorter leading-word-stripped suffixes.
+            # e.g. "Scarlet & Violet Destined" -> try "Violet Destined", "Destined"
+            #      "Destined" matches TCGdex "Destined Rivals"
+            words = set_name.split()
+            for i in range(1, len(words)):
+                suffix = " ".join(words[i:])
+                suffix_norm = normalize(suffix)
+                for s in sets:
+                    if suffix_norm in normalize(s.get("name", "")):
+                        set_id = s.get("id")
+                        set_response = requests.get(f"{TCGDEX_BASE_URL}/sets/{set_id}", timeout=10)
+                        set_response.raise_for_status()
+                        print(f"  Matched TCGdex set using suffix '{suffix}'")
+                        return set_response.json()
 
             return None
 
@@ -111,21 +215,70 @@ def fetch_tcgdex_set_info(set_name: str) -> Optional[dict]:
             return None
 
 
-def parse_estimated_value(value: str) -> Optional[float]:
-    """Parse estimated value from string format like "$20.60" to float."""
+def find_card_number_by_name(pokemon_name: str, tcgdex_cards: list) -> tuple:
+    """
+    Look up a card's localId from TCGdex by name.
+    Returns (localId, tcgdex_name) or (None, None).
+    Pass 1: exact case-insensitive match. Pass 2: substring match.
+    """
+    name_lower = pokemon_name.lower().strip()
+    # Pass 1: exact case-insensitive match
+    for card in tcgdex_cards:
+        tcg_name = card.get("name")
+        local_id = card.get("localId")
+        if isinstance(tcg_name, str) and tcg_name.lower().strip() == name_lower and local_id is not None:
+            return str(local_id), tcg_name
+    # Pass 2: substring match
+    for card in tcgdex_cards:
+        tcg_name = card.get("name")
+        local_id = card.get("localId")
+        if not isinstance(tcg_name, str) or local_id is None:
+            continue
+        tcg_name_lower = tcg_name.lower().strip()
+        if name_lower in tcg_name_lower or tcg_name_lower in name_lower:
+            return str(local_id), tcg_name
+    return None, None
+
+
+def parse_estimated_value(value) -> Optional[float]:
+    """Parse estimated value — handles native float (XLSX) or string like "$20.60" (CSV)."""
+    if isinstance(value, (int, float)) and not pd.isna(value):
+        return float(value)
     if pd.isna(value) or value == "":
         return None
     try:
-        return float(value.replace("$", "").strip())
+        return float(str(value).replace("$", "").strip())
     except (ValueError, AttributeError):
         return None
 
 
-def parse_boolean(value: str) -> bool:
-    """Parse TRUE/FALSE strings to boolean."""
+def parse_boolean(value) -> bool:
+    """Parse boolean — handles native bool, 0/1 int (XLSX), or TRUE/FALSE string (CSV)."""
     if pd.isna(value):
         return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
     return str(value).strip().upper() == "TRUE"
+
+
+TCGPLAYER_PRODUCT_RE = re.compile(r'/product/(\d+)/')
+
+
+def extract_tcgplayer_images(url: str) -> dict:
+    """Extract image_small and image_large from a TCGPlayer product URL."""
+    m = TCGPLAYER_PRODUCT_RE.search(url)
+    if not m:
+        return {}
+    pid = m.group(1)
+    return {
+        "image_small": f"https://tcgplayer-cdn.tcgplayer.com/product/{pid}_200w.jpg",
+        "image_large": f"https://tcgplayer-cdn.tcgplayer.com/product/{pid}_in_1000x1000.jpg",
+    }
 
 
 def fetch_card_details(set_id: str, local_id: str) -> Optional[dict]:
@@ -234,24 +387,38 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
     # Process records
     records = []
     enriched_count = 0
+    skipped: dict[str, int] = {}
 
     for idx, row in df.iterrows():
         try:
-            # Validate and extract required fields
-            # Handle card numbers that may be read as floats (e.g., 172.0)
-            raw_number = row["Number"]
-            if pd.isna(raw_number):
-                continue  # Skip rows with no card number
-            if isinstance(raw_number, float):
-                card_number = str(int(raw_number)).strip()
-            else:
-                card_number = str(raw_number).strip()
-
             pokemon_name = str(row["Pokemon Name"]).strip()
 
             # Skip empty rows
             if not pokemon_name or pokemon_name.lower() == 'nan':
+                skipped["blank name"] = skipped.get("blank name", 0) + 1
                 continue
+
+            # Handle card numbers that may be read as floats (e.g., 172.0)
+            raw_number = row["Number"]
+            if pd.isna(raw_number):
+                if tcgdex_cards:
+                    local_id, matched_name = find_card_number_by_name(pokemon_name, tcgdex_cards)
+                    if local_id:
+                        local_id_str = local_id.strip()
+                        card_number = str(int(local_id_str)) if local_id_str.isdigit() else local_id_str
+                        print(f"  AUTO-RESOLVED number for '{pokemon_name}': #{card_number} (matched '{matched_name}')")
+                    else:
+                        print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex match")
+                        skipped["missing number"] = skipped.get("missing number", 0) + 1
+                        continue
+                else:
+                    print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex data available")
+                    skipped["missing number"] = skipped.get("missing number", 0) + 1
+                    continue
+            elif isinstance(raw_number, float):
+                card_number = str(int(raw_number)).strip()
+            else:
+                card_number = str(raw_number).strip()
 
             # Create objectID using set_id-card_number pattern (like Supabase)
             if set_id:
@@ -260,7 +427,12 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
                 # Fallback if no set_id available
                 object_id = f"{set_name.replace(' ', '-').replace(':', '').lower()}-{card_number}"
 
-            machine_qty = int(row["# in Machine"])
+            raw_qty = row["# in Machine"]
+            if pd.isna(raw_qty):
+                print(f"  Skipping '{pokemon_name}' #{card_number} — not in machine")
+                skipped["not in machine"] = skipped.get("not in machine", 0) + 1
+                continue
+            machine_qty = int(raw_qty)
             record = {
                 "objectID": object_id,
                 "pokemon_name": pokemon_name,
@@ -296,16 +468,21 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
 
         except KeyError as e:
             print(f"  ⚠ Row {idx + 1}: Missing column {e}")
+            skipped["error"] = skipped.get("error", 0) + 1
             continue
         except ValueError as e:
             print(f"  ⚠ Row {idx + 1}: Invalid data format - {e}")
+            skipped["error"] = skipped.get("error", 0) + 1
             continue
         except Exception as e:
             print(f"  ⚠ Row {idx + 1}: Unexpected error - {e}")
+            skipped["error"] = skipped.get("error", 0) + 1
             continue
 
     # Final progress report
-    print(f"  Processed {len(records)} valid records ({enriched_count} enriched)")
+    total_skipped = sum(skipped.values())
+    skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
+    print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
 
     # Upload to Algolia
     if records:
@@ -317,6 +494,199 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
             print(f"  ✗ Error uploading to Algolia: {e}")
     else:
         print(f"  ⚠ No valid records to upload")
+
+
+def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str, enrich: bool = True):
+    """
+    Process a single XLSX file and upload records to Algolia.
+    Each sheet is treated as a separate card set. Sheets prefixed with (OLD) are skipped.
+    Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
+    """
+    print(f"\nProcessing XLSX: {file_path.name}")
+
+    try:
+        wb = openpyxl.load_workbook(file_path)  # for hyperlinks
+        xl = pd.ExcelFile(file_path)            # for data
+    except Exception as e:
+        print(f"  Error reading XLSX: {e}")
+        return
+
+    top_10_numbers, chase_numbers = parse_chase_tab(xl)
+    print(f"  Chase tab: {len(top_10_numbers)} top-10 cards, {len(chase_numbers)} chase cards")
+
+    for sheet_name in xl.sheet_names:
+        if sheet_name.strip().upper().startswith("(OLD)"):
+            print(f"  Skipping sheet: {sheet_name}")
+            continue
+
+        set_name = extract_card_set_from_sheet_name(sheet_name)
+        print(f"\n  Sheet: {sheet_name}  ->  Set: {set_name}")
+
+        # Build hyperlink map: {data_row_index: url} from column A
+        # Row 1 is the header, data starts at row 2 → pandas index 0
+        ws = wb[sheet_name]
+        hyperlinks = {}
+        for row in ws.iter_rows(min_row=2, max_col=1):
+            cell = row[0]
+            if cell.hyperlink:
+                hyperlinks[cell.row - 2] = cell.hyperlink.target  # -2: header + 0-index
+
+        try:
+            df = pd.read_excel(xl, sheet_name=sheet_name)
+            df.columns = df.columns.str.strip()
+        except Exception as e:
+            print(f"  Error reading sheet '{sheet_name}': {e}")
+            continue
+
+        # Skip non-card sheets (e.g. "Landing Page Sections", "Most expensive")
+        required_columns = {'Pokemon Name', 'Number', '# in Machine', 'Card Type', 'Estimated Value'}
+        if not required_columns.issubset(set(df.columns)):
+            print(f"  Skipping sheet '{sheet_name}' — not a card set (missing expected columns)")
+            continue
+
+        print(f"  Sheet records: {len(df)}")
+
+        # Get set info from TCGdex
+        set_id = None
+        tcgdex_cards = []
+
+        if enrich:
+            set_info = fetch_tcgdex_set_info(set_name)
+            if set_info:
+                set_id = set_info.get("id")
+                tcgdex_cards = set_info.get("cards", [])
+                print(f"  Found TCGdex set ID: {set_id}")
+                print(f"  TCGdex cards available: {len(tcgdex_cards)}")
+            else:
+                print(f"  ✗ Could not find TCGdex set for '{set_name}'")
+                print(f"  Continuing without enrichment...")
+
+        # Process records
+        records = []
+        enriched_count = 0
+        skipped: dict[str, int] = {}
+
+        for idx, row in df.iterrows():
+            try:
+                pokemon_name = str(row["Pokemon Name"]).strip()
+
+                if not pokemon_name or pokemon_name.lower() == 'nan':
+                    skipped["blank name"] = skipped.get("blank name", 0) + 1
+                    continue
+
+                raw_number = row["Number"]
+                if pd.isna(raw_number):
+                    if tcgdex_cards:
+                        local_id, matched_name = find_card_number_by_name(pokemon_name, tcgdex_cards)
+                        if local_id:
+                            local_id_str = local_id.strip()
+                            card_number = str(int(local_id_str)) if local_id_str.isdigit() else local_id_str
+                            print(f"  AUTO-RESOLVED number for '{pokemon_name}': #{card_number} (matched '{matched_name}')")
+                        else:
+                            print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex match")
+                            skipped["missing number"] = skipped.get("missing number", 0) + 1
+                            continue
+                    else:
+                        print(f"  WARN: Skipping '{pokemon_name}' — missing number, no TCGdex data available")
+                        skipped["missing number"] = skipped.get("missing number", 0) + 1
+                        continue
+                elif isinstance(raw_number, float):
+                    card_number = str(int(raw_number)).strip()
+                else:
+                    card_number = str(raw_number).strip()
+                # Strip set-size denominator (e.g. "289/217" -> "289")
+                if '/' in card_number:
+                    card_number = card_number.split('/')[0]
+
+                if set_id:
+                    object_id = f"{set_id}-{card_number}"
+                else:
+                    object_id = f"{set_name.replace(' ', '-').replace(':', '').lower()}-{card_number}"
+
+                raw_qty = row["# in Machine"]
+                if pd.isna(raw_qty):
+                    print(f"  Skipping '{pokemon_name}' #{card_number} — not in machine")
+                    skipped["not in machine"] = skipped.get("not in machine", 0) + 1
+                    continue
+                machine_qty = int(raw_qty)
+                card_type = str(row["Card Type"]).strip()
+                record = {
+                    "objectID": object_id,
+                    "pokemon_name": pokemon_name,
+                    "number": card_number,
+                    "card_type": card_type,
+                    "machine_quantity": machine_qty,
+                    "initial_quantity": machine_qty,
+                    "estimated_value": parse_estimated_value(row["Estimated Value"]),
+                    "is_chase_card": parse_boolean(row.get("Is Chase Card?", False)),
+                    "is_top_10_chase_card": parse_boolean(row.get("Is top 10 chase card?", False)),
+                    "is_classic_pokemon": parse_boolean(row.get("Is classic Pokemon?", False)),
+                    "is_full_art": card_type.lower() != "double rare",
+                    "set_name": set_name,
+                }
+
+                if set_id:
+                    record["set_id"] = set_id
+
+                if enrich and tcgdex_cards:
+                    debug = (idx < 5)
+                    enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, set_id=set_id, debug=debug)
+                    record.update(enriched_data)
+                    if enriched_data.get("image_small"):
+                        enriched_count += 1
+
+                # Override TCGdex images with TCGPlayer images from hyperlink if present
+                url = hyperlinks.get(idx)
+                if url:
+                    tcgplayer_images = extract_tcgplayer_images(url)
+                    if tcgplayer_images:
+                        record.update(tcgplayer_images)
+
+                records.append(record)
+
+                if (idx + 1) % 25 == 0:
+                    print(f"  Progress: {idx + 1}/{len(df)} cards processed ({enriched_count} enriched)")
+
+            except KeyError as e:
+                print(f"  ⚠ Row {idx + 1}: Missing column {e}")
+                skipped["error"] = skipped.get("error", 0) + 1
+                continue
+            except ValueError as e:
+                print(f"  ⚠ Row {idx + 1}: Invalid data format - {e}")
+                skipped["error"] = skipped.get("error", 0) + 1
+                continue
+            except Exception as e:
+                print(f"  ⚠ Row {idx + 1}: Unexpected error - {e}")
+                skipped["error"] = skipped.get("error", 0) + 1
+                continue
+
+        total_skipped = sum(skipped.values())
+        skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
+        print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
+
+        # Overlay top-10 and chase flags from chase tab (detected by content, not position)
+        overlay_count = 0
+        for record in records:
+            num = record["number"]
+            if num in top_10_numbers:
+                record["is_top_10_chase_card"] = True
+                record["is_chase_card"] = True
+                overlay_count += 1
+            elif num in chase_numbers:
+                record["is_chase_card"] = True
+                overlay_count += 1
+        if overlay_count:
+            print(f"  Overlay: {overlay_count} records flagged from first tab")
+
+        if records:
+            print(f"  Uploading {len(records)} records to Algolia...")
+            try:
+                client.save_objects(index_name=index_name, objects=records)
+                print(f"  ✓ Successfully uploaded {len(records)} records")
+            except Exception as e:
+                print(f"  ✗ Error uploading to Algolia: {e}")
+        else:
+            print(f"  ⚠ No valid records to upload")
 
 
 def main():
@@ -332,7 +702,7 @@ def main():
     parser.add_argument(
         "--file",
         type=str,
-        help="Process only a specific CSV file"
+        help="Process only a specific file (CSV or XLSX)"
     )
 
     args = parser.parse_args()
@@ -363,23 +733,28 @@ def main():
 
     # Process files
     if args.file:
-        # Process single file
         file_path = DATA_DIR / args.file
         if not file_path.exists():
             print(f"Error: File not found: {file_path}")
             return
-        process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        if file_path.suffix.lower() == ".xlsx":
+            process_xlsx_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        else:
+            process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
     else:
-        # Process all CSV files
         csv_files = list(DATA_DIR.glob("*.csv"))
-        if not csv_files:
-            print(f"No CSV files found in {DATA_DIR}")
-            return
-
-        print(f"Found {len(csv_files)} CSV files")
-
-        for csv_file in csv_files:
-            process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        if csv_files:
+            print(f"Found {len(csv_files)} CSV files")
+            for csv_file in csv_files:
+                process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+        else:
+            xlsx_files = list(DATA_DIR.glob("*.xlsx"))
+            if not xlsx_files:
+                print(f"No CSV or XLSX files found in {DATA_DIR}")
+                return
+            print(f"No CSVs found. Processing {len(xlsx_files)} XLSX file(s)")
+            for xlsx_file in xlsx_files:
+                process_xlsx_file(xlsx_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
 
     print("\n" + "=" * 60)
     print("Ingestion complete!")
