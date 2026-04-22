@@ -149,12 +149,13 @@ export default function Search() {
             <PoweredBy />
           </div>
 
-          {/* Top 10 Carousel - separate InstantSearch instance */}
-          <Carousel
-            title="⭐ Top 10 Chase Cards"
-            filters="is_top_10_chase_card:true"
-            hitsPerPage={10}
-          />
+          {/* Top 10 carousel always shown */}
+          <Carousel title="⭐ Top 10 Chase Cards" filters="is_top_10_chase_card:true" hitsPerPage={10} />
+
+          {/* Additional carousels defined per-event */}
+          {eventConfig.landing_sections?.map(({ title, filter }) => (
+            <Carousel key={title} title={title} filters={filter} hitsPerPage={10} />
+          ))}
 
           {/* Recently Claimed Carousel */}
           <ClaimedCarousel />
