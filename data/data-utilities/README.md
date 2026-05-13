@@ -9,7 +9,7 @@ For end-to-end event setup, re-ingestion, and switching the active event, see th
 Install dependencies and configure credentials:
 
 ```bash
-poetry install
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 Create `data/.env` from `data/.env.example`:
