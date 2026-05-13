@@ -19,6 +19,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_UTILS="$SCRIPT_DIR/data/data-utilities"
 AGENT_DIR="$SCRIPT_DIR/agent"
+DATA_PYTHON="$DATA_UTILS/.venv/bin/python"
+AGENT_PYTHON="$AGENT_DIR/.venv/bin/python"
 
 # ── Argument validation ────────────────────────────────────────────────────────
 
@@ -84,9 +86,9 @@ echo "========================================"
 echo "Step 1/6: Creating event record and Algolia indices"
 echo "========================================"
 if [ -n "$VENUE" ]; then
-  (cd "$DATA_UTILS" && poetry run python create_event.py "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --venue "$VENUE")
+  (cd "$DATA_UTILS" && "$DATA_PYTHON" create_event.py "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --venue "$VENUE")
 else
-  (cd "$DATA_UTILS" && poetry run python create_event.py "$EVENT_ID" "$EVENT_NAME" "$BOOTH")
+  (cd "$DATA_UTILS" && "$DATA_PYTHON" create_event.py "$EVENT_ID" "$EVENT_NAME" "$BOOTH")
 fi
 
 # Create per-event data directory for CSV files
@@ -100,7 +102,7 @@ echo ""
 echo "========================================"
 echo "Step 2/6: Clearing index tcg_cards_${EVENT_ID}"
 echo "========================================"
-(cd "$DATA_UTILS" && poetry run python clear_index.py --yes)
+(cd "$DATA_UTILS" && "$DATA_PYTHON" clear_index.py --yes)
 
 # ── Step 3 guard: check for CSV or XLSX files ─────────────────────────────────
 
@@ -114,7 +116,7 @@ if [ ! -e "${CSV_FILES[0]}" ] && [ ! -e "${XLSX_FILES[0]}" ]; then
   echo "    data/data-utilities/reset_and_ingest.sh $EVENT_ID"
   echo ""
   echo "  Then activate the event when ready:"
-  echo "    cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
+  echo "    cd data/data-utilities && .venv/bin/python set_active_event.py set $EVENT_ID"
   echo ""
   echo "Algolia indices created:"
   echo "  tcg_cards_${EVENT_ID}"
@@ -129,7 +131,7 @@ echo ""
 echo "========================================"
 echo "Step 3/6: Ingesting card data"
 echo "========================================"
-(cd "$DATA_UTILS" && poetry run python ingest.py)
+(cd "$DATA_UTILS" && "$DATA_PYTHON" ingest.py)
 
 # ── Step 4: Enrich chase cards (optional — requires XLSX) ─────────────────────
 
@@ -139,13 +141,13 @@ echo "Step 4/6: Enriching chase cards"
 echo "========================================"
 XLSX_FILE="$DATA_DIR/TCG Search Website - Raw List.xlsx"
 if [ -f "$XLSX_FILE" ]; then
-  (cd "$DATA_UTILS" && poetry run python enrich_chase_cards.py)
+  (cd "$DATA_UTILS" && "$DATA_PYTHON" enrich_chase_cards.py)
 elif [ -e "${XLSX_FILES[0]}" ]; then
   echo "  Skipped — XLSX-only event (images sourced from column A hyperlinks)"
 else
   echo "  Skipped — no XLSX found in data/data-files/$EVENT_ID/"
   echo "  To enrich later: copy the XLSX then run:"
-  echo "    cd data/data-utilities && ALGOLIA_EVENT_ID=$EVENT_ID poetry run python enrich_chase_cards.py"
+  echo "    cd data/data-utilities && ALGOLIA_EVENT_ID=$EVENT_ID .venv/bin/python enrich_chase_cards.py"
 fi
 
 # ── Step 5: Create Agent Studio agent ─────────────────────────────────────────
@@ -154,7 +156,7 @@ echo ""
 echo "========================================"
 echo "Step 5/6: Creating Agent Studio agent"
 echo "========================================"
-(cd "$AGENT_DIR" && poetry run python agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
+(cd "$AGENT_DIR" && "$AGENT_PYTHON" agent.py create "$EVENT_ID" "$EVENT_NAME" "$BOOTH" --publish)
 
 # ── Step 6: Set event as active ────────────────────────────────────────────────
 
@@ -164,9 +166,9 @@ echo "Step 6/6: Setting '$EVENT_ID' as the active event"
 echo "========================================"
 if [ "$NO_ACTIVATE" = true ]; then
   echo "  Skipped (--no-activate). To activate when ready:"
-  echo "    cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
+  echo "    cd data/data-utilities && .venv/bin/python set_active_event.py set $EVENT_ID"
 else
-  (cd "$DATA_UTILS" && poetry run python set_active_event.py set "$EVENT_ID")
+  (cd "$DATA_UTILS" && "$DATA_PYTHON" set_active_event.py set "$EVENT_ID")
 fi
 
 # ── Done ───────────────────────────────────────────────────────────────────────
@@ -183,7 +185,7 @@ echo "  tcg_cards_${EVENT_ID}_price_desc"
 echo ""
 if [ "$NO_ACTIVATE" = true ]; then
   echo "To activate when ready:"
-  echo "  cd data/data-utilities && poetry run python set_active_event.py set $EVENT_ID"
+  echo "  cd data/data-utilities && .venv/bin/python set_active_event.py set $EVENT_ID"
 else
   echo "The app at / will now redirect to /$EVENT_ID"
 fi

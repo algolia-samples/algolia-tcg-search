@@ -16,6 +16,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_UTILS="$SCRIPT_DIR/data/data-utilities"
 AGENT_DIR="$SCRIPT_DIR/agent"
+DATA_PYTHON="$DATA_UTILS/.venv/bin/python"
+AGENT_PYTHON="$AGENT_DIR/.venv/bin/python"
 
 # ── Argument parsing ───────────────────────────────────────────────────────────
 
@@ -80,7 +82,7 @@ echo ""
 echo "========================================"
 echo "Step 1/3: Deleting Agent Studio agent"
 echo "========================================"
-(cd "$AGENT_DIR" && poetry run python agent.py delete "$EVENT_ID")
+(cd "$AGENT_DIR" && "$AGENT_PYTHON" agent.py delete "$EVENT_ID")
 
 # ── Step 2: Delete Algolia indices + event record ──────────────────────────────
 
@@ -88,7 +90,7 @@ echo ""
 echo "========================================"
 echo "Step 2/3: Deleting Algolia indices and event record"
 echo "========================================"
-(cd "$DATA_UTILS" && poetry run python delete_event.py "$EVENT_ID" --yes)
+(cd "$DATA_UTILS" && "$DATA_PYTHON" delete_event.py "$EVENT_ID" --yes)
 
 # ── Step 3: Remove data files (optional) ──────────────────────────────────────
 
