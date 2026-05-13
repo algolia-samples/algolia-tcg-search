@@ -13,7 +13,7 @@ For `list`, `get`, and `providers`, call `algolia-agent` directly.
 ## Setup
 
 ```bash
-poetry install             # installs algolia-agent-cli and python-dotenv
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env       # fill in ALGOLIA_APP_ID and ALGOLIA_API_KEY
 ```
 

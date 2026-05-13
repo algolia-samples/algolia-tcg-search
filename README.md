@@ -98,7 +98,7 @@ Install Python dependencies and configure credentials:
 
 ```bash
 cd data/data-utilities
-poetry install
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 Create `data/.env` from `data/.env.example`:
@@ -166,8 +166,8 @@ To make a different (already set-up) event the active one:
 
 ```bash
 cd data/data-utilities
-poetry run python set_active_event.py list          # see all events
-poetry run python set_active_event.py set <event_id>
+.venv/bin/python set_active_event.py list          # see all events
+.venv/bin/python set_active_event.py set <event_id>
 ```
 
 This is a safe, non-destructive operation — it only updates the `current` field in `tcg_events`. The frontend will redirect to the new event on next load.
