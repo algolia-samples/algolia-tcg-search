@@ -162,7 +162,7 @@ export default function Search() {
 
           <div className="search-header">
             <div className="search-controls-row">
-              <SearchBox placeholder="Search for cards" className="searchbox" />
+              <SearchBox placeholder="Search for cards" className="searchbox" aiMode />
               <FilterDropdown attribute="set_name" placeholder="All Sets" />
               <FilterToggle attribute="is_chase_card" label="Chase Cards" shortLabel="Chase" />
               <SortBy items={sortItems} />
@@ -170,14 +170,14 @@ export default function Search() {
             </div>
           </div>
 
+          {/* AI Chat Agent */}
+          <ChatAgent agentId={agentId} />
+
           <div className="search-panel">
             <div className="search-panel__results">
               <HitsWithNoResults />
             </div>
           </div>
-
-          {/* AI Chat Agent */}
-          <ChatAgent agentId={agentId} />
         </InstantSearch>
       </div>
     </div>
