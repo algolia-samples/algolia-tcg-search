@@ -641,24 +641,22 @@ em {
 .searchbox .ais-SearchBox-form:focus-within {
   border-color: #00aeff;
   box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
-  transform: translateY(-1px);
 }
 
 .searchbox .ais-SearchBox-input {
   border: none !important;
+  outline: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
   padding-right: 4rem !important;
 }
 
-.searchbox .ais-SearchBox-input:focus {
-  border-color: transparent !important;
+.searchbox .ais-SearchBox-input:focus,
+.searchbox .ais-SearchBox-input:hover {
+  border: none !important;
+  outline: none !important;
   box-shadow: none !important;
   transform: none !important;
-}
-
-.searchbox .ais-SearchBox-input:hover {
-  box-shadow: none !important;
 }
 
 /* Shift reset button left to clear the AI mode button */
