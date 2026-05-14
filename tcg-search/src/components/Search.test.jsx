@@ -29,7 +29,7 @@ vi.mock('react-instantsearch', () => ({
   Hits: () => null,
   Pagination: () => null,
   PoweredBy: () => null,
-  SearchBox: () => null,
+  SearchBox: ({ aiMode }) => <div data-testid="search-box" data-ai-mode={aiMode ? 'true' : undefined} />,
   SortBy: () => null,
   useHits: () => ({ results: { hits: [] } }),
   useSearchBox: () => ({ refine: vi.fn() }),
@@ -100,6 +100,25 @@ describe('Search — landing sections', () => {
     expect(carousels[1]).toHaveAttribute('data-title', 'Section A');
     expect(carousels[2]).toHaveAttribute('data-title', 'Section B');
     expect(carousels[3]).toHaveAttribute('data-title', 'Section C');
+  });
+});
+
+describe('Search — SearchBox aiMode', () => {
+  test('passes aiMode prop to SearchBox', () => {
+    renderSearch({ event_id: 'test-event' });
+    expect(screen.getByTestId('search-box')).toHaveAttribute('data-ai-mode', 'true');
+  });
+});
+
+describe('Search — ChatAgent DOM ordering', () => {
+  test('chat-agent renders after search-header and before search-panel', () => {
+    renderSearch({ event_id: 'test-event' });
+    const header = document.querySelector('.search-header');
+    const chatAgent = screen.getByTestId('chat-agent');
+    const panel = document.querySelector('.search-panel');
+    // DOCUMENT_POSITION_FOLLOWING (4) means the argument follows the reference node
+    expect(header.compareDocumentPosition(chatAgent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chatAgent.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 
