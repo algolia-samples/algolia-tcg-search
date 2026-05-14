@@ -636,6 +636,7 @@ em {
   transition: all 0.2s ease;
   gap: 0.5rem;
   padding-right: 0.5rem;
+  overflow: hidden;
 }
 
 .searchbox .ais-SearchBox-form:focus-within {
