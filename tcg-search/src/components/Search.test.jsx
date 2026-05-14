@@ -110,6 +110,18 @@ describe('Search — SearchBox aiMode', () => {
   });
 });
 
+describe('Search — ChatAgent DOM ordering', () => {
+  test('chat-agent renders after search-header and before search-panel', () => {
+    renderSearch({ event_id: 'test-event' });
+    const header = document.querySelector('.search-header');
+    const chatAgent = screen.getByTestId('chat-agent');
+    const panel = document.querySelector('.search-panel');
+    // DOCUMENT_POSITION_FOLLOWING (4) means the argument follows the reference node
+    expect(header.compareDocumentPosition(chatAgent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chatAgent.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
 describe('Search — agentId derivation', () => {
   test('passes eventConfig.agent_id to ChatAgent when present', () => {
     useEvent.mockReturnValue({
