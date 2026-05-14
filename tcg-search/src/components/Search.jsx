@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import { searchClient, getIndexNames, userToken, chatAgentId } from '../utilities/algolia';
 import { useEvent } from '../context/EventContext';
@@ -39,6 +40,10 @@ function ScanQuerySetter({ query }) {
   return null;
 }
 
+ScanQuerySetter.propTypes = {
+  query: PropTypes.string.isRequired,
+};
+
 function ClearButton({ defaultSort, sortItems }) {
   const { refine: clearRefinements, canRefine } = useClearRefinements();
   const { currentRefinement: currentSort, refine: setSort } = useSortBy({ items: sortItems });
@@ -58,6 +63,13 @@ function ClearButton({ defaultSort, sortItems }) {
     </button>
   );
 }
+
+ClearButton.propTypes = {
+  defaultSort: PropTypes.string.isRequired,
+  sortItems: PropTypes.arrayOf(
+    PropTypes.shape({ label: PropTypes.string, value: PropTypes.string })
+  ).isRequired,
+};
 
 function HitsWithNoResults() {
   const { results } = useHits();
