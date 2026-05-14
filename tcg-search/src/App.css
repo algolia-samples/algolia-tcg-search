@@ -660,9 +660,9 @@ em {
   transform: none !important;
 }
 
-/* Shift reset button left to clear the AI mode button (~100px wide + 8px padding) */
+/* Shift reset button left to clear the AI mode button */
 .searchbox .ais-SearchBox-reset {
-  right: 8rem;
+  right: 7rem;
 }
 
 .ais-AiModeButton {
