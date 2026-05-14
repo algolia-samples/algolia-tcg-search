@@ -626,6 +626,74 @@ em {
   box-shadow: 0 0 0 2px rgba(59, 76, 202, 0.1) !important;
 }
 
+/* AI Mode button — rendered as a flex sibling inside ais-SearchBox-form.
+   Move the border to the form so the button appears inside the search field. */
+.searchbox .ais-SearchBox-form {
+  border: 2px solid #3B4CCA;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: white;
+  transition: all 0.2s ease;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.searchbox .ais-SearchBox-form:focus-within {
+  border-color: #00aeff;
+  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
+  transform: translateY(-1px);
+}
+
+.searchbox .ais-SearchBox-input {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding-right: 4rem !important;
+}
+
+.searchbox .ais-SearchBox-input:focus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.searchbox .ais-SearchBox-input:hover {
+  box-shadow: none !important;
+}
+
+/* Shift reset button left to clear the AI mode button */
+.searchbox .ais-SearchBox-reset {
+  right: 5.75rem;
+}
+
+.ais-AiModeButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.75rem;
+  background: #3B4CCA;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-family: 'Righteous', cursive;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+  line-height: 1;
+}
+
+.ais-AiModeButton:hover {
+  background: #2a3ab5;
+}
+
+.ais-AiModeButton-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
 /* Show more button styling - use specific selectors for higher specificity */
 .ais-Panel-body .ais-RefinementList-showMore {
   margin-top: 0.75rem;
