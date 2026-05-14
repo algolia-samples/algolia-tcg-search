@@ -627,21 +627,21 @@ em {
 }
 
 /* AI Mode button — rendered as a flex sibling inside ais-SearchBox-form.
-   Move the border to the form so the button appears inside the search field. */
+   Use box-shadow (not border) to draw the outline — it follows border-radius
+   without the subpixel corner-gap artifacts that border produces here. */
 .searchbox .ais-SearchBox-form {
-  border: 2px solid #3B4CCA;
+  border: none;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px #3B4CCA, 0 2px 4px rgba(0, 0, 0, 0.1);
   background: white;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease;
   gap: 0.5rem;
   padding-right: 0.5rem;
   overflow: hidden;
 }
 
 .searchbox .ais-SearchBox-form:focus-within {
-  border-color: #00aeff;
-  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
+  box-shadow: 0 0 0 2px #00aeff, 0 4px 8px rgba(59, 76, 202, 0.2);
 }
 
 .searchbox .ais-SearchBox-input {
@@ -660,9 +660,9 @@ em {
   transform: none !important;
 }
 
-/* Shift reset button left to clear the AI mode button */
+/* Shift reset button left to clear the AI mode button (~100px wide + 8px padding) */
 .searchbox .ais-SearchBox-reset {
-  right: 5.75rem;
+  right: 8rem;
 }
 
 .ais-AiModeButton {
@@ -1467,6 +1467,20 @@ article {
 
   .searchbox .ais-SearchBox-input {
     width: 100% !important;
+    padding-right: 3rem !important;
+  }
+
+  /* AI Mode: icon-only on mobile — hide label, shrink padding, tighten reset gap */
+  .ais-AiModeButton-label {
+    display: none;
+  }
+
+  .ais-AiModeButton {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .searchbox .ais-SearchBox-reset {
+    right: 3rem;
   }
 
   /* Mobile: all controls on one row — compress to fit */
