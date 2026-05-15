@@ -650,7 +650,6 @@ em {
   outline: none;
   box-shadow: none;
   border-radius: 0;
-  padding-right: 4rem;
 }
 
 .searchbox .ais-SearchBox-input:focus,
@@ -661,9 +660,11 @@ em {
   transform: none;
 }
 
-/* Shift reset button left to clear the AI mode button */
+/* Pull reset out of absolute positioning into the flex flow so its position
+   is determined by the layout rather than a hardcoded offset. */
 .searchbox .ais-SearchBox-reset {
-  right: 7rem;
+  position: static;
+  transform: none;
 }
 
 .ais-AiModeButton {
@@ -1468,20 +1469,15 @@ article {
 
   .searchbox .ais-SearchBox-input {
     width: 100%;
-    padding-right: 3rem;
   }
 
-  /* AI Mode: icon-only on mobile — hide label, shrink padding, tighten reset gap */
+  /* AI Mode: icon-only on mobile — hide label, shrink padding */
   .ais-AiModeButton-label {
     display: none;
   }
 
   .ais-AiModeButton {
     padding: 0.3rem 0.4rem;
-  }
-
-  .searchbox .ais-SearchBox-reset {
-    right: 3rem;
   }
 
   /* Mobile: all controls on one row — compress to fit */
