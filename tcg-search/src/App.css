@@ -624,6 +624,7 @@ em {
 .ais-Panel .ais-SearchBox-input:focus {
   border-color: #3B4CCA;
   box-shadow: 0 0 0 2px rgba(59, 76, 202, 0.1);
+  transform: none;
 }
 
 /* AI Mode button — rendered as a flex sibling inside ais-SearchBox-form.
