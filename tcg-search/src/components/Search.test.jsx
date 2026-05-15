@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { useSearchBox } from 'react-instantsearch';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useEvent } from '../context/EventContext';
 import Search from './Search';
@@ -29,10 +30,14 @@ vi.mock('react-instantsearch', () => ({
   Hits: () => null,
   Pagination: () => null,
   PoweredBy: () => null,
-  SearchBox: ({ aiMode }) => <div data-testid="search-box" data-ai-mode={aiMode ? 'true' : undefined} />,
+  SearchBox: ({ aiMode, onSubmit }) => (
+    <form data-testid="search-box-form" onSubmit={(e) => { e.preventDefault(); onSubmit?.(); }}>
+      <div data-testid="search-box" data-ai-mode={aiMode ? 'true' : undefined} />
+    </form>
+  ),
   SortBy: () => null,
   useHits: () => ({ results: { hits: [] } }),
-  useSearchBox: () => ({ refine: vi.fn() }),
+  useSearchBox: vi.fn(() => ({ refine: vi.fn(), query: '' })),
   useToggleRefinement: () => ({ value: { isRefined: false, count: 0 }, refine: vi.fn() }),
   useClearRefinements: () => ({ refine: vi.fn(), canRefine: false }),
   useSortBy: () => ({ currentRefinement: 'primary', refine: vi.fn() }),
@@ -143,5 +148,51 @@ describe('Search — agentId derivation', () => {
 
     render(<MemoryRouter initialEntries={['/test-event']}><Routes><Route path="/:eventId" element={<Search />} /></Routes></MemoryRouter>);
     expect(screen.getByTestId('chat-agent')).toHaveAttribute('data-agent-id', FALLBACK_AGENT_ID);
+  });
+});
+
+describe('Search — SearchBox enter-to-chat', () => {
+  let aiButton;
+
+  beforeEach(() => {
+    aiButton = document.createElement('button');
+    aiButton.className = 'ais-AiModeButton';
+    document.body.appendChild(aiButton);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(aiButton);
+    vi.mocked(useSearchBox).mockReset();
+    vi.mocked(useSearchBox).mockImplementation(() => ({ refine: vi.fn(), query: '' }));
+  });
+
+  test('clicks .ais-AiModeButton on submit when query is non-empty', () => {
+    vi.mocked(useSearchBox).mockReturnValue({ query: 'pikachu', refine: vi.fn() });
+    const clickSpy = vi.spyOn(aiButton, 'click');
+
+    renderSearch({ event_id: 'test-event' });
+    fireEvent.submit(screen.getByTestId('search-box-form'));
+
+    expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  test('does not click .ais-AiModeButton on submit when query is empty', () => {
+    vi.mocked(useSearchBox).mockReturnValue({ query: '', refine: vi.fn() });
+    const clickSpy = vi.spyOn(aiButton, 'click');
+
+    renderSearch({ event_id: 'test-event' });
+    fireEvent.submit(screen.getByTestId('search-box-form'));
+
+    expect(clickSpy).not.toHaveBeenCalled();
+  });
+
+  test('does not click .ais-AiModeButton on submit when query is whitespace-only', () => {
+    vi.mocked(useSearchBox).mockReturnValue({ query: '   ', refine: vi.fn() });
+    const clickSpy = vi.spyOn(aiButton, 'click');
+
+    renderSearch({ event_id: 'test-event' });
+    fireEvent.submit(screen.getByTestId('search-box-form'));
+
+    expect(clickSpy).not.toHaveBeenCalled();
   });
 });

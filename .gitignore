@@ -204,3 +204,6 @@ dmypy.json
 
 # Claude Code
 .claude/skills/
+
+# Blog drafts
+BLOG.md
