@@ -53,7 +53,7 @@ function SearchBoxWithAISubmit() {
       className="searchbox"
       aiMode
       onSubmit={() => {
-        if (query) {
+        if (query.trim()) {
           document.querySelector('.ais-AiModeButton')?.click();
         }
       }}

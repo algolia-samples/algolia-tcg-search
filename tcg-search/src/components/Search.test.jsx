@@ -185,4 +185,14 @@ describe('Search — SearchBox enter-to-chat', () => {
 
     expect(clickSpy).not.toHaveBeenCalled();
   });
+
+  test('does not click .ais-AiModeButton on submit when query is whitespace-only', () => {
+    vi.mocked(useSearchBox).mockReturnValue({ query: '   ', refine: vi.fn() });
+    const clickSpy = vi.spyOn(aiButton, 'click');
+
+    renderSearch({ event_id: 'test-event' });
+    fireEvent.submit(screen.getByTestId('search-box-form'));
+
+    expect(clickSpy).not.toHaveBeenCalled();
+  });
 });
