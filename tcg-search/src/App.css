@@ -532,11 +532,11 @@ em {
 .ais-SearchBox-input {
   font-family: 'Righteous', cursive;
   font-size: 1.25rem;
-  border: 2px solid #3B4CCA !important;
-  border-radius: 8px !important;
-  padding: 0.75rem 1rem 0.75rem 3rem !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.2s ease !important;
+  border: 2px solid #3B4CCA;
+  border-radius: 8px;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
   width: 100%;
   scroll-margin-top: 1.5rem;
 }
@@ -558,13 +558,13 @@ em {
 }
 
 .ais-SearchBox-input:focus {
-  border-color: #00aeff !important;
-  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2) !important;
+  border-color: #00aeff;
+  box-shadow: 0 4px 8px rgba(59, 76, 202, 0.2);
   transform: translateY(-1px);
 }
 
 .ais-SearchBox-input:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
 }
 
 .ais-SearchBox-submit {
@@ -613,7 +613,7 @@ em {
 .ais-Panel .ais-SearchBox-input {
   font-size: 16px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid #e2e8f0;
 }
 
 .ais-Panel .ais-SearchBox-input::placeholder {
@@ -622,8 +622,8 @@ em {
 }
 
 .ais-Panel .ais-SearchBox-input:focus {
-  border-color: #3B4CCA !important;
-  box-shadow: 0 0 0 2px rgba(59, 76, 202, 0.1) !important;
+  border-color: #3B4CCA;
+  box-shadow: 0 0 0 2px rgba(59, 76, 202, 0.1);
 }
 
 /* AI Mode button — rendered as a flex sibling inside ais-SearchBox-form.
@@ -645,19 +645,19 @@ em {
 }
 
 .searchbox .ais-SearchBox-input {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding-right: 4rem !important;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding-right: 4rem;
 }
 
 .searchbox .ais-SearchBox-input:focus,
 .searchbox .ais-SearchBox-input:hover {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  transform: none !important;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  transform: none;
 }
 
 /* Shift reset button left to clear the AI mode button */
@@ -1466,8 +1466,8 @@ article {
   }
 
   .searchbox .ais-SearchBox-input {
-    width: 100% !important;
-    padding-right: 3rem !important;
+    width: 100%;
+    padding-right: 3rem;
   }
 
   /* AI Mode: icon-only on mobile — hide label, shrink padding, tighten reset gap */
