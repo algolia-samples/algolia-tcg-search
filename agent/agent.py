@@ -234,7 +234,9 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
         return
 
     try:
-        agent = client.update_agent(agent_id, new_payload)
+        # Library uses PUT but the API requires PATCH — call _request directly
+        result = client._request(f"/agents/{agent_id}", method="PATCH", body=new_payload)
+        agent = result.get("data", result)
     except AgentAPIError as e:
         print(f"  ERROR updating {event_id}: {e}", file=sys.stderr)
         return
@@ -319,6 +321,9 @@ def _publish(client, agent_id):
     try:
         agent = client.publish_agent(agent_id)
     except AgentAPIError as e:
+        if e.status_code == 409:
+            print(f"  Agent {agent_id} already published — skipping.")
+            return
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
     print(f"Published agent: {agent['name']}")

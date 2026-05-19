@@ -22,7 +22,7 @@
   "clientSideTools": [
     {
       "name": "check_card_inventory",
-      "description": "Check how many of a specific Pokemon card are available or claimed in the vending machine. Returns all matching cards with their current inventory count. Use this when asked about availability, quantities, or whether a specific card is still in the machine.",
+      "description": "Check how many of a specific Pokemon card are available or claimed in the vending machine. Returns matching cards with inventory counts. Use for availability, quantity, and stock questions.",
       "inputSchema": {
         "type": "object",
         "properties": {
