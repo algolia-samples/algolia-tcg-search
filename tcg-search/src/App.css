@@ -347,6 +347,26 @@ em {
   max-width: 500px;
 }
 
+.no-results-ask-ai {
+  margin-top: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1.25rem;
+  background: #3B4CCA;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-family: 'Righteous', cursive;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.no-results-ask-ai:hover {
+  background: #2a3ab5;
+}
+
 .search-controls-row .ais-SortBy {
   flex: 1;
   min-width: 120px;

@@ -97,8 +97,14 @@ function HitsWithNoResults() {
       <div className="no-results">
         <h2 className="no-results-title">No cards found</h2>
         <p className="no-results-description">
-          Try adjusting your search or filters to find what you&apos;re looking for.
+          Try asking the AI — it can help with card availability, prices, and recommendations.
         </p>
+        <button
+          className="no-results-ask-ai"
+          onClick={() => document.querySelector('.ais-AiModeButton')?.click()}
+        >
+          Ask AI
+        </button>
       </div>
     );
   }
