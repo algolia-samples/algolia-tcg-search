@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 export default function AiModeButton({ onClick, className = '' }) {
   return (
     <button
+      type="button"
       className={`ai-mode-button ${className}`.trim()}
       onClick={onClick}
     >

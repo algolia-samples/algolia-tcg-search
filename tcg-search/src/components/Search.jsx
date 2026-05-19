@@ -45,6 +45,10 @@ ScanQuerySetter.propTypes = {
   query: PropTypes.string.isRequired,
 };
 
+function triggerAiMode() {
+  document.querySelector('.ais-AiModeButton')?.click();
+}
+
 // Sits inside InstantSearch — intercepts Enter to open AI chat when query is non-empty
 function SearchBoxWithAISubmit() {
   const { query } = useSearchBox();
@@ -54,9 +58,7 @@ function SearchBoxWithAISubmit() {
       className="searchbox"
       aiMode
       onSubmit={() => {
-        if (query.trim()) {
-          document.querySelector('.ais-AiModeButton')?.click();
-        }
+        if (query.trim()) triggerAiMode();
       }}
     />
   );
@@ -100,7 +102,7 @@ function HitsWithNoResults() {
         <p className="no-results-description">
           Try asking the AI — it can help with card availability, prices, and recommendations.
         </p>
-        <AiModeButton onClick={() => document.querySelector('.ais-AiModeButton')?.click()} />
+        <AiModeButton onClick={triggerAiMode} />
       </div>
     );
   }
