@@ -3,8 +3,7 @@ import { searchClient, getIndexNames } from '../../../utilities/algolia';
 import InventoryBar from '../../InventoryBar';
 
 function InventoryToolResult({ message }) {
-  console.log('[InventoryToolResult]', message.state, message.output);
-  if (message.state === 'input-streaming' || message.state === 'input-available') {
+if (message.state === 'input-streaming' || message.state === 'input-available') {
     return <p className="inventory-tool-status">Checking inventory…</p>;
   }
   if (message.state === 'output-error') {
@@ -70,7 +69,7 @@ export function makeInventoryTool(eventId) {
   const { primary } = getIndexNames(eventId);
   return {
     onToolCall({ input, addToolResult }) {
-      searchClient
+      return searchClient
         .searchSingleIndex({
           indexName: primary,
           searchParams: { query: input.query, hitsPerPage: 10 },
