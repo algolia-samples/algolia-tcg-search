@@ -94,11 +94,19 @@ def cmd_create(args):
     tool = build_tool(config)
 
     if args.dry_run:
+        tools = [tool]
+        for ct in config.get("clientSideTools", []):
+            tools.append({
+                "type": "client_side",
+                "name": ct["name"],
+                "description": ct["description"],
+                "inputSchema": ct["inputSchema"],
+            })
         print("=== DRY RUN ===")
         print(f"\nAgent name: {config['name']}")
         print(f"Provider:   {config['provider']}")
         print(f"Model:      {config['model']}")
-        print(f"\nTool payload:\n{json.dumps(tool, indent=2)}")
+        print(f"\nTools payload:\n{json.dumps(tools, indent=2)}")
         print(f"\n--- Rendered instructions ---\n{instructions}")
         return
 
@@ -110,13 +118,22 @@ def cmd_create(args):
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
 
+    tools = [tool]
+    for ct in config.get("clientSideTools", []):
+        tools.append({
+            "type": "client_side",
+            "name": ct["name"],
+            "description": ct["description"],
+            "inputSchema": ct["inputSchema"],
+        })
+
     payload = {
         "name": config["name"],
         "providerId": provider_id,
         "model": config["model"],
         "instructions": instructions,
         "status": "draft",
-        "tools": [tool],
+        "tools": tools,
     }
     if config.get("config"):
         payload["config"] = config["config"]
@@ -187,13 +204,22 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
     current = client.get_agent(agent_id)
     provider_id = client.resolve_provider_id(config["provider"])
 
+    tools = [tool]
+    for ct in config.get("clientSideTools", []):
+        tools.append({
+            "type": "client_side",
+            "name": ct["name"],
+            "description": ct["description"],
+            "inputSchema": ct["inputSchema"],
+        })
+
     new_payload = {
         "name": config["name"],
         "providerId": provider_id,
         "model": config["model"],
         "instructions": instructions,
         "status": current.get("status", "draft"),
-        "tools": [tool],
+        "tools": tools,
     }
     if config.get("config"):
         new_payload["config"] = config["config"]

@@ -18,5 +18,21 @@
   ],
   "config": {
     "suggestions": { "enabled": true }
-  }
+  },
+  "clientSideTools": [
+    {
+      "name": "check_card_inventory",
+      "description": "Check how many of a specific Pokemon card are available or claimed in the vending machine. Returns all matching cards with their current inventory count. Use this when asked about availability, quantities, or whether a specific card is still in the machine.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Pokemon card name to search for (e.g. 'Charizard ex')"
+          }
+        },
+        "required": ["query"]
+      }
+    }
+  ]
 }
