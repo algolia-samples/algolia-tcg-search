@@ -25,6 +25,7 @@ import FilterToggle from './FilterToggle';
 import Carousel from './Carousel';
 import ClaimedCarousel from './ClaimedCarousel';
 import ChatAgent from './ChatAgent';
+import AiModeButton from './AiModeButton';
 
 // Set user token for insights
 aa('setUserToken', userToken);
@@ -99,12 +100,7 @@ function HitsWithNoResults() {
         <p className="no-results-description">
           Try asking the AI — it can help with card availability, prices, and recommendations.
         </p>
-        <button
-          className="no-results-ask-ai"
-          onClick={() => document.querySelector('.ais-AiModeButton')?.click()}
-        >
-          AI Mode
-        </button>
+        <AiModeButton onClick={() => document.querySelector('.ais-AiModeButton')?.click()} />
       </div>
     );
   }
