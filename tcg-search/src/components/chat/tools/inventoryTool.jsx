@@ -3,6 +3,7 @@ import { searchClient, getIndexNames } from '../../../utilities/algolia';
 import InventoryBar from '../../InventoryBar';
 
 function InventoryToolResult({ message }) {
+  console.log('[InventoryToolResult]', message.state, message.output);
   if (message.state === 'input-streaming' || message.state === 'input-available') {
     return <p className="inventory-tool-status">Checking inventory…</p>;
   }
