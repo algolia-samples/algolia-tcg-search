@@ -814,7 +814,7 @@ em {
   border-color: #e2e8f0;
 }
 
-button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn):not(.filter-toggle):not(.filter-clear-btn) {
+button:not([class*="ais-"]):not(.header-search-button):not(.carousel-nav):not(.card-scanner-btn):not(.filter-toggle):not(.filter-clear-btn):not(.no-results-ask-ai) {
   border: none;
   cursor: pointer;
   appearance: none;
