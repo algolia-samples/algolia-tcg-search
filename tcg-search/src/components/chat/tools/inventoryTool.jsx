@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { searchClient, getIndexNames } from '../../../utilities/algolia';
 import InventoryBar from '../../InventoryBar';
 
@@ -20,7 +21,7 @@ function InventoryToolResult({ message }) {
         const isClaimed = !hit.machine_quantity || hit.machine_quantity <= 0;
         const price = hit.estimated_value != null ? `$${hit.estimated_value.toFixed(2)}` : null;
         return (
-          <div key={hit.objectID} className="carousel-hit-card">
+          <article key={hit.objectID} className="carousel-hit-card" aria-label={`${hit.pokemon_name} Pokemon card`}>
             <div className={`carousel-hit-image-wrapper ${isClaimed ? 'claimed' : ''}`}>
               {isClaimed && <div className="carousel-claimed-badge">CLAIMED</div>}
               {hit.image_small ? (
@@ -47,12 +48,22 @@ function InventoryToolResult({ message }) {
                 </div>
               )}
             </div>
-          </div>
+          </article>
         );
       })}
     </div>
   );
 }
+
+InventoryToolResult.propTypes = {
+  message: PropTypes.shape({
+    state: PropTypes.string.isRequired,
+    output: PropTypes.shape({
+      hits: PropTypes.array,
+      nbHits: PropTypes.number,
+    }),
+  }).isRequired,
+};
 
 export function makeInventoryTool(eventId) {
   const { primary } = getIndexNames(eventId);
@@ -63,7 +74,8 @@ export function makeInventoryTool(eventId) {
           indexName: primary,
           searchParams: { query: input.query, hitsPerPage: 10 },
         })
-        .then(({ hits, nbHits }) => addToolResult({ output: { hits, nbHits } }));
+        .then(({ hits, nbHits }) => addToolResult({ output: { hits, nbHits } }))
+        .catch(() => addToolResult({ output: { hits: [], nbHits: 0 } }));
     },
     layoutComponent: InventoryToolResult,
   };
