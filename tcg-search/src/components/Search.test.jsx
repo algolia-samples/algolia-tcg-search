@@ -151,6 +151,38 @@ describe('Search — agentId derivation', () => {
   });
 });
 
+describe('Search — no-results state', () => {
+  let aiButton;
+
+  beforeEach(() => {
+    aiButton = document.createElement('button');
+    aiButton.className = 'ais-AiModeButton';
+    document.body.appendChild(aiButton);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(aiButton);
+  });
+
+  test('renders no-results title and AI prompt', () => {
+    renderSearch({ event_id: 'test-event' });
+    expect(screen.getByText('No cards found')).toBeInTheDocument();
+    expect(screen.getByText(/Try asking the AI/)).toBeInTheDocument();
+  });
+
+  test('renders AI Mode button', () => {
+    renderSearch({ event_id: 'test-event' });
+    expect(screen.getByRole('button', { name: /AI Mode/i })).toBeInTheDocument();
+  });
+
+  test('clicking AI Mode button triggers .ais-AiModeButton', () => {
+    const clickSpy = vi.spyOn(aiButton, 'click');
+    renderSearch({ event_id: 'test-event' });
+    fireEvent.click(screen.getByRole('button', { name: /AI Mode/i }));
+    expect(clickSpy).toHaveBeenCalledOnce();
+  });
+});
+
 describe('Search — SearchBox enter-to-chat', () => {
   let aiButton;
 
