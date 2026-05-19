@@ -103,7 +103,7 @@ function HitsWithNoResults() {
           className="no-results-ask-ai"
           onClick={() => document.querySelector('.ais-AiModeButton')?.click()}
         >
-          Ask AI
+          AI Mode
         </button>
       </div>
     );
