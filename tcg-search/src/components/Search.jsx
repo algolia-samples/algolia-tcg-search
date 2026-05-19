@@ -204,7 +204,7 @@ export default function Search() {
           </div>
 
           {/* AI Chat Agent */}
-          <ChatAgent agentId={agentId} />
+          <ChatAgent agentId={agentId} eventId={eventConfig.event_id} />
 
           <div className="search-panel">
             <div className="search-panel__results">
