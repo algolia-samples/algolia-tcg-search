@@ -3,7 +3,7 @@ import { Chat, ChatSidePanelLayout } from 'react-instantsearch';
 import 'instantsearch.css/components/chat.css';
 import ChatItemComponent from './ChatItemComponent';
 
-function Greeting() {
+function ChatGreeting() {
   return (
     <div className="ais-ChatGreeting">
       <h2 className="ais-ChatGreeting-heading">
@@ -22,7 +22,7 @@ export default function ChatAgent({ agentId }) {
       agentId={agentId}
       layoutComponent={ChatSidePanelLayout}
       itemComponent={ChatItemComponent}
-      emptyComponent={Greeting}
+      emptyComponent={ChatGreeting}
       feedback
     />
   );
