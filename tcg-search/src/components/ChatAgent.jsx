@@ -7,7 +7,6 @@ export default function ChatAgent({ agentId }) {
   return (
     <Chat
       agentId={agentId}
-      resume={true}
       itemComponent={ChatItemComponent}
     />
   );
