@@ -2790,3 +2790,10 @@ button.carousel-nav-right {
   transition: width 0.3s ease;
 }
 
+/* Fix class name mismatch between instantsearch.css and react-instantsearch:
+   CSS uses .ais-Chat--maximized but widget applies .ais-ChatOverlayLayout--maximized */
+.ais-ChatOverlayLayout--maximized {
+  width: var(--ais-chat-maximized-width);
+  height: var(--ais-chat-maximized-height);
+}
+
