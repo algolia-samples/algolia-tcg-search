@@ -23,6 +23,7 @@ export default function ChatAgent({ agentId }) {
       layoutComponent={ChatSidePanelLayout}
       itemComponent={ChatItemComponent}
       emptyComponent={Greeting}
+      feedback
     />
   );
 }
