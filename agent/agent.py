@@ -99,6 +99,8 @@ def cmd_create(args):
         print(f"Provider:   {config['provider']}")
         print(f"Model:      {config['model']}")
         print(f"\nTool payload:\n{json.dumps(tool, indent=2)}")
+        if config.get("config"):
+            print(f"\nAgent config:\n{json.dumps(config['config'], indent=2)}")
         print(f"\n--- Rendered instructions ---\n{instructions}")
         return
 
