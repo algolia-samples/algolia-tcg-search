@@ -99,6 +99,8 @@ def cmd_create(args):
         print(f"Provider:   {config['provider']}")
         print(f"Model:      {config['model']}")
         print(f"\nTool payload:\n{json.dumps(tool, indent=2)}")
+        if config.get("config"):
+            print(f"\nAgent config:\n{json.dumps(config['config'], indent=2)}")
         print(f"\n--- Rendered instructions ---\n{instructions}")
         return
 
@@ -200,6 +202,10 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
 
     if dry_run:
         changes = _diff(current, new_payload)
+        curr_config = current.get("config", {})
+        new_config = new_payload.get("config", {})
+        if curr_config != new_config:
+            changes.append(f"  config: {json.dumps(curr_config)} → {json.dumps(new_config)}")
         print(f"\n--- {event_id} ({agent_id}) ---")
         if changes:
             print("\n".join(changes))
