@@ -9,7 +9,7 @@ const PROMPT_SUGGESTIONS = [
   'What are your most valuable cards?',
   'Do you have any Charizard cards?',
   'Show me your top chase cards',
-  'What cards are under $10?',
+  "What's your best water type card?",
   'How do I get a card?',
 ];
 
