@@ -17,6 +17,7 @@
     }
   ],
   "config": {
+    "enableAlgoliaMcp": true,
     "suggestions": { "enabled": true }
   }
 }
