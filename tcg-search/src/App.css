@@ -718,6 +718,32 @@ em {
   fill: currentColor;
 }
 
+/* Chat greeting prompt suggestion chips */
+.chat-greeting-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.chat-greeting-suggestion {
+  background: none;
+  border: 1.5px solid #3B4CCA;
+  border-radius: 999px;
+  color: #3B4CCA;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.85rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chat-greeting-suggestion:hover,
+.chat-greeting-suggestion:focus-visible {
+  background: #3B4CCA;
+  color: white;
+  outline: none;
+}
+
 /* Show more button styling - use specific selectors for higher specificity */
 .ais-Panel-body .ais-RefinementList-showMore {
   margin-top: 0.75rem;
@@ -2482,6 +2508,16 @@ article {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* Room for card box-shadow at the bottom of carousel lists */
+.ais-Carousel-list {
+  padding-bottom: 16px;
+}
+
+/* Fix toggle button position when side panel is maximized (library bug: uses --ais-chat-width instead of actual panel width) */
+.ais-ChatSidePanelLayout--maximized .ais-Chat-container--open ~ .ais-Chat-toggleButtonWrapper {
+  right: calc(100% + var(--ais-chat-margin));
 }
 
 .carousel-hit-image-wrapper {
