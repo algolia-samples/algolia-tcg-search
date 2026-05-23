@@ -24,6 +24,7 @@ function ChatGreeting({ sendMessage }) {
         {PROMPT_SUGGESTIONS.map((prompt) => (
           <button
             key={prompt}
+            type="button"
             className="chat-greeting-suggestion"
             onClick={() => sendMessage({ text: prompt })}
           >

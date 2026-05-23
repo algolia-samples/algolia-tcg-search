@@ -737,9 +737,11 @@ em {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.chat-greeting-suggestion:hover {
+.chat-greeting-suggestion:hover,
+.chat-greeting-suggestion:focus-visible {
   background: #3B4CCA;
   color: white;
+  outline: none;
 }
 
 /* Show more button styling - use specific selectors for higher specificity */
