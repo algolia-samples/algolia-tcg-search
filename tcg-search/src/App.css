@@ -2513,6 +2513,11 @@ article {
   padding-bottom: 16px;
 }
 
+/* Fix toggle button position when side panel is maximized (library bug: uses --ais-chat-width instead of actual panel width) */
+.ais-ChatSidePanelLayout--maximized .ais-Chat-container--open ~ .ais-Chat-toggleButtonWrapper {
+  right: calc(100% + var(--ais-chat-margin));
+}
+
 .carousel-hit-image-wrapper {
   width: 100%;
   display: flex;
