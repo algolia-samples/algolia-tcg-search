@@ -32,6 +32,7 @@
         "set_name",
         "estimated_value",
         "machine_quantity",
+        "initial_quantity",
         "is_chase_card",
         "is_top_10_chase_card",
         "pokemon_types",
