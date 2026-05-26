@@ -206,4 +206,4 @@ dmypy.json
 .claude/skills/
 
 # Blog drafts
-BLOG.md
+BLOG*.md
