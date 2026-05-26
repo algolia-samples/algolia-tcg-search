@@ -16,6 +16,29 @@
       "description": "Pokemon cards sorted by estimated value descending (highest price first)."
     }
   ],
+  "searchControls": {
+    "hitsPerPage": {
+      "exposed": true,
+      "default": 5,
+      "constraint": { "max": 5 }
+    },
+    "attributesToRetrieve": {
+      "exposed": false,
+      "default": [
+        "objectID",
+        "pokemon_name",
+        "number",
+        "card_type",
+        "set_name",
+        "estimated_value",
+        "machine_quantity",
+        "is_chase_card",
+        "is_top_10_chase_card",
+        "pokemon_types",
+        "image_small"
+      ]
+    }
+  },
   "config": {
     "enableAlgoliaMcp": true,
     "suggestions": { "enabled": true }
