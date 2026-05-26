@@ -92,10 +92,6 @@ def cmd_create(args):
 
     config, instructions = _render_config(args.event_id, args.event_name, args.booth)
     tool = build_tool(config)
-    if "searchControls" in tool:
-        sc = tool.pop("searchControls")
-        for idx in tool["indices"]:
-            idx["searchControls"] = sc
 
     if args.dry_run:
         print("=== DRY RUN ===")
@@ -187,10 +183,6 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
 
     config, instructions = _render_config(event_id, event_name, booth)
     tool = build_tool(config)
-    if "searchControls" in tool:
-        sc = tool.pop("searchControls")
-        for idx in tool["indices"]:
-            idx["searchControls"] = sc
 
     from algolia_agent.cli import _diff
 
@@ -210,16 +202,6 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
 
     if dry_run:
         changes = _diff(current, new_payload)
-        curr_sc = next(
-            (i.get("searchControls") for t in current.get("tools", []) for i in t.get("indices", [])),
-            None,
-        )
-        new_sc = next(
-            (i.get("searchControls") for t in new_payload.get("tools", []) for i in t.get("indices", [])),
-            None,
-        )
-        if curr_sc != new_sc:
-            changes.append(f"  searchControls: {json.dumps(curr_sc)} → {json.dumps(new_sc)}")
         curr_config = current.get("config", {})
         new_config = new_payload.get("config", {})
         if curr_config != new_config:
