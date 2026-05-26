@@ -221,7 +221,7 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
 
     print(f"  Updated: {agent['name']} ({agent_id})")
 
-    if publish:
+    if publish and current.get("status") != "published":
         _publish(client, agent_id)
 
 
