@@ -1,9 +1,7 @@
-import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Chat, ChatSidePanelLayout } from 'react-instantsearch';
 import 'instantsearch.css/components/chat.css';
 import ChatItemComponent from './ChatItemComponent';
-import { scrollToSearchBox } from '../utilities/dom';
 
 const PROMPT_SUGGESTIONS = [
   'What are your most valuable cards?',
@@ -39,16 +37,6 @@ function ChatGreeting({ sendMessage }) {
 }
 
 export default function ChatAgent({ agentId }) {
-  useEffect(() => {
-    const handleViewAll = (e) => {
-      if (e.target.closest('.ais-ChatToolSearchIndexCarouselHeaderViewAll')) {
-        scrollToSearchBox();
-      }
-    };
-    document.addEventListener('click', handleViewAll);
-    return () => document.removeEventListener('click', handleViewAll);
-  }, []);
-
   return (
     <Chat
       agentId={agentId}
