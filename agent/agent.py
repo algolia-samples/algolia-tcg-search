@@ -300,7 +300,7 @@ def _publish(client, agent_id):
         agent = client.publish_agent(agent_id)
     except AgentAPIError as e:
         if e.status_code == 409:
-            print(f"  (already published)")
+            print(f"  (already published: {agent_id})")
             return
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
