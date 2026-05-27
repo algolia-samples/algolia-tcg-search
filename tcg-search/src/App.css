@@ -313,7 +313,7 @@ em {
 
 .search-panel__results {
   flex: 3;
-  min-height: 800px;
+  min-height: 100vh;
 }
 
 /* No results message */
@@ -1584,6 +1584,7 @@ article {
 
   .search-panel__results {
     width: 100%;
+    min-height: 100vh;
   }
 
   /* Mobile grid: 1 column */
