@@ -221,7 +221,7 @@ def _update_event_agent(client, event, dry_run=False, publish=False):
 
     print(f"  Updated: {agent['name']} ({agent_id})")
 
-    if publish:
+    if publish and current.get("status") != "published":
         _publish(client, agent_id)
 
 
@@ -299,6 +299,9 @@ def _publish(client, agent_id):
     try:
         agent = client.publish_agent(agent_id)
     except AgentAPIError as e:
+        if e.status_code == 409:
+            print(f"  (already published: {agent_id})")
+            return
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
     print(f"Published agent: {agent['name']}")
