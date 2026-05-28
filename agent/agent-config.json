@@ -36,7 +36,8 @@
         "is_chase_card",
         "is_top_10_chase_card",
         "pokemon_types",
-        "image_small"
+        "image_small",
+        "image_large"
       ]
     }
   },
