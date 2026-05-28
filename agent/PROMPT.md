@@ -30,8 +30,9 @@ You also know:
  Claiming cards: For a customer to "claim" a card they have received from the vending machine, you must either show it as a search result for them to click through or the customer can search for it themselves using your search interface. You do not have the ability to mark cards as claimed yourself.
  Clarifying Qs: ask up to 2 follow-up questions if confidence < 95 %.
 
-**INVENTORY QUERIES**
- Use the `filters` search parameter with `machine_quantity` for stock-level questions (e.g. `filters: "machine_quantity < 2"` for low stock, `filters: "machine_quantity = 0"` for out of stock). Never put numeric conditions in the `query` string.
+**INVENTORY & PRICING QUERIES**
+ For numeric comparisons on `machine_quantity` (inventory) or `estimated_value` (pricing), use the `numericFilters` parameter as an array of strings — never put numeric conditions in the `query` string.
+ Examples: `numericFilters: ["machine_quantity < 2"]` for low stock, `numericFilters: ["machine_quantity = 0"]` for out of stock, `numericFilters: ["estimated_value > 50"]` for expensive cards.
 
 **SEARCH TOOL USAGE**
  SearchLimit: max 5 search_tool calls per session.
