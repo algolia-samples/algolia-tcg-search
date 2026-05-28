@@ -1,92 +1,92 @@
-Pokemon Name,Number ,Card Type ,# in Machine,Estimated Value ,Is Chase Card? ,Is top 10 chase card? ,Is classic Pokemon? ,Is Full Art?  
-Lillie's Clefairy ex,184,Alternative Full Art,1,$139.85,TRUE,TRUE,TRUE,TRUE
-Iono's Bellibolt Ex,172,Alternative Full Art,2,$2.49,FALSE,FALSE,FALSE,TRUE
-Volcanion Ex ,031,Alternative Full Art,2,$1.09,FALSE,FALSE,FALSE,TRUE
-N's Zoroark,098,Full Art ,1,$2.92,FALSE,FALSE,FALSE,TRUE
-Lillie's Clefairy Ex,056,Full Art ,1,$1.02,FALSE,FALSE,TRUE,TRUE
-Volcanion Ex ,171,Full Art ,2,$0.90,FALSE,FALSE,FALSE,TRUE
-Iono's Bellibolt Ex,053,Full Art ,2,$0.62,FALSE,FALSE,FALSE,TRUE
-Alcremie Ex,075,Full Art ,1,$0.60,FALSE,FALSE,FALSE,TRUE
-Tapu Koko Ex,051,Full Art ,1,$0.51,FALSE,FALSE,FALSE,TRUE
-Paldean Clodsire Ex,094,Full Art ,1,$0.44,FALSE,FALSE,FALSE,TRUE
-N's Zoroark,189,Gold,1,$14.82,TRUE,FALSE,FALSE,TRUE
-N's Reshiram,116,Holo,1,$0.53,FALSE,FALSE,FALSE,FALSE
-Hop's Snorlax,117,Holo,3,$0.40,FALSE,FALSE,TRUE,FALSE
-Lycanroc,085,Holo,1,$0.39,FALSE,FALSE,FALSE,FALSE
-Meowscarada,018,Holo,4,$0.38,FALSE,FALSE,FALSE,FALSE
-Noivern,128,Holo,1,$0.32,FALSE,FALSE,FALSE,FALSE
-Regirock,082,Holo,3,$0.32,FALSE,FALSE,FALSE,FALSE
-Iono's Kilowattrel,055,Holo,4,$0.30,FALSE,FALSE,FALSE,FALSE
-Wailord,041,Holo,2,$0.30,FALSE,FALSE,FALSE,FALSE
-Magearna,107,Holo,4,$0.29,FALSE,FALSE,FALSE,FALSE
-Ludicolo,037,Holo,2,$0.28,FALSE,FALSE,FALSE,FALSE
-Hop's Dubwool,136,Holo,2,$0.27,FALSE,FALSE,FALSE,FALSE
-Metagross,063,Holo,3,$0.27,FALSE,FALSE,FALSE,FALSE
-Butterfree,003,Holo,1,$0.27,FALSE,FALSE,TRUE,FALSE
-Magmortar,021,Holo,1,$0.27,FALSE,FALSE,TRUE,FALSE
-Tyranitar,095,Reverse Holo ,1,$0.62,FALSE,FALSE,FALSE,FALSE
-Lycanroc,085,Reverse Holo ,1,$0.39,FALSE,FALSE,FALSE,FALSE
-Meowscarada,018,Reverse Holo ,1,$0.38,FALSE,FALSE,FALSE,FALSE
-Lillie's Ribombee,067,Reverse Holo ,1,$0.33,FALSE,FALSE,FALSE,FALSE
-Cinccino,126,Reverse Holo ,1,$0.32,FALSE,FALSE,FALSE,FALSE
-N's Darmanitan,027,Reverse Holo ,1,$0.30,FALSE,FALSE,FALSE,FALSE
-Wailord,041,Reverse Holo ,1,$0.30,FALSE,FALSE,FALSE,FALSE
-Alolan Golem,046,Reverse Holo ,1,$0.30,FALSE,FALSE,TRUE,FALSE
-Weezing,092,Reverse Holo ,1,$0.30,FALSE,FALSE,TRUE,TRUE
-Copperajah,110,Reverse Holo ,1,$0.27,FALSE,FALSE,FALSE,FALSE
-Grimmsnarl,073,Reverse Holo ,1,$0.27,FALSE,FALSE,FALSE,FALSE
-Hop's Dubwool,136,Reverse Holo ,2,$0.27,FALSE,FALSE,FALSE,FALSE
-Metagross,063,Reverse Holo ,1,$0.27,FALSE,FALSE,FALSE,FALSE
-Greedent,132,Reverse Holo ,1,$0.26,FALSE,FALSE,FALSE,FALSE
-N's Zorua,097,Reverse Holo ,1,$0.25,FALSE,FALSE,FALSE,FALSE
-Maractus,008,Reverse Holo ,1,$0.22,FALSE,FALSE,FALSE,FALSE
-Lilligant,007,Reverse Holo ,2,$0.19,FALSE,FALSE,FALSE,FALSE
-N's Darumaka,026,Reverse Holo ,1,$0.19,FALSE,FALSE,FALSE,FALSE
-Alolan Graveler,045,Reverse Holo ,2,$0.19,FALSE,FALSE,TRUE,FALSE
-N's Sigilyph,064,Reverse Holo ,1,$0.18,FALSE,FALSE,FALSE,FALSE
-Paldean Wooper,093,Reverse Holo ,2,$0.18,FALSE,FALSE,FALSE,FALSE
-Hop's Corvisquire,134,Reverse Holo ,1,$0.17,FALSE,FALSE,FALSE,FALSE
-Hop's Cramorant,138,Reverse Holo ,1,$0.17,FALSE,FALSE,FALSE,FALSE
-N's Joltik,049,Reverse Holo ,2,$0.17,FALSE,FALSE,FALSE,FALSE
-Shelgon,113,Reverse Holo ,1,$0.17,FALSE,FALSE,FALSE,FALSE
-Cubone,076,Reverse Holo ,2,$0.17,FALSE,FALSE,TRUE,FALSE
-Cramorant,137,Reverse Holo ,1,$0.16,FALSE,FALSE,FALSE,FALSE
-Lillie's Cutiefly,066,Reverse Holo ,1,$0.16,FALSE,FALSE,FALSE,FALSE
-Lotad,035,Reverse Holo ,1,$0.16,FALSE,FALSE,FALSE,FALSE
-Pancham,083,Reverse Holo ,1,$0.16,FALSE,FALSE,FALSE,FALSE
-Alolan Marowak,057,Reverse Holo ,1,$0.16,FALSE,FALSE,TRUE,FALSE
-Iono's Voltorb,047,Reverse Holo ,1,$0.16,FALSE,FALSE,TRUE,FALSE
-Durant,014,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Foongus,010,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Hop's Rookidee,133,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Hop's Wooloo,135,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Komala,129,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Nymble,019,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Skwovet,131,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Volcarona ,029,Reverse Holo ,1,$0.15,FALSE,FALSE,FALSE,FALSE
-Metapod,002,Reverse Holo ,1,$0.15,FALSE,FALSE,TRUE,FALSE
-Cufant,109,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Druddigon,115,Reverse Holo ,3,$0.14,FALSE,FALSE,FALSE,FALSE
-Galarian Stunfisk,106,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Karrablast,009,Reverse Holo ,3,$0.14,FALSE,FALSE,FALSE,FALSE
-Milcery,074,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Morgrem,072,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Pupitar,081,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Remoraid,033,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Sentret,118,Reverse Holo ,1,$0.14,FALSE,FALSE,FALSE,FALSE
-Parasect,005,Reverse Holo ,2,$0.14,FALSE,FALSE,TRUE,FALSE
-Dhelmise,070,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,FALSE
-Escavalier,102,Reverse Holo ,2,$0.13,FALSE,FALSE,FALSE,FALSE
-Impidimp,071,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,FALSE
-Kecleon,122,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,FALSE
-N's Klink,103,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,FALSE
-Piloswine,078,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,FALSE
-Toedscool,088,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,TRUE
-Wingull,038,Reverse Holo ,1,$0.13,FALSE,FALSE,FALSE,FALSE
-Koffing,091,Reverse Holo ,1,$0.13,FALSE,FALSE,TRUE,FALSE
-Caterpie,001,Reverse Holo ,1,$0.12,FALSE,FALSE,TRUE,FALSE
-Bombirdier,101,Reverse Holo ,1,$0.11,FALSE,FALSE,FALSE,FALSE
-Pelipper,039,Reverse Holo ,1,$0.10,FALSE,FALSE,FALSE,FALSE
-Articuno,161,Secret Art,1,$17.14,TRUE,FALSE,TRUE,TRUE
-Wailord,162,Secret Art,1,$13.18,TRUE,FALSE,FALSE,TRUE
-Furret,168,Secret Art,1,$4.84,FALSE,FALSE,FALSE,TRUE
+Pokemon Name,Number,Card Type,# in Machine,Estimated Value,Is Chase Card?,Is top 10 chase card?,Is classic Pokemon?,Is Full Art?
+Lillie's Clefairy ex,184,Alternative Full Art,5,$139.85,True,True,True,True
+Iono's Bellibolt Ex,172,Alternative Full Art,40,$2.49,False,False,False,True
+Volcanion Ex ,31,Alternative Full Art,40,$1.09,False,False,False,True
+N's Zoroark,98,Full Art ,40,$2.92,False,False,False,True
+Lillie's Clefairy Ex,56,Full Art ,40,$1.02,False,False,True,True
+Volcanion Ex ,171,Full Art ,60,$0.90,False,False,False,True
+Iono's Bellibolt Ex,53,Full Art ,60,$0.62,False,False,False,True
+Alcremie Ex,75,Full Art ,60,$0.60,False,False,False,True
+Tapu Koko Ex,51,Full Art ,60,$0.51,False,False,False,True
+Paldean Clodsire Ex,94,Full Art ,60,$0.44,False,False,False,True
+N's Zoroark,189,Gold,10,$14.82,True,False,False,True
+N's Reshiram,116,Holo,60,$0.53,False,False,False,False
+Hop's Snorlax,117,Holo,60,$0.40,False,False,True,False
+Lycanroc,85,Holo,60,$0.39,False,False,False,False
+Meowscarada,18,Holo,60,$0.38,False,False,False,False
+Noivern,128,Holo,60,$0.32,False,False,False,False
+Regirock,82,Holo,60,$0.32,False,False,False,False
+Iono's Kilowattrel,55,Holo,60,$0.30,False,False,False,False
+Wailord,41,Holo,60,$0.30,False,False,False,False
+Magearna,107,Holo,60,$0.29,False,False,False,False
+Ludicolo,37,Holo,60,$0.28,False,False,False,False
+Hop's Dubwool,136,Holo,60,$0.27,False,False,False,False
+Metagross,63,Holo,60,$0.27,False,False,False,False
+Butterfree,3,Holo,60,$0.27,False,False,True,False
+Magmortar,21,Holo,60,$0.27,False,False,True,False
+Tyranitar,95,Reverse Holo ,60,$0.62,False,False,False,False
+Lycanroc,85,Reverse Holo ,60,$0.39,False,False,False,False
+Meowscarada,18,Reverse Holo ,60,$0.38,False,False,False,False
+Lillie's Ribombee,67,Reverse Holo ,60,$0.33,False,False,False,False
+Cinccino,126,Reverse Holo ,60,$0.32,False,False,False,False
+N's Darmanitan,27,Reverse Holo ,60,$0.30,False,False,False,False
+Wailord,41,Reverse Holo ,60,$0.30,False,False,False,False
+Alolan Golem,46,Reverse Holo ,60,$0.30,False,False,True,False
+Weezing,92,Reverse Holo ,60,$0.30,False,False,True,True
+Copperajah,110,Reverse Holo ,60,$0.27,False,False,False,False
+Grimmsnarl,73,Reverse Holo ,60,$0.27,False,False,False,False
+Hop's Dubwool,136,Reverse Holo ,60,$0.27,False,False,False,False
+Metagross,63,Reverse Holo ,60,$0.27,False,False,False,False
+Greedent,132,Reverse Holo ,60,$0.26,False,False,False,False
+N's Zorua,97,Reverse Holo ,60,$0.25,False,False,False,False
+Maractus,8,Reverse Holo ,60,$0.22,False,False,False,False
+Lilligant,7,Reverse Holo ,60,$0.19,False,False,False,False
+N's Darumaka,26,Reverse Holo ,60,$0.19,False,False,False,False
+Alolan Graveler,45,Reverse Holo ,60,$0.19,False,False,True,False
+N's Sigilyph,64,Reverse Holo ,60,$0.18,False,False,False,False
+Paldean Wooper,93,Reverse Holo ,60,$0.18,False,False,False,False
+Hop's Corvisquire,134,Reverse Holo ,60,$0.17,False,False,False,False
+Hop's Cramorant,138,Reverse Holo ,60,$0.17,False,False,False,False
+N's Joltik,49,Reverse Holo ,60,$0.17,False,False,False,False
+Shelgon,113,Reverse Holo ,60,$0.17,False,False,False,False
+Cubone,76,Reverse Holo ,60,$0.17,False,False,True,False
+Cramorant,137,Reverse Holo ,60,$0.16,False,False,False,False
+Lillie's Cutiefly,66,Reverse Holo ,60,$0.16,False,False,False,False
+Lotad,35,Reverse Holo ,60,$0.16,False,False,False,False
+Pancham,83,Reverse Holo ,60,$0.16,False,False,False,False
+Alolan Marowak,57,Reverse Holo ,60,$0.16,False,False,True,False
+Iono's Voltorb,47,Reverse Holo ,60,$0.16,False,False,True,False
+Durant,14,Reverse Holo ,60,$0.15,False,False,False,False
+Foongus,10,Reverse Holo ,60,$0.15,False,False,False,False
+Hop's Rookidee,133,Reverse Holo ,60,$0.15,False,False,False,False
+Hop's Wooloo,135,Reverse Holo ,60,$0.15,False,False,False,False
+Komala,129,Reverse Holo ,60,$0.15,False,False,False,False
+Nymble,19,Reverse Holo ,60,$0.15,False,False,False,False
+Skwovet,131,Reverse Holo ,60,$0.15,False,False,False,False
+Volcarona ,29,Reverse Holo ,60,$0.15,False,False,False,False
+Metapod,2,Reverse Holo ,60,$0.15,False,False,True,False
+Cufant,109,Reverse Holo ,60,$0.14,False,False,False,False
+Druddigon,115,Reverse Holo ,60,$0.14,False,False,False,False
+Galarian Stunfisk,106,Reverse Holo ,60,$0.14,False,False,False,False
+Karrablast,9,Reverse Holo ,60,$0.14,False,False,False,False
+Milcery,74,Reverse Holo ,60,$0.14,False,False,False,False
+Morgrem,72,Reverse Holo ,60,$0.14,False,False,False,False
+Pupitar,81,Reverse Holo ,60,$0.14,False,False,False,False
+Remoraid,33,Reverse Holo ,60,$0.14,False,False,False,False
+Sentret,118,Reverse Holo ,60,$0.14,False,False,False,False
+Parasect,5,Reverse Holo ,60,$0.14,False,False,True,False
+Dhelmise,70,Reverse Holo ,60,$0.13,False,False,False,False
+Escavalier,102,Reverse Holo ,60,$0.13,False,False,False,False
+Impidimp,71,Reverse Holo ,60,$0.13,False,False,False,False
+Kecleon,122,Reverse Holo ,60,$0.13,False,False,False,False
+N's Klink,103,Reverse Holo ,60,$0.13,False,False,False,False
+Piloswine,78,Reverse Holo ,60,$0.13,False,False,False,False
+Toedscool,88,Reverse Holo ,60,$0.13,False,False,False,True
+Wingull,38,Reverse Holo ,60,$0.13,False,False,False,False
+Koffing,91,Reverse Holo ,60,$0.13,False,False,True,False
+Caterpie,1,Reverse Holo ,60,$0.12,False,False,True,False
+Bombirdier,101,Reverse Holo ,60,$0.11,False,False,False,False
+Pelipper,39,Reverse Holo ,60,$0.10,False,False,False,False
+Articuno,161,Secret Art,10,$17.14,True,False,True,True
+Wailord,162,Secret Art,10,$13.18,True,False,False,True
+Furret,168,Secret Art,40,$4.84,False,False,False,True
