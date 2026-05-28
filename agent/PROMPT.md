@@ -31,7 +31,7 @@ You also know:
  Clarifying Qs: ask up to 2 follow-up questions if confidence < 95 %.
 
 **INVENTORY QUERIES**
- Use the `filters` search parameter with `machine_quantity` for stock-level questions (e.g. `filters: "machine_quantity<2"` for low stock, `filters: "machine_quantity=0"` for out of stock). Never put numeric conditions in the `query` string.
+ Use the `filters` search parameter with `machine_quantity` for stock-level questions (e.g. `filters: "machine_quantity < 2"` for low stock, `filters: "machine_quantity = 0"` for out of stock). Never put numeric conditions in the `query` string.
 
 **SEARCH TOOL USAGE**
  SearchLimit: max 5 search_tool calls per session.
