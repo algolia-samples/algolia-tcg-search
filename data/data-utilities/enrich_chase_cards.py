@@ -31,7 +31,6 @@ if not ALGOLIA_EVENT_ID:
 ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
 DATA_DIR = Path(__file__).parent.parent / "data-files" / ALGOLIA_EVENT_ID
 XLSX_FILE = DATA_DIR / "TCG Search Website - Raw List.xlsx"
-CHASE_SHEET = "Chase Cards"
 TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
 
 
@@ -92,12 +91,29 @@ def resolve_set_id(set_name_raw: str, set_id_map: dict) -> Optional[str]:
     return None
 
 
-def load_chase_rows() -> list[dict]:
-    """Load and parse rows from the Chase Cards sheet, including hyperlink URLs."""
-    wb = openpyxl.load_workbook(XLSX_FILE)
-    ws = wb[CHASE_SHEET]
+def find_chase_sheet(wb):
+    """Find the chase/summary sheet by scanning for a 'top 10' section header row."""
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        for row in ws.iter_rows(min_row=1, max_row=20, max_col=1, values_only=True):
+            val = str(row[0]).strip().lower() if row[0] is not None else ""
+            if "top 10" in val:
+                return ws
+    raise KeyError("No chase tab found — expected a sheet with a 'Top 10' section header")
 
-    headers = [cell.value.strip() if cell.value else "" for cell in ws[1]]
+
+def load_chase_rows() -> list[dict]:
+    """Load and parse rows from the chase sheet, including hyperlink URLs."""
+    wb = openpyxl.load_workbook(XLSX_FILE)
+    ws = find_chase_sheet(wb)
+
+    headers = [str(cell.value).strip() if cell.value is not None else "" for cell in ws[1]]
+    required = {"Pokemon Name", "Number", "Set", "Link to picture"}
+    missing = required - set(headers)
+    if missing:
+        print(f"  Skipping enrichment — chase sheet missing columns: {', '.join(sorted(missing))}")
+        print(f"  (Chase flags were already applied during ingest.)")
+        return []
     name_col = headers.index("Pokemon Name")
     number_col = headers.index("Number")
     set_col = headers.index("Set")
