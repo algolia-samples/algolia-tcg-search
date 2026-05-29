@@ -95,8 +95,8 @@ def find_chase_sheet(wb):
     """Find the chase/summary sheet by scanning for a 'top 10' section header row."""
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
-        for row in ws.iter_rows(min_row=1, max_col=1, values_only=True):
-            val = str(row[0]).strip().lower() if row[0] else ""
+        for row in ws.iter_rows(min_row=1, max_row=20, max_col=1, values_only=True):
+            val = str(row[0]).strip().lower() if row[0] is not None else ""
             if "top 10" in val:
                 return ws
     raise KeyError("No chase tab found — expected a sheet with a 'Top 10' section header")
@@ -107,7 +107,7 @@ def load_chase_rows() -> list[dict]:
     wb = openpyxl.load_workbook(XLSX_FILE)
     ws = find_chase_sheet(wb)
 
-    headers = [cell.value.strip() if cell.value else "" for cell in ws[1]]
+    headers = [str(cell.value).strip() if cell.value is not None else "" for cell in ws[1]]
     required = {"Pokemon Name", "Number", "Set", "Link to picture"}
     missing = required - set(headers)
     if missing:
