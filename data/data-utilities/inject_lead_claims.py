@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 inject_lead_claims.py — Match Pokemon card claims to a conference leads spreadsheet.
 
@@ -38,7 +39,7 @@ LAST_THRESHOLD = 0.8   # tighter — last names should be a strong signal
 
 
 def normalize(s) -> str:
-    return (s or "").strip().lower()
+    return str(s or "").strip().lower()
 
 
 def similarity(a: str, b: str) -> float:
@@ -88,7 +89,7 @@ def find_match(
 def find_col(header_row, label: str) -> int:
     """Return 1-based column index for a header label (case-insensitive, stripped)."""
     for i, cell in enumerate(header_row, start=1):
-        if normalize(str(cell.value or "")) == normalize(label):
+        if normalize(cell.value) == normalize(label):
             return i
     raise ValueError(f"Column '{label}' not found in sheet header row.")
 
@@ -115,6 +116,11 @@ def main():
     print(f"Loaded {len(claims)} unique claimants from {args.claims_csv.name}.")
 
     wb = openpyxl.load_workbook(args.xlsx)
+    if args.sheet not in wb.sheetnames:
+        raise SystemExit(
+            f"Sheet {args.sheet!r} not found in {args.xlsx.name}. "
+            f"Available: {', '.join(wb.sheetnames)}"
+        )
     ws = wb[args.sheet]
 
     header_row = list(ws.iter_rows(min_row=1, max_row=1))[0]
