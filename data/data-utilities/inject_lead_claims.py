@@ -31,6 +31,7 @@ import argparse
 import csv
 import difflib
 from pathlib import Path
+from typing import Optional
 
 import openpyxl
 
@@ -48,23 +49,42 @@ def similarity(a: str, b: str) -> float:
 
 def load_best_claims(csv_path: Path) -> dict[tuple[str, str], str]:
     """Return {(first, last): pokemon_name} keeping the highest-value card per person."""
+    required = {"claimer_first_name", "claimer_last_name", "card_value", "pokemon_name"}
     best: dict[tuple[str, str], tuple[float, str]] = {}
+    skipped = 0
     with open(csv_path, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
+        reader = csv.DictReader(f)
+        missing = required - set(reader.fieldnames or [])
+        if missing:
+            raise SystemExit(
+                f"CSV {csv_path.name} is missing required columns: "
+                f"{', '.join(sorted(missing))}. "
+                f"Found: {', '.join(reader.fieldnames or [])}"
+            )
+        for row in reader:
             first = normalize(row["claimer_first_name"])
             last = normalize(row["claimer_last_name"])
             if not first and not last:
                 continue
+            try:
+                value = float(row["card_value"] or 0)
+            except ValueError:
+                skipped += 1
+                continue
+            if value != value:  # NaN guard
+                skipped += 1
+                continue
             key = (first, last)
-            value = float(row["card_value"] or 0)
             if key not in best or value > best[key][0]:
                 best[key] = (value, row["pokemon_name"])
+    if skipped:
+        print(f"Skipped {skipped} rows with invalid card_value.")
     return {k: v[1] for k, v in best.items()}
 
 
 def find_match(
     first: str, last: str, claims: dict[tuple[str, str], str]
-) -> tuple[str, str] | None:
+) -> Optional[tuple[str, str]]:
     """Exact match first, then fuzzy requiring BOTH first and last to be similar.
 
     Scoring both name parts independently prevents false positives where only
