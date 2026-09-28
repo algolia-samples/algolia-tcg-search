@@ -207,3 +207,6 @@ dmypy.json
 
 # Blog drafts
 BLOG*.md
+
+# Enriched card dumps from `ingest.py --dump-json` (regenerable from the XLSX)
+data/data-files/**/*.json
