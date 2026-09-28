@@ -506,7 +506,7 @@ def process_csv_file(file_path: Path, client: Optional[SearchClientSync], index_
 
     # Upload to Algolia, or collect for the JSON dump
     if not records:
-        print(f"  ⚠ No valid records to upload")
+        print("  ⚠ No valid records found")
     elif dump is not None:
         dump.extend(records)
         print(f"  Collected {len(records)} records for the JSON dump")
@@ -718,7 +718,7 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
             print(f"  Overlay: {overlay_count} records flagged from chase tab")
 
         if not records:
-            print(f"  ⚠ No valid records to upload")
+            print("  ⚠ No valid records found")
         elif dump is not None:
             dump.extend(records)
             print(f"  Collected {len(records)} records for the JSON dump")
@@ -791,7 +791,7 @@ def main():
         if not dump_path.is_absolute():
             dump_path = DATA_DIR / dump_path
         client = None
-        print(f"Dump mode — nothing is uploaded.")
+        print("Dump mode — nothing is uploaded.")
         print(f"✓ Target file: {dump_path}\n")
     else:
         # Initialize Algolia
