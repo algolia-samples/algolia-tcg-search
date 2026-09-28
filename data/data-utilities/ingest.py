@@ -758,7 +758,7 @@ def main():
         "--dump-json",
         type=str,
         metavar="PATH",
-        help="Write the enriched records to a JSON file instead of uploading to "
+        help="Write the processed records to a JSON file instead of uploading to "
              "Algolia. A relative PATH is resolved inside the event's data-files "
              "directory."
     )
@@ -830,7 +830,8 @@ def main():
     if dump is not None:
         dump_path.parent.mkdir(parents=True, exist_ok=True)
         dump_path.write_text(json.dumps(dump, indent=2) + "\n", encoding="utf-8")
-        print(f"\n✓ Wrote {len(dump)} enriched records to {dump_path}")
+        with_images = sum(1 for record in dump if record.get("image_small"))
+        print(f"\n✓ Wrote {len(dump)} records ({with_images} with images) to {dump_path}")
 
     print("\n" + "=" * 60)
     print("Ingestion complete!" if dump is None else "Dump complete!")
