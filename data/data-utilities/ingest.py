@@ -4,6 +4,7 @@ Ingest Pokemon TCG card data into Algolia index.
 Reads CSV files, enriches with TCGdex API data, and uploads to Algolia.
 """
 
+import json
 import os
 import sys
 import re
@@ -361,15 +362,16 @@ def enrich_card_with_tcgdex(card_number: str, tcgdex_cards: list, set_id: Option
     return enriched
 
 
-def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str, enrich: bool = True):
+def process_csv_file(file_path: Path, client: Optional[SearchClientSync], index_name: str, enrich: bool = True, dump: Optional[list] = None):
     """
     Process a single CSV file and upload records to Algolia.
 
     Args:
         file_path: Path to CSV file
-        client: Algolia SearchClientSync instance
+        client: Algolia SearchClientSync instance, or None when dumping
         index_name: Name of the Algolia index
         enrich: Whether to enrich with TCGdex API data
+        dump: When a list, records are appended to it instead of uploaded
     """
     print(f"\nProcessing: {file_path.name}")
 
@@ -502,24 +504,28 @@ def process_csv_file(file_path: Path, client: SearchClientSync, index_name: str,
     skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
     print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
 
-    # Upload to Algolia
-    if records:
+    # Upload to Algolia, or collect for the JSON dump
+    if not records:
+        print(f"  ⚠ No valid records to upload")
+    elif dump is not None:
+        dump.extend(records)
+        print(f"  Collected {len(records)} records for the JSON dump")
+    else:
         print(f"  Uploading {len(records)} records to Algolia...")
         try:
             response = client.save_objects(index_name=index_name, objects=records)
             print(f"  ✓ Successfully uploaded {len(records)} records")
         except Exception as e:
             print(f"  ✗ Error uploading to Algolia: {e}")
-    else:
-        print(f"  ⚠ No valid records to upload")
 
 
-def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str, enrich: bool = True):
+def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index_name: str, enrich: bool = True, dump: Optional[list] = None):
     """
     Process a single XLSX file and upload records to Algolia.
     Each sheet is treated as a separate card set. Hidden sheets and sheets prefixed
     with (OLD) are skipped.
     Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
+    When dump is a list, records are appended to it instead of being uploaded.
     """
     print(f"\nProcessing XLSX: {file_path.name}")
 
@@ -711,15 +717,18 @@ def process_xlsx_file(file_path: Path, client: SearchClientSync, index_name: str
         if overlay_count:
             print(f"  Overlay: {overlay_count} records flagged from chase tab")
 
-        if records:
+        if not records:
+            print(f"  ⚠ No valid records to upload")
+        elif dump is not None:
+            dump.extend(records)
+            print(f"  Collected {len(records)} records for the JSON dump")
+        else:
             print(f"  Uploading {len(records)} records to Algolia...")
             try:
                 client.save_objects(index_name=index_name, objects=records)
                 print(f"  ✓ Successfully uploaded {len(records)} records")
             except Exception as e:
                 print(f"  ✗ Error uploading to Algolia: {e}")
-        else:
-            print(f"  ⚠ No valid records to upload")
 
     unmatched = (top_10_keys | chase_keys) - matched_chase_keys
     if unmatched:
@@ -745,11 +754,23 @@ def main():
         type=str,
         help="Process only a specific file (CSV or XLSX)"
     )
+    parser.add_argument(
+        "--dump-json",
+        type=str,
+        metavar="PATH",
+        help="Write the enriched records to a JSON file instead of uploading to "
+             "Algolia. A relative PATH is resolved inside the event's data-files "
+             "directory."
+    )
 
     args = parser.parse_args()
 
+    # --dump-json writes the records to a file instead of Algolia, so credentials
+    # and a client are only needed for a real ingest.
+    dump = [] if args.dump_json else None
+
     # Validate environment
-    if not ALGOLIA_APP_ID or not ALGOLIA_API_KEY:
+    if dump is None and (not ALGOLIA_APP_ID or not ALGOLIA_API_KEY):
         print("=" * 60)
         print("ERROR: Missing Algolia credentials")
         print("=" * 60)
@@ -764,11 +785,20 @@ def main():
         print(f"Error: Data directory {DATA_DIR} does not exist")
         return
 
-    # Initialize Algolia
-    print("Connecting to Algolia...")
-    client = SearchClientSync(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
-    print(f"✓ Connected to Algolia")
-    print(f"✓ Target index: {ALGOLIA_INDEX_NAME}\n")
+    dump_path = None
+    if dump is not None:
+        dump_path = Path(args.dump_json)
+        if not dump_path.is_absolute():
+            dump_path = DATA_DIR / dump_path
+        client = None
+        print(f"Dump mode — nothing is uploaded.")
+        print(f"✓ Target file: {dump_path}\n")
+    else:
+        # Initialize Algolia
+        print("Connecting to Algolia...")
+        client = SearchClientSync(ALGOLIA_APP_ID, ALGOLIA_API_KEY)
+        print(f"✓ Connected to Algolia")
+        print(f"✓ Target index: {ALGOLIA_INDEX_NAME}\n")
 
     enrich = not args.no_enrich
 
@@ -779,15 +809,15 @@ def main():
             print(f"Error: File not found: {file_path}")
             return
         if file_path.suffix.lower() == ".xlsx":
-            process_xlsx_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+            process_xlsx_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich, dump=dump)
         else:
-            process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+            process_csv_file(file_path, client, ALGOLIA_INDEX_NAME, enrich=enrich, dump=dump)
     else:
         csv_files = list(DATA_DIR.glob("*.csv"))
         if csv_files:
             print(f"Found {len(csv_files)} CSV files")
             for csv_file in csv_files:
-                process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+                process_csv_file(csv_file, client, ALGOLIA_INDEX_NAME, enrich=enrich, dump=dump)
         else:
             xlsx_files = list(DATA_DIR.glob("*.xlsx"))
             if not xlsx_files:
@@ -795,10 +825,15 @@ def main():
                 return
             print(f"No CSVs found. Processing {len(xlsx_files)} XLSX file(s)")
             for xlsx_file in xlsx_files:
-                process_xlsx_file(xlsx_file, client, ALGOLIA_INDEX_NAME, enrich=enrich)
+                process_xlsx_file(xlsx_file, client, ALGOLIA_INDEX_NAME, enrich=enrich, dump=dump)
+
+    if dump is not None:
+        dump_path.parent.mkdir(parents=True, exist_ok=True)
+        dump_path.write_text(json.dumps(dump, indent=2) + "\n", encoding="utf-8")
+        print(f"\n✓ Wrote {len(dump)} enriched records to {dump_path}")
 
     print("\n" + "=" * 60)
-    print("Ingestion complete!")
+    print("Ingestion complete!" if dump is None else "Dump complete!")
     print("=" * 60)
 
 
