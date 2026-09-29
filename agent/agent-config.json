@@ -18,14 +18,13 @@
   ],
   "extra_tools": [
     {
-      "name": "algolia_display_results",
-      "type": "algolia_display_results",
+      "name": "algolia_grouped_results",
+      "type": "algolia_grouped_results",
       "isTerminal": true,
       "minGroups": 1,
       "maxGroups": 3,
       "minResultsPerGroup": 1,
-      "maxResultsPerGroup": 5,
-      "v2": null
+      "maxResultsPerGroup": 5
     }
   ],
   "searchControls": {

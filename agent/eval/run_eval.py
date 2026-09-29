@@ -18,8 +18,8 @@ Credentials come from agent/.env: ALGOLIA_APP_ID plus ALGOLIA_SEARCH_API_KEY if
 present, otherwise ALGOLIA_API_KEY.
 
 Note this always sends cache=false. A cached completion replays a stored response
-and drops messageMetadata, so evaluating against the cache would measure the cache
-rather than the agent.
+and drops messageMetadata (the `groupedResultsEnabled` hint), so evaluating against
+the cache would measure the cache rather than the agent.
 """
 
 import argparse
@@ -128,6 +128,13 @@ def complete(agent_id, query, run_index):
     return _post(url, body)
 
 
+# Agents migrated to the production tool emit `algolia_grouped_results`; agents
+# still on the beta name emit `algolia_display_results`. instantsearch.js aliases
+# the two to one renderer, so the eval accepts either and stays usable against an
+# event that has not been re-published yet.
+GROUPED_RESULTS_TOOL_NAMES = ("algolia_grouped_results", "algolia_display_results")
+
+
 def observe(response):
     """Reduce one completion to the facts the golden set asserts on."""
     obs = {
@@ -139,6 +146,7 @@ def observe(response):
         "total_cards": 0,
         "fields": [],
         "hit_names": [],
+        "unknown_object_ids": [],
         "error": None,
     }
     for part in response.get("parts", []) or []:
@@ -154,7 +162,7 @@ def observe(response):
                 for hit in ((part.get("output") or {}).get("hits") or []):
                     if hit.get("pokemon_name") not in obs["hit_names"]:
                         obs["hit_names"].append(hit.get("pokemon_name"))
-            elif name == "algolia_display_results":
+            elif name in GROUPED_RESULTS_TOOL_NAMES:
                 obs["displayed"] = True
                 payload = part.get("input") or {}
                 groups = payload.get("groups") or []
@@ -162,7 +170,17 @@ def observe(response):
                 obs["fields"].append(payload.get("intro") or "")
                 for group in groups:
                     obs["fields"] += [group.get("title") or "", group.get("why") or ""]
-                    obs["total_cards"] += len(group.get("results") or [])
+                    results = group.get("results") or []
+                    obs["total_cards"] += len(results)
+                    # A result's own `why` is rendered on the card as of
+                    # instantsearch-ui-components 0.41.0, so it is held to the
+                    # same plain-text rule as the group fields.
+                    obs["fields"] += [r.get("why") or "" for r in results]
+                # The tool reports back any objectID it could not resolve against
+                # the turn's search hits. That means the agent invented it, and
+                # the card is dropped from the carousel without saying so.
+                unknown = (part.get("output") or {}).get("unknownObjectIds") or []
+                obs["unknown_object_ids"] += list(unknown)
     # A failed turn arrives as an error part rather than an HTTP error.
     blob = json.dumps(response)
     for marker in ("MaxStepsPerCompletionError", "\"type\": \"error\""):
@@ -172,7 +190,7 @@ def observe(response):
     return obs
 
 
-# The prompt forbids markdown in the display tool's fields, so this has to cover
+# The prompt forbids markdown in the grouped results tool's fields, so this has to cover
 # every form it forbids — bold, italics and code, in both asterisk and underscore
 # spellings. Matching paired delimiters with non-space content rather than a bare
 # "*" keeps a lone asterisk in card text from reading as a false positive.
@@ -190,9 +208,9 @@ def check(expect, obs):
     fails = []
     if expect.get("must_display") is True and not obs["displayed"]:
         if not expect.get("may_decline"):
-            fails.append("expected a display call, got none")
+            fails.append("expected a grouped results call, got none")
     if expect.get("must_display") is False and obs["displayed"]:
-        fails.append("display call not expected")
+        fails.append("grouped results call not expected")
     if "max_search_calls" in expect and obs["search_calls"] > expect["max_search_calls"]:
         fails.append(f"{obs['search_calls']} searches > max {expect['max_search_calls']}")
     if "max_text_parts" in expect and obs["text_parts"] > expect["max_text_parts"]:
@@ -220,10 +238,16 @@ def check(expect, obs):
             if hit:
                 kind, pattern = hit
                 fails.append(
-                    f"{kind} markdown in a display field: "
+                    f"{kind} markdown in a grouped results field: "
                     f"{pattern.search(field).group(0)!r} in {field[:60]!r}"
                 )
                 break
+    if expect.get("no_unknown_object_ids") and obs["unknown_object_ids"]:
+        fails.append(
+            "tool could not resolve "
+            f"{len(obs['unknown_object_ids'])} objectID(s) — the agent invented them "
+            f"and those cards were dropped: {obs['unknown_object_ids']}"
+        )
     if expect.get("no_error") and obs["error"]:
         fails.append(f"turn errored: {obs['error']}")
     return fails

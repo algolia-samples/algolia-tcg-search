@@ -23,6 +23,11 @@ vi.mock('react-instantsearch', () => ({
   ChatSidePanelLayout: function ChatSidePanelLayout() {
     return null;
   },
+  Carousel: function Carousel() {
+    return null;
+  },
+  GroupedResultsToolType: 'algolia_grouped_results',
+  DisplayResultsToolType: 'algolia_display_results',
 }));
 
 vi.mock('./ChatItemComponent', () => ({
@@ -63,13 +68,32 @@ describe('ChatAgent — Chat wiring', () => {
     expect(chatProps.current.feedback).toBe(true);
   });
 
-  // The library resolves the Display Results payload itself as of
-  // instantsearch-ui-components 0.40.0, so the app must not re-wrap that tool:
-  // its own wrapper would bypass the guard against a half-streamed objectID
-  // hydrating the wrong card.
-  test('does not override the built-in chat tool renderers', () => {
+  // We override the Grouped Results tool to add a "View all" the library does
+  // not ship. Registered under both names because agents not yet re-published
+  // still emit the legacy one, and the app would otherwise lose the button on
+  // those events.
+  test('overrides the grouped results tool under both its names', () => {
     render(<ChatAgent agentId="agent-123" />);
-    expect(chatProps.current.tools).toBeUndefined();
+    const tools = chatProps.current.tools;
+    expect(Object.keys(tools).sort()).toEqual([
+      'algolia_display_results',
+      'algolia_grouped_results',
+    ]);
+    // The same instance, so the two names cannot drift apart.
+    expect(tools.algolia_display_results).toBe(tools.algolia_grouped_results);
+  });
+
+  // The override must supply a layout and nothing else. react-instantsearch's
+  // mergeToolOptions only inherits `streamInput` (progressive rendering, and
+  // with it the guard against a half-streamed objectID hydrating the wrong
+  // card) when the user tool leaves it undefined. Setting it here — even to the
+  // right value — would freeze a default the library is entitled to change.
+  test('supplies only a layout, leaving streaming and gating to the library', () => {
+    render(<ChatAgent agentId="agent-123" />);
+    const tool = chatProps.current.tools.algolia_grouped_results;
+    expect(Object.keys(tool)).toEqual(['layoutComponent']);
+    expect(tool.streamInput).toBeUndefined();
+    expect(tool.shouldRender).toBeUndefined();
   });
 });
 

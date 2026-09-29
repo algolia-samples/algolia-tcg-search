@@ -34,7 +34,9 @@ regression. Raise `runs` before believing a single red result.
 
 Requests send `cache=false`. Agent Studio caches completions keyed on the message text,
 and a cache HIT replays a stored response *without* `messageMetadata` — so evaluating
-against the cache measures the cache, not the agent.
+against the cache measures the cache, not the agent. The hint it drops is
+`groupedResultsEnabled` (`displayResultsEnabled` on agents still on the beta tool
+name); the rename did not fix the underlying bug.
 
 ## Adding a case
 
@@ -42,4 +44,4 @@ Add to `golden.json` with a `regression` line naming the bug it guards, so a fut
 failure is legible without archaeology. Supported assertions live in `check()` in
 `run_eval.py`: `must_display`, `may_decline`, `max_search_calls`, `max_text_parts`,
 `min_text_parts`, `groups_between`, `max_total_cards`, `min_cards_if_displayed`,
-`forbidden_tools`, `no_markdown_in_fields`, `no_error`.
+`forbidden_tools`, `no_markdown_in_fields`, `no_unknown_object_ids`, `no_error`.

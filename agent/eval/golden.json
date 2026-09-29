@@ -4,14 +4,15 @@
     {
       "name": "single-turn-answer",
       "query": "Do you have any Charizard cards?",
-      "regression": "The client fired a second completion per question, so the agent answered twice: the display tool's intro and carousel, then a prose restatement. A text part alongside a display call is the signature.",
+      "regression": "The client fired a second completion per question, so the agent answered twice: the grouped results tool's intro and carousel, then a prose restatement. A text part alongside a grouped results call is the signature.",
       "runs": 3,
       "pass_rate": 1.0,
       "expect": {
         "must_display": true,
         "max_text_parts": 0,
         "max_search_calls": 3,
-        "no_error": true
+        "no_error": true,
+        "no_unknown_object_ids": true
       }
     },
     {
@@ -22,10 +23,14 @@
       "pass_rate": 1.0,
       "expect": {
         "must_display": true,
-        "groups_between": [2, 3],
+        "groups_between": [
+          2,
+          3
+        ],
         "max_search_calls": 3,
         "max_total_cards": 8,
-        "no_error": true
+        "no_error": true,
+        "no_unknown_object_ids": true
       }
     },
     {
@@ -38,8 +43,11 @@
         "may_decline": true,
         "min_cards_if_displayed": 2,
         "max_search_calls": 5,
-        "forbidden_tools": ["algolia_search_for_facet_values"],
-        "no_error": true
+        "forbidden_tools": [
+          "algolia_search_for_facet_values"
+        ],
+        "no_error": true,
+        "no_unknown_object_ids": true
       }
     },
     {
@@ -52,19 +60,37 @@
       "expect": {
         "may_decline": true,
         "max_search_calls": 6,
-        "forbidden_tools": ["algolia_search_for_facet_values"],
-        "no_error": true
+        "forbidden_tools": [
+          "algolia_search_for_facet_values"
+        ],
+        "no_error": true,
+        "no_unknown_object_ids": true
       }
     },
     {
       "name": "plain-text-fields",
       "query": "What are your most valuable cards?",
-      "regression": "The display tool's intro/title/why are inserted as raw text, unlike assistant prose which is markdown-compiled. The agent followed the global 'bold card names' rule and customers saw literal **asterisks**.",
+      "regression": "The grouped results tool's intro, each group's title and why, and each result's own why are inserted as raw text, unlike assistant prose which is markdown-compiled. The agent followed the global 'bold card names' rule and customers saw literal **asterisks**. Per-result why joined this list when 0.41.0 started rendering it.",
       "runs": 3,
       "pass_rate": 1.0,
       "expect": {
         "must_display": true,
         "no_markdown_in_fields": true,
+        "max_total_cards": 8,
+        "no_error": true,
+        "no_unknown_object_ids": true
+      }
+    },
+    {
+      "name": "curated-ids-are-real",
+      "query": "Give me a mix of your best cards across a few different types",
+      "regression": "Cards hydrate by objectID against the turn's own search hits, so an objectID the agent did not actually retrieve renders nothing and the card vanishes with no error anywhere — a group arrives visibly short and nothing says why. The tool reports these as unknownObjectIds; breadth across types is the pressure that provokes inventing them.",
+      "runs": 3,
+      "pass_rate": 1.0,
+      "expect": {
+        "must_display": true,
+        "no_unknown_object_ids": true,
+        "max_search_calls": 3,
         "max_total_cards": 8,
         "no_error": true
       }
