@@ -207,6 +207,37 @@ describe('the rendered curated block', () => {
     expect(viewAlls()).toHaveLength(0);
   });
 
+  // App.css hides a lone group's `why` with
+  // `.ais-ChatToolGroupedResults:not(:has(.group ~ .group)) .groupWhy`.
+  // jsdom does not apply that stylesheet, so this guards the DOM shape the
+  // selector depends on: sibling `-group` divs, each holding its own
+  // `-groupWhy`. If the library flattens or renames either, the rule silently
+  // stops matching and this fails instead.
+  describe('the DOM shape the single-group CSS rule relies on', () => {
+    const groupsIn = (c) => c.querySelectorAll('.ais-ChatToolGroupedResults-group');
+
+    test('renders one -group holding a -groupWhy when there is one group', () => {
+      const { container } = renderBlock({
+        groups: [{ title: 'Other Gold Cards', cards: GOLD }],
+      });
+      const groups = groupsIn(container);
+      expect(groups).toHaveLength(1);
+      expect(groups[0].querySelector('.ais-ChatToolGroupedResults-groupWhy')).toBeInTheDocument();
+    });
+
+    test('renders -group divs as siblings when there are several', () => {
+      const { container } = renderBlock({
+        groups: [
+          { title: 'Other Gold Cards', cards: GOLD },
+          { title: 'Alternative Fire Cards', cards: FIRE },
+        ],
+      });
+      const groups = groupsIn(container);
+      expect(groups).toHaveLength(2);
+      expect(groups[0].parentElement).toBe(groups[1].parentElement);
+    });
+  });
+
   test("applies that group's filter and closes the panel when clicked", () => {
     const { applyFilters, onClose } = renderBlock({
       groups: [

@@ -2568,6 +2568,21 @@ article {
   line-height: 1.2;
 }
 
+/* A lone group's `why` only ever restates the intro, so hide it.
+   The field is required by the tool's contract and the agent fills it whatever
+   the prompt says — measured at 3 of 3 single-group turns paraphrasing, against
+   0 of 3 multi-group turns, where two or three `why`s genuinely differentiate.
+   Since prompting cannot suppress it, suppress the presentation instead.
+   `:has(group ~ group)` is "two or more groups"; negated, it is "at most one".
+   The group *title* stays — it is a short label for the carousel, not a
+   sentence competing with the intro. */
+.ais-ChatToolGroupedResults:not(
+    :has(.ais-ChatToolGroupedResults-group ~ .ais-ChatToolGroupedResults-group)
+  )
+  .ais-ChatToolGroupedResults-groupWhy {
+  display: none;
+}
+
 /* "View all" in the first curated group's carousel header, beside the scroll
    arrows. The Grouped Results tool ships no View All of its own, and the search
    tool's — the only one that exists — is hidden on exactly the turns that show
