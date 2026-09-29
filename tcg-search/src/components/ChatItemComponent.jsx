@@ -9,6 +9,11 @@ export default function ChatItemComponent({ item }) {
   const { isModalOpen, isClosing, origin, rotation, imgRef, wrapperRef, handleImageClick, handleCloseModal } = useCardModal(item);
   const formattedPrice = item.estimated_value != null ? `$${item.estimated_value.toFixed(2)}` : '\u00A0';
   const isClaimed = !item.machine_quantity || item.machine_quantity <= 0;
+  // Why the agent picked this particular card. Only curated cards carry it: the
+  // Grouped Results tool namespaces its own per-result fields under
+  // __groupedToolResult so they cannot collide with record attributes. Cards from
+  // a raw search carousel have none, and render exactly as before.
+  const curatedWhy = item.__groupedToolResult?.why?.trim();
 
   return (
     <>
@@ -40,6 +45,7 @@ export default function ChatItemComponent({ item }) {
             {item.pokemon_name}
           </h3>
           <div className="carousel-hit-price">{formattedPrice}</div>
+          {curatedWhy && <p className="carousel-hit-why">{curatedWhy}</p>}
           {item.machine_quantity !== undefined && item.machine_quantity !== null && (
             <div className="carousel-inventory-row">
               <span className={item.machine_quantity === 1 ? 'inventory-count inventory-count--last' : 'inventory-count'}>{item.machine_quantity === 1 ? 'Last one!' : `${item.machine_quantity} left`}</span>
@@ -76,5 +82,9 @@ ChatItemComponent.propTypes = {
     number: PropTypes.string,
     machine_quantity: PropTypes.number,
     initial_quantity: PropTypes.number,
+    // Present only on cards curated by the Grouped Results tool.
+    __groupedToolResult: PropTypes.shape({
+      why: PropTypes.string,
+    }),
   }).isRequired,
 };

@@ -2568,6 +2568,51 @@ article {
   line-height: 1.2;
 }
 
+/* "View all" in the first curated group's carousel header, beside the scroll
+   arrows. The Grouped Results tool ships no View All of its own, and the search
+   tool's — the only one that exists — is hidden on exactly the turns that show
+   cards. `margin-left: auto` pushes it off the result count and keeps it next
+   to the arrows, which the header lays out last. */
+.chat-grouped-results-view-all {
+  /* Pushes it off the result count and up against the scroll arrows, which the
+     header (display:flex; justify-content:space-between) lays out last. */
+  margin-left: auto;
+  margin-right: 0.25rem;
+  gap: 0.2rem;
+  white-space: nowrap;
+  /* `.ais-Button` hardcodes font-size: var(--ais-font-size), but the header's
+     result count sets only colour and weight, so it inherits the message font
+     size instead. Left alone the two disagree and the button reads a size too
+     large beside "3 results". Inherit to sit level with it, and match its
+     weight — with the app accent to mark it as the actionable one. */
+  font-size: inherit;
+  font-weight: 600;
+  color: #3B4CCA;
+}
+
+/* In em, so the arrow tracks the label rather than --ais-icon-size, which is
+   what made it outgrow the text. */
+.chat-grouped-results-view-all svg {
+  width: 1em;
+  height: auto;
+}
+
+/* The agent's one-line reason for picking this card. Clamped to two lines so a
+   long one cannot push the inventory row and set name out of a fixed-height
+   carousel card; the agent is asked for a few words, and live samples run
+   25-40 characters. */
+.carousel-hit-why {
+  font-size: 0.68rem;
+  font-style: italic;
+  color: #4a5568;
+  line-height: 1.25;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .carousel-inventory-row {
   display: flex;
   align-items: center;
