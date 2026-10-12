@@ -2,7 +2,7 @@
 
 import unittest
 
-from merge_records import merge_records
+from merge_records import apply_claims, merge_records
 
 
 def card(object_id, name, qty, chase=False, top10=False, **extra):
@@ -89,6 +89,45 @@ class MergeRecords(unittest.TestCase):
         first = card("s-1", "Pikachu", 1)
         merge_records([("a.xlsx", [first]), ("b.xlsx", [card("s-1", "Pikachu", 2)])])
         self.assertEqual(first["machine_quantity"], 1)
+
+
+class ApplyClaims(unittest.TestCase):
+    def test_claim_takes_one_off_the_machine_and_keeps_initial(self):
+        records = [card("s-1", "Pikachu", 2)]
+        applied, skipped, problems = apply_claims(records, [{"card_id": "s-1", "pokemon_name": "Pikachu"}])
+        self.assertEqual((records[0]["machine_quantity"], records[0]["initial_quantity"]), (1, 2))
+        self.assertEqual(applied, [("s-1", "Pikachu", 2, 1)])
+        self.assertEqual((skipped, problems), ([], []))
+
+    def test_two_claims_on_one_card_take_two(self):
+        records = [card("s-1", "Pikachu", 3)]
+        claim = {"card_id": "s-1", "pokemon_name": "Pikachu"}
+        apply_claims(records, [claim, claim])
+        self.assertEqual(records[0]["machine_quantity"], 1)
+
+    def test_claim_for_a_card_that_changed_is_skipped_not_applied(self):
+        # Fezandipiti was claimed as me02.5-038; that objectID is now Cinderace.
+        records = [card("me02.5-038", "Cinderace ex", 2)]
+        applied, skipped, problems = apply_claims(records, [{"card_id": "me02.5-038", "pokemon_name": "Fezandipiti ex"}])
+        self.assertEqual(records[0]["machine_quantity"], 2)
+        self.assertEqual(applied, [])
+        self.assertEqual(len(skipped), 1)
+        self.assertIn("Cinderace ex", skipped[0])
+
+    def test_claim_for_a_missing_card_is_skipped(self):
+        _, skipped, problems = apply_claims([card("s-1", "Pikachu", 1)], [{"card_id": "s-9", "pokemon_name": "Mew"}])
+        self.assertEqual((len(skipped), problems), (1, []))
+
+    def test_claim_on_an_empty_card_is_a_problem(self):
+        records = [card("s-1", "Pikachu", 0)]
+        _, _, problems = apply_claims(records, [{"card_id": "s-1", "pokemon_name": "Pikachu"}])
+        self.assertEqual(len(problems), 1)
+        self.assertEqual(records[0]["machine_quantity"], 0)
+
+    def test_name_match_ignores_case_and_padding(self):
+        records = [card("s-1", "Dragapult ex", 2)]
+        applied, skipped, _ = apply_claims(records, [{"card_id": "s-1", "pokemon_name": " Dragapult Ex "}])
+        self.assertEqual((len(applied), skipped), (1, []))
 
 
 if __name__ == "__main__":

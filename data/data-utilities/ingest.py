@@ -19,7 +19,7 @@ import requests
 from algoliasearch.search.client import SearchClientSync
 
 from card_checks import check_card
-from merge_records import merge_records
+from merge_records import apply_claims, merge_records
 
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -34,6 +34,7 @@ if not ALGOLIA_EVENT_ID:
 ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
 DATA_DIR = Path(__file__).parent.parent / "data-files" / ALGOLIA_EVENT_ID
 TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
+CLAIMS_FILE = "claimed-cards.json"
 
 # File name pattern to extract card set
 FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
@@ -853,6 +854,20 @@ def main():
               f"({len(summed)} combined)")
         for object_id, name, quantities in summed:
             print(f"  {object_id}  {name}: {' + '.join(str(q) for q in quantities)} = {sum(quantities)}")
+
+        # Cards already claimed from the machine. Kept in the event folder so a rebuild
+        # does not need the claims database; applied after the merge so quantities net out.
+        claims_path = DATA_DIR / CLAIMS_FILE
+        if claims_path.exists():
+            claims = json.loads(claims_path.read_text(encoding="utf-8"))
+            applied, skipped, claim_problems = apply_claims(merged, claims)
+            print(f"\nClaims ({CLAIMS_FILE}): {len(applied)} of {len(claims)} applied")
+            for object_id, name, before, after in applied:
+                print(f"  {object_id}  {name}: {before} -> {after}")
+            for message in skipped:
+                print(f"  ⚠ {message}")
+            problems.extend(claim_problems)
+
         if problems:
             print(f"\n✗ {len(problems)} problem(s) — nothing was written. Fix the sheets and re-run:")
             for problem in problems:

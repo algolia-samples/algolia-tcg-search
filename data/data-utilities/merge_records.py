@@ -74,3 +74,41 @@ def merge_records(sources: list) -> tuple:
         if len(qty) > 1
     ]
     return list(merged.values()), problems, summed
+
+
+def apply_claims(records: list, claims: list) -> tuple:
+    """
+    Subtract already-claimed cards from the merged inventory, so an event can be
+    rebuilt from its files without going back to the claims database.
+
+    Each claim is {"card_id": objectID, "pokemon_name": ...} and takes one unit off
+    machine_quantity; initial_quantity stays, as the app leaves it when a card is claimed.
+    The claim's name must match the card now at that objectID: a card removed from the
+    inventory can leave its objectID pointing at a different card, and decrementing
+    that one would be wrong.
+
+    Mutates records. Returns (applied, skipped, problems):
+      applied   (objectID, name, before, after)
+      skipped   messages for claims that matched no card or a different card; non-fatal
+      problems  messages that must stop the ingest: a claim on a card with none left
+    """
+    by_id = {record["objectID"]: record for record in records}
+    applied, skipped, problems = [], [], []
+
+    for claim in claims:
+        card_id, name = claim.get("card_id"), claim.get("pokemon_name", "")
+        record = by_id.get(card_id)
+        if record is None:
+            skipped.append(f"{card_id} '{name}': not in the inventory, claim skipped")
+        elif normalize_name(record.get("pokemon_name", "")) != normalize_name(name):
+            skipped.append(
+                f"{card_id}: claimed as '{name}' but that number is now '{record.get('pokemon_name')}', claim skipped"
+            )
+        elif (record.get("machine_quantity") or 0) < 1:
+            problems.append(f"{card_id} '{name}': claimed but none left in the machine")
+        else:
+            before = record["machine_quantity"]
+            record["machine_quantity"] = before - 1
+            applied.append((card_id, record.get("pokemon_name", name), before, before - 1))
+
+    return applied, skipped, problems

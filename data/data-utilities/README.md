@@ -51,6 +51,7 @@ If one machine is stocked from more than one sheet (say, leftovers from a previo
 - The Top 10 carousel comes from the first file only; later files' top-10 flags are ignored.
 - The run stops without writing anything if a file lists the same card number twice, or if two files disagree on which card a number is. Fix the sheet and re-run.
 - Use `--dump-json` with `--merge` to preview the combined inventory first.
+- If the folder has a `claimed-cards.json`, those cards are subtracted after the merge (one unit per entry, off `machine_quantity` only), so a rebuild doesn't need the claims database. Each entry is `{"card_id": "<objectID>", "pokemon_name": "...", "set_name": "...", "claimed_at": "..."}`. Don't put claimers' names or emails in it. An entry whose `card_id` now points at a different card is skipped with a warning instead of decrementing the wrong card. Claims made after you save the file are not in it, so add them before a rebuild.
 
 ### Running Scripts Directly
 
