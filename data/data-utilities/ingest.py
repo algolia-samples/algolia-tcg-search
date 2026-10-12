@@ -18,6 +18,8 @@ import pandas as pd
 import requests
 from algoliasearch.search.client import SearchClientSync
 
+from card_checks import check_card
+
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -544,6 +546,9 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
     # report it instead of leaving the Top 10 carousel quietly short.
     matched_chase_keys = set()
 
+    # Rows whose number/name/set disagree with TCGdex. Warn-only: ingest still loads them.
+    check_findings = []
+
     for sheet_name in xl.sheet_names:
         if sheet_name.strip().upper().startswith("(OLD)"):
             print(f"  Skipping sheet: {sheet_name}")
@@ -585,6 +590,7 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
 
         # Get set info from TCGdex
         set_id = None
+        official_count = None
         tcgdex_cards = []
 
         if enrich:
@@ -592,6 +598,7 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
             if set_info:
                 set_id = set_info.get("id")
                 tcgdex_cards = set_info.get("cards", [])
+                official_count = (set_info.get("cardCount") or {}).get("official")
                 print(f"  Found TCGdex set ID: {set_id}")
                 print(f"  TCGdex cards available: {len(tcgdex_cards)}")
             else:
@@ -666,6 +673,9 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
                     record["set_id"] = set_id
 
                 if enrich and tcgdex_cards:
+                    if not pd.isna(raw_number):
+                        for kind, message in check_card(pokemon_name, raw_number, tcgdex_cards, official_count):
+                            check_findings.append((sheet_name, idx + 2, pokemon_name, message))
                     debug = (idx < 5)
                     enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, set_id=set_id, debug=debug)
                     record.update(enriched_data)
@@ -737,6 +747,11 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
         for name, num in sorted(unmatched):
             tier = "top-10" if (name, num) in top_10_keys else "chase"
             print(f"      #{num:>4}  {name}  ({tier})")
+
+    if check_findings:
+        print(f"\n  ⚠ {len(check_findings)} row(s) disagree with TCGdex — check the sheet (still ingested):")
+        for sheet_name, row_number, name, message in check_findings:
+            print(f"      {sheet_name} row {row_number}  {name}: {message}")
 
 
 def main():

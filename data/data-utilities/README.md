@@ -31,11 +31,16 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 | `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events`; supports `--landing-sections` and `--patch` |
 | `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
 | `ingest.py` | Reads XLSX (or CSVs as fallback), enriches via TCGdex API, uploads records to Algolia |
+| `card_checks.py` | Compares each XLSX row to its TCGdex set (name at that number, set-size denominator) and reports mismatches during ingest; warn-only. Tests: `python -m unittest test_card_checks` |
 | `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
 | `clear_index.py` | Wipes all records from the index (preserves settings) |
 | `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
 | `validate_csv.py` | Validates CSV files against the expected column schema |
 | `inject_lead_claims.py` | Matches Pokemon card claims (from a Supabase CSV export) to a conference leads XLSX and writes the highest-value card name to a designated column; dry-run by default |
+
+### Checking a workbook before ingesting
+
+`ingest.py --dump-json out.json` runs the full pipeline without uploading (no Algolia credentials needed) and ends with a list of rows that disagree with TCGdex, for example a card on the wrong tab or a number that belongs to a different card. Fix the sheet and re-run until the list is empty or understood.
 
 ### Running Scripts Directly
 
