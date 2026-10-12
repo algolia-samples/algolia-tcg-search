@@ -36,7 +36,6 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 | `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
 | `clear_index.py` | Wipes all records from the index (preserves settings) |
 | `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
-| `validate_csv.py` | Validates CSV files against the expected column schema |
 | `inject_lead_claims.py` | Matches Pokemon card claims (from a Supabase CSV export) to a conference leads XLSX and writes the highest-value card name to a designated column; dry-run by default |
 
 ### Checking a workbook before ingesting
