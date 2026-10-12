@@ -523,22 +523,26 @@ def process_csv_file(file_path: Path, client: Optional[SearchClientSync], index_
             print(f"  ✗ Error uploading to Algolia: {e}")
 
 
-def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index_name: str, enrich: bool = True, dump: Optional[list] = None):
+def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index_name: str, enrich: bool = True, dump: Optional[list] = None) -> bool:
     """
     Process a single XLSX file and upload records to Algolia.
     Each sheet is treated as a separate card set. Hidden sheets and sheets prefixed
     with (OLD) are skipped.
     Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
     When dump is a list, records are appended to it instead of being uploaded.
+
+    Returns False if the workbook, a sheet, or a row could not be read. A normal ingest
+    just logs that, but --merge needs the complete inventory and stops on it.
     """
     print(f"\nProcessing XLSX: {file_path.name}")
+    complete = True
 
     try:
         wb = openpyxl.load_workbook(file_path)  # for hyperlinks
         xl = pd.ExcelFile(file_path)            # for data
     except Exception as e:
         print(f"  Error reading XLSX: {e}")
-        return
+        return False
 
     top_10_keys, chase_keys = parse_chase_tab(xl)
     print(f"  Chase tab: {len(top_10_keys)} top-10 cards, {len(chase_keys)} chase cards")
@@ -580,6 +584,7 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
             df.columns = df.columns.str.strip()
         except Exception as e:
             print(f"  Error reading sheet '{sheet_name}': {e}")
+            complete = False
             continue
 
         # Skip non-card sheets (e.g. "Landing Page Sections", "Most expensive")
@@ -712,6 +717,8 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
         total_skipped = sum(skipped.values())
         skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
         print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
+        if skipped.get("error"):
+            complete = False
 
         # Overlay top-10 and chase flags from chase tab (detected by content, not position)
         overlay_count = 0
@@ -754,6 +761,8 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
         print(f"\n  ⚠ {len(check_findings)} row(s) disagree with TCGdex — check the sheet (still ingested):")
         for sheet_name, row_number, name, message in check_findings:
             print(f"      {sheet_name} row {row_number}  {name}: {message}")
+
+    return complete
 
 
 def main():
@@ -841,12 +850,22 @@ def main():
             return
         print(f"Merging {len(xlsx_files)} XLSX file(s) — the first listed wins on conflicting fields:")
         sources = []
+        unreadable = []
         for xlsx_file in xlsx_files:
             print(f"  {xlsx_file.name}")
         for xlsx_file in xlsx_files:
             records = []
-            process_xlsx_file(xlsx_file, None, ALGOLIA_INDEX_NAME, enrich=enrich, dump=records)
+            if not process_xlsx_file(xlsx_file, None, ALGOLIA_INDEX_NAME, enrich=enrich, dump=records):
+                unreadable.append(xlsx_file.name)
             sources.append((xlsx_file.name, records))
+
+        # An unreadable workbook would silently drop its cards from the inventory.
+        if unreadable:
+            print("\n" + "=" * 60)
+            print(f"✗ Could not fully read {len(unreadable)} file(s) — nothing was written:")
+            for name in unreadable:
+                print(f"  {name}")
+            sys.exit(1)
 
         merged, problems, summed = merge_records(sources)
         print("\n" + "=" * 60)
