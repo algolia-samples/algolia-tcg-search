@@ -32,6 +32,7 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 | `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
 | `ingest.py` | Reads XLSX (or CSVs as fallback), enriches via TCGdex API, uploads records to Algolia |
 | `card_checks.py` | Compares each XLSX row to its TCGdex set (name at that number, set-size denominator) and reports mismatches during ingest; warn-only. Tests: `python -m unittest test_card_checks` |
+| `merge_records.py` | Combines records from several workbooks for `ingest.py --merge` (sums quantities, stops on conflicts). Tests: `python -m unittest test_merge_records` |
 | `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
 | `clear_index.py` | Wipes all records from the index (preserves settings) |
 | `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
@@ -41,6 +42,15 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 ### Checking a workbook before ingesting
 
 `ingest.py --dump-json out.json` runs the full pipeline without uploading (no Algolia credentials needed) and ends with a list of rows that disagree with TCGdex, for example a card on the wrong tab or a number that belongs to a different card. Fix the sheet and re-run until the list is empty or understood.
+
+### Combining several workbooks
+
+If one machine is stocked from more than one sheet (say, leftovers from a previous event added to the main list), put all the XLSX files in the event's folder and ingest with `--merge`: `./reset_and_ingest.sh <event_id> --merge` (or `ingest.py --merge`). A card in several files has its quantities summed; a card in one file is kept as is. Without `--merge`, a card in a later file silently replaces the earlier one.
+
+- Files are read in name order, and the first file wins on name, value, and images.
+- The Top 10 carousel comes from the first file only; later files' top-10 flags are ignored.
+- The run stops without writing anything if a file lists the same card number twice, or if two files disagree on which card a number is. Fix the sheet and re-run.
+- Use `--dump-json` with `--merge` to preview the combined inventory first.
 
 ### Running Scripts Directly
 

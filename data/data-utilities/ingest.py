@@ -19,6 +19,7 @@ import requests
 from algoliasearch.search.client import SearchClientSync
 
 from card_checks import check_card
+from merge_records import merge_records
 
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -777,6 +778,14 @@ def main():
              "Algolia. A relative PATH is resolved inside the event's data-files "
              "directory."
     )
+    parser.add_argument(
+        "--merge",
+        action="store_true",
+        help="Treat the event's XLSX files as one combined inventory: a card in several "
+             "files has its quantities summed, a card in one file is kept as is. Without "
+             "this, files are ingested one after another and an overlapping card from a "
+             "later file replaces the earlier one."
+    )
 
     args = parser.parse_args()
 
@@ -818,7 +827,45 @@ def main():
     enrich = not args.no_enrich
 
     # Process files
-    if args.file:
+    if args.merge:
+        if args.file:
+            print("Error: --merge combines every XLSX in the event folder; it cannot be used with --file")
+            sys.exit(1)
+        if list(DATA_DIR.glob("*.csv")):
+            print("Error: --merge works on XLSX files only, but this event folder has CSVs")
+            sys.exit(1)
+        xlsx_files = sorted(DATA_DIR.glob("*.xlsx"))
+        if not xlsx_files:
+            print(f"No XLSX files found in {DATA_DIR}")
+            return
+        print(f"Merging {len(xlsx_files)} XLSX file(s) — the first listed wins on conflicting fields:")
+        sources = []
+        for xlsx_file in xlsx_files:
+            print(f"  {xlsx_file.name}")
+        for xlsx_file in xlsx_files:
+            records = []
+            process_xlsx_file(xlsx_file, None, ALGOLIA_INDEX_NAME, enrich=enrich, dump=records)
+            sources.append((xlsx_file.name, records))
+
+        merged, problems, summed = merge_records(sources)
+        print("\n" + "=" * 60)
+        print(f"Merged {sum(len(r) for _, r in sources)} rows into {len(merged)} cards "
+              f"({len(summed)} combined)")
+        for object_id, name, quantities in summed:
+            print(f"  {object_id}  {name}: {' + '.join(str(q) for q in quantities)} = {sum(quantities)}")
+        if problems:
+            print(f"\n✗ {len(problems)} problem(s) — nothing was written. Fix the sheets and re-run:")
+            for problem in problems:
+                print(f"  {problem}")
+            sys.exit(1)
+
+        if dump is not None:
+            dump.extend(merged)
+        else:
+            print(f"\nUploading {len(merged)} records to Algolia...")
+            client.save_objects(index_name=ALGOLIA_INDEX_NAME, objects=merged)
+            print(f"✓ Successfully uploaded {len(merged)} records")
+    elif args.file:
         file_path = DATA_DIR / args.file
         if not file_path.exists():
             print(f"Error: File not found: {file_path}")

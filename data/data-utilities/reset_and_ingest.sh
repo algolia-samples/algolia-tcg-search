@@ -3,7 +3,7 @@
 # The event must already exist (run setup_event.sh to create a new event).
 #
 # Usage:
-#   ./reset_and_ingest.sh [event_id]
+#   ./reset_and_ingest.sh [event_id] [ingest.py flags, e.g. --merge]
 #
 # Examples:
 #   ./reset_and_ingest.sh etail-palm-springs-2026
@@ -20,8 +20,9 @@ if [ ! -f "$PYTHON" ]; then
 fi
 
 # Accept event_id as an argument, falling back to env var, then interactive selection
-if [ -n "$1" ]; then
+if [ -n "$1" ] && [ "${1#-}" = "$1" ]; then
   export ALGOLIA_EVENT_ID="$1"
+  shift
 fi
 
 if [ -z "$ALGOLIA_EVENT_ID" ]; then
@@ -64,7 +65,7 @@ echo ""
 echo "========================================"
 echo "Step 2/3: Ingesting card data"
 echo "========================================"
-"$PYTHON" ingest.py
+"$PYTHON" ingest.py "$@"
 
 echo ""
 echo "========================================"
