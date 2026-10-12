@@ -3,7 +3,7 @@
 # The event must already exist (run setup_event.sh to create a new event).
 #
 # Usage:
-#   ./reset_and_ingest.sh [event_id]
+#   ./reset_and_ingest.sh [event_id] [ingest.py flags, e.g. --merge]
 #
 # Examples:
 #   ./reset_and_ingest.sh etail-palm-springs-2026
@@ -20,8 +20,9 @@ if [ ! -f "$PYTHON" ]; then
 fi
 
 # Accept event_id as an argument, falling back to env var, then interactive selection
-if [ -n "$1" ]; then
+if [ -n "$1" ] && [ "${1#-}" = "$1" ]; then
   export ALGOLIA_EVENT_ID="$1"
+  shift
 fi
 
 if [ -z "$ALGOLIA_EVENT_ID" ]; then
@@ -52,8 +53,36 @@ if [ -z "$ALGOLIA_EVENT_ID" ]; then
   done
 fi
 
+# This script clears the index before ingest.py sees its flags, so the flags that only
+# make sense without a clear are refused, and --merge is checked before anything is cleared.
+MERGE=0
+for arg in "$@"; do
+  case "$arg" in
+    --dump-json|--dump-json=*)
+      echo "ERROR: --dump-json would clear the index and upload nothing. Run ingest.py directly to preview."
+      exit 1
+      ;;
+    --merge) MERGE=1 ;;
+  esac
+done
+
 echo "Re-ingesting cards for event: $ALGOLIA_EVENT_ID"
 echo ""
+
+if [ "$MERGE" = 1 ]; then
+  echo "========================================"
+  echo "Preflight: checking the merge (index is not touched)"
+  echo "========================================"
+  PREFLIGHT="$(mktemp)"
+  if ! "$PYTHON" ingest.py "$@" --dump-json "$PREFLIGHT"; then
+    rm -f "$PREFLIGHT"
+    echo ""
+    echo "Preflight failed. The index was NOT cleared."
+    exit 1
+  fi
+  rm -f "$PREFLIGHT"
+  echo ""
+fi
 
 echo "========================================"
 echo "Step 1/3: Clearing Algolia index"
@@ -64,14 +93,16 @@ echo ""
 echo "========================================"
 echo "Step 2/3: Ingesting card data"
 echo "========================================"
-"$PYTHON" ingest.py
+"$PYTHON" ingest.py "$@"
 
 echo ""
 echo "========================================"
 echo "Step 3/3: Enriching chase cards"
 echo "========================================"
 XLSX_FILE="$SCRIPT_DIR/../data-files/$ALGOLIA_EVENT_ID/TCG Search Website - Raw List.xlsx"
-if [ -f "$XLSX_FILE" ]; then
+if [ "$MERGE" = 1 ]; then
+  echo "  Skipped — it reads one fixed workbook and would override the merged inventory"
+elif [ -f "$XLSX_FILE" ]; then
   "$PYTHON" enrich_chase_cards.py
 else
   echo "  Skipped — TCG Search Website - Raw List.xlsx not found for this event"
