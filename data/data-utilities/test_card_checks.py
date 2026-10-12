@@ -20,6 +20,10 @@ class NormalizeName(unittest.TestCase):
     def test_different_cards_stay_different(self):
         self.assertNotEqual(normalize_name("Pikachu"), normalize_name("Pikachu ex"))
 
+    def test_gender_symbols_keep_the_two_nidorans_apart(self):
+        self.assertNotEqual(normalize_name("Nidoran\u2640"), normalize_name("Nidoran\u2642"))
+        self.assertEqual(normalize_name("Nidoran\u2640"), normalize_name("nidoran \u2640"))
+
 
 class CheckCard(unittest.TestCase):
     def kinds(self, name, number, official=217):
@@ -30,6 +34,15 @@ class CheckCard(unittest.TestCase):
 
     def test_accepts_unpadded_and_denominator_less_numbers(self):
         self.assertEqual(self.kinds("Cinderace ex", "38"), [])
+
+    def test_integral_float_numbers_match_like_ints(self):
+        # XLSX numeric cells arrive as floats; 38.0 must find TCGdex's "038".
+        self.assertEqual(self.kinds("Cinderace ex", 38.0), [])
+        self.assertEqual(self.kinds("Cinderace ex", 38), [])
+
+    def test_nidoran_number_pointing_at_the_other_gender_is_flagged(self):
+        cards = [{"localId": "029", "name": "Nidoran\u2640"}, {"localId": "032", "name": "Nidoran\u2642"}]
+        self.assertEqual([k for k, _ in check_card("Nidoran\u2642", "029", cards, None)], ["name"])
 
     def test_wrong_number_for_name(self):
         # The Giovanni row that was numbered 228 (Yanmega's number).
