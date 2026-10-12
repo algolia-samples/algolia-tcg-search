@@ -14,9 +14,13 @@ from typing import Optional
 
 
 def normalize_name(name) -> str:
-    """Lowercase, unify apostrophes, drop other punctuation, collapse whitespace."""
+    """Lowercase, unify apostrophes, drop other punctuation, collapse whitespace.
+
+    The gender symbols are spelled out first: Nidoran♀ and Nidoran♂ are different
+    cards that would otherwise both normalize to "nidoran".
+    """
     text = str(name).replace("’", "'").replace("ʼ", "'").lower()
-    text = text.replace("'", "")
+    text = text.replace("'", "").replace("♀", " female").replace("♂", " male")
     text = re.sub(r"[^a-z0-9\s]", " ", text)
     return " ".join(text.split())
 
@@ -37,6 +41,10 @@ def check_card(name, raw_number, tcgdex_cards: list, official_count: Optional[in
     """
     if not tcgdex_cards or raw_number is None:
         return []
+
+    # XLSX numeric cells arrive as floats (38.0); ingest converts them the same way.
+    if isinstance(raw_number, float) and raw_number.is_integer():
+        raw_number = int(raw_number)
 
     number, _, denominator = str(raw_number).strip().partition("/")
     number, denominator = number.strip(), denominator.strip()
