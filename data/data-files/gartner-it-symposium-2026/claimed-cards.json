@@ -1,0 +1,31 @@
+[
+  {
+    "card_id": "me02-109",
+    "pokemon_name": "Mega Charizard X ex",
+    "set_name": "Mega Evolution Phantasmal Flame",
+    "claimed_at": "2026-09-24",
+    "claimed_during": "retailclub-ai-festival-2026"
+  },
+  {
+    "card_id": "me02.5-107",
+    "pokemon_name": "Regirock ex",
+    "set_name": "Ascended Heroes",
+    "claimed_at": "2026-09-24",
+    "claimed_during": "retailclub-ai-festival-2026"
+  },
+  {
+    "card_id": "me02.5-038",
+    "pokemon_name": "Fezandipiti ex",
+    "set_name": "Ascended Heroes",
+    "claimed_at": "2026-09-24",
+    "claimed_during": "retailclub-ai-festival-2026",
+    "note": "A Shrouded Fable card (sv06.5-038) that was mislabeled as Ascended Heroes #38. It was removed from the inventory after this claim, and me02.5-038 is now Cinderace ex, so ingest skips this entry by design."
+  },
+  {
+    "card_id": "sv03.5-173",
+    "pokemon_name": "Pikachu",
+    "set_name": "Scarlet & Violet 151",
+    "claimed_at": "2026-09-24",
+    "claimed_during": "retailclub-ai-festival-2026"
+  }
+]
