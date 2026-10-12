@@ -18,6 +18,9 @@ import pandas as pd
 import requests
 from algoliasearch.search.client import SearchClientSync
 
+from card_checks import check_card
+from merge_records import apply_claims, merge_records
+
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
 
@@ -31,6 +34,7 @@ if not ALGOLIA_EVENT_ID:
 ALGOLIA_INDEX_NAME = f"tcg_cards_{ALGOLIA_EVENT_ID}"
 DATA_DIR = Path(__file__).parent.parent / "data-files" / ALGOLIA_EVENT_ID
 TCGDEX_BASE_URL = "https://api.tcgdex.net/v2/en"
+CLAIMS_FILE = "claimed-cards.json"
 
 # File name pattern to extract card set
 FILE_PATTERN = r"TCG Search Website - Raw List - (.+) \((\d+)\)\.csv"
@@ -519,22 +523,28 @@ def process_csv_file(file_path: Path, client: Optional[SearchClientSync], index_
             print(f"  ✗ Error uploading to Algolia: {e}")
 
 
-def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index_name: str, enrich: bool = True, dump: Optional[list] = None):
+def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index_name: str, enrich: bool = True, dump: Optional[list] = None) -> bool:
     """
     Process a single XLSX file and upload records to Algolia.
     Each sheet is treated as a separate card set. Hidden sheets and sheets prefixed
     with (OLD) are skipped.
     Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
     When dump is a list, records are appended to it instead of being uploaded.
+
+    Returns False if the workbook, a sheet, or a row could not be read, a card sheet is
+    missing required columns, or no card sheet was found at all. A normal ingest just
+    logs that, but --merge needs the complete inventory and stops on it.
     """
     print(f"\nProcessing XLSX: {file_path.name}")
+    complete = True
+    card_sheets = 0
 
     try:
         wb = openpyxl.load_workbook(file_path)  # for hyperlinks
         xl = pd.ExcelFile(file_path)            # for data
     except Exception as e:
         print(f"  Error reading XLSX: {e}")
-        return
+        return False
 
     top_10_keys, chase_keys = parse_chase_tab(xl)
     print(f"  Chase tab: {len(top_10_keys)} top-10 cards, {len(chase_keys)} chase cards")
@@ -543,6 +553,9 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
     # from every set sheet (or spelled differently there) silently loses its flag, so
     # report it instead of leaving the Top 10 carousel quietly short.
     matched_chase_keys = set()
+
+    # Rows whose number/name/set disagree with TCGdex. Warn-only: ingest still loads them.
+    check_findings = []
 
     for sheet_name in xl.sheet_names:
         if sheet_name.strip().upper().startswith("(OLD)"):
@@ -573,18 +586,27 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
             df.columns = df.columns.str.strip()
         except Exception as e:
             print(f"  Error reading sheet '{sheet_name}': {e}")
+            complete = False
             continue
 
         # Skip non-card sheets (e.g. "Landing Page Sections", "Most expensive")
         required_columns = {'Pokemon Name', 'Number', '# in Machine', 'Card Type', 'Estimated Value'}
         if not required_columns.issubset(set(df.columns)):
             print(f"  Skipping sheet '{sheet_name}' — not a card set (missing expected columns)")
+            # A sheet that has some card columns but not all is a card sheet that did not
+            # parse, not an unrelated tab; its cards would be missing from the inventory.
+            if {'Pokemon Name', '# in Machine'} & set(df.columns):
+                print(f"  ✗ '{sheet_name}' looks like a card sheet but is missing: "
+                      f"{', '.join(sorted(required_columns - set(df.columns)))}")
+                complete = False
             continue
 
+        card_sheets += 1
         print(f"  Sheet records: {len(df)}")
 
         # Get set info from TCGdex
         set_id = None
+        official_count = None
         tcgdex_cards = []
 
         if enrich:
@@ -592,6 +614,7 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
             if set_info:
                 set_id = set_info.get("id")
                 tcgdex_cards = set_info.get("cards", [])
+                official_count = (set_info.get("cardCount") or {}).get("official")
                 print(f"  Found TCGdex set ID: {set_id}")
                 print(f"  TCGdex cards available: {len(tcgdex_cards)}")
             else:
@@ -666,6 +689,9 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
                     record["set_id"] = set_id
 
                 if enrich and tcgdex_cards:
+                    if not pd.isna(raw_number):
+                        for kind, message in check_card(pokemon_name, raw_number, tcgdex_cards, official_count):
+                            check_findings.append((sheet_name, idx + 2, pokemon_name, message))
                     debug = (idx < 5)
                     enriched_data = enrich_card_with_tcgdex(card_number, tcgdex_cards, set_id=set_id, debug=debug)
                     record.update(enriched_data)
@@ -700,6 +726,8 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
         total_skipped = sum(skipped.values())
         skip_summary = ", ".join(f"{count} {reason}" for reason, count in skipped.items()) if skipped else "none"
         print(f"  Processed {len(records)} valid records ({enriched_count} enriched) — skipped {total_skipped} ({skip_summary})")
+        if skipped.get("error"):
+            complete = False
 
         # Overlay top-10 and chase flags from chase tab (detected by content, not position)
         overlay_count = 0
@@ -738,6 +766,17 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
             tier = "top-10" if (name, num) in top_10_keys else "chase"
             print(f"      #{num:>4}  {name}  ({tier})")
 
+    if check_findings:
+        print(f"\n  ⚠ {len(check_findings)} row(s) disagree with TCGdex — check the sheet (still ingested):")
+        for sheet_name, row_number, name, message in check_findings:
+            print(f"      {sheet_name} row {row_number}  {name}: {message}")
+
+    if card_sheets == 0:
+        print(f"  ✗ No card sheet found in {file_path.name} (hidden and non-card tabs are skipped)")
+        complete = False
+
+    return complete
+
 
 def main():
     """Main execution."""
@@ -761,6 +800,14 @@ def main():
         help="Write the processed records to a JSON file instead of uploading to "
              "Algolia. A relative PATH is resolved inside the event's data-files "
              "directory."
+    )
+    parser.add_argument(
+        "--merge",
+        action="store_true",
+        help="Treat the event's XLSX files as one combined inventory: a card in several "
+             "files has its quantities summed, a card in one file is kept as is. Without "
+             "this, files are ingested one after another and an overlapping card from a "
+             "later file replaces the earlier one."
     )
 
     args = parser.parse_args()
@@ -803,7 +850,69 @@ def main():
     enrich = not args.no_enrich
 
     # Process files
-    if args.file:
+    if args.merge:
+        if args.file:
+            print("Error: --merge combines every XLSX in the event folder; it cannot be used with --file")
+            sys.exit(1)
+        if list(DATA_DIR.glob("*.csv")):
+            print("Error: --merge works on XLSX files only, but this event folder has CSVs")
+            sys.exit(1)
+        xlsx_files = sorted(DATA_DIR.glob("*.xlsx"))
+        if not xlsx_files:
+            print(f"No XLSX files found in {DATA_DIR}")
+            return
+        print(f"Merging {len(xlsx_files)} XLSX file(s) — the first listed wins on conflicting fields:")
+        sources = []
+        unreadable = []
+        for xlsx_file in xlsx_files:
+            print(f"  {xlsx_file.name}")
+        for xlsx_file in xlsx_files:
+            records = []
+            if not process_xlsx_file(xlsx_file, None, ALGOLIA_INDEX_NAME, enrich=enrich, dump=records):
+                unreadable.append(xlsx_file.name)
+            sources.append((xlsx_file.name, records))
+
+        # An unreadable workbook would silently drop its cards from the inventory.
+        if unreadable:
+            print("\n" + "=" * 60)
+            print(f"✗ Could not fully read {len(unreadable)} file(s) — nothing was written:")
+            for name in unreadable:
+                print(f"  {name}")
+            sys.exit(1)
+
+        merged, problems, summed = merge_records(sources)
+        print("\n" + "=" * 60)
+        print(f"Merged {sum(len(r) for _, r in sources)} rows into {len(merged)} cards "
+              f"({len(summed)} combined)")
+        for object_id, name, quantities in summed:
+            print(f"  {object_id}  {name}: {' + '.join(str(q) for q in quantities)} = {sum(quantities)}")
+
+        # Cards already claimed from the machine. Kept in the event folder so a rebuild
+        # does not need the claims database; applied after the merge so quantities net out.
+        claims_path = DATA_DIR / CLAIMS_FILE
+        if claims_path.exists():
+            claims = json.loads(claims_path.read_text(encoding="utf-8"))
+            applied, skipped, claim_problems = apply_claims(merged, claims)
+            print(f"\nClaims ({CLAIMS_FILE}): {len(applied)} of {len(claims)} applied")
+            for object_id, name, before, after in applied:
+                print(f"  {object_id}  {name}: {before} -> {after}")
+            for message in skipped:
+                print(f"  ⚠ {message}")
+            problems.extend(claim_problems)
+
+        if problems:
+            print(f"\n✗ {len(problems)} problem(s) — nothing was written. Fix the sheets and re-run:")
+            for problem in problems:
+                print(f"  {problem}")
+            sys.exit(1)
+
+        if dump is not None:
+            dump.extend(merged)
+        else:
+            print(f"\nUploading {len(merged)} records to Algolia...")
+            client.save_objects(index_name=ALGOLIA_INDEX_NAME, objects=merged)
+            print(f"✓ Successfully uploaded {len(merged)} records")
+    elif args.file:
         file_path = DATA_DIR / args.file
         if not file_path.exists():
             print(f"Error: File not found: {file_path}")

@@ -31,11 +31,29 @@ ALGOLIA_EVENT_ID=my-event-2026      # only needed when running scripts directly
 | `create_event.py` | Creates Algolia indices and inserts a record into `tcg_events`; supports `--landing-sections` and `--patch` |
 | `set_active_event.py` | Sets `current: true` for an event in `tcg_events` |
 | `ingest.py` | Reads XLSX (or CSVs as fallback), enriches via TCGdex API, uploads records to Algolia |
+| `card_checks.py` | Compares each XLSX row to its TCGdex set (name at that number, set-size denominator) and reports mismatches during ingest; warn-only. Tests: `python -m unittest test_card_checks` |
+| `merge_records.py` | Combines records from several workbooks for `ingest.py --merge` (sums quantities, stops on conflicts). Tests: `python -m unittest test_merge_records` |
 | `enrich_chase_cards.py` | Updates chase card flags from the master XLSX |
 | `clear_index.py` | Wipes all records from the index (preserves settings) |
 | `configure_index.py` | Manually reapplies `algolia-config.json` settings to an index |
 | `validate_csv.py` | Validates CSV files against the expected column schema |
 | `inject_lead_claims.py` | Matches Pokemon card claims (from a Supabase CSV export) to a conference leads XLSX and writes the highest-value card name to a designated column; dry-run by default |
+
+### Checking a workbook before ingesting
+
+`ingest.py --dump-json out.json` runs the full pipeline without uploading (no Algolia credentials needed) and ends with a list of rows that disagree with TCGdex, for example a card on the wrong tab or a number that belongs to a different card. Fix the sheet and re-run until the list is empty or understood.
+
+### Combining several workbooks
+
+If one machine is stocked from more than one sheet (say, leftovers from a previous event added to the main list), put all the XLSX files in the event's folder and ingest with `--merge`: `./reset_and_ingest.sh <event_id> --merge` (or `ingest.py --merge`). A card in several files has its quantities summed; a card in one file is kept as is. Without `--merge`, a card in a later file silently replaces the earlier one.
+
+- Files are read in name order, and the first file wins on name, value, and images.
+- The Top 10 carousel comes from the first file only; later files' top-10 flags are ignored.
+- The run stops without writing anything if a file lists the same card number twice, or if two files disagree on which card a number is. Fix the sheet and re-run.
+- Use `ingest.py --merge --dump-json out.json` to preview the combined inventory first. `reset_and_ingest.sh ... --merge` does this itself before it clears anything, and it refuses `--dump-json`.
+- A file that can't be fully read stops the merge, so a corrupt workbook can't quietly drop its cards.
+- `reset_and_ingest.sh` skips its chase-card enrich step under `--merge`: that step reads one fixed legacy workbook and would override the merged inventory.
+- If the folder has a `claimed-cards.json`, those cards are subtracted after the merge (one unit per entry, off `machine_quantity` only), so a rebuild doesn't need the claims database. Each entry is `{"card_id": "<objectID>", "pokemon_name": "...", "set_name": "...", "claimed_at": "..."}`. Don't put claimers' names or emails in it. An entry whose `card_id` now points at a different card is skipped with a warning instead of decrementing the wrong card. Claims made after you save the file are not in it, so add them before a rebuild.
 
 ### Running Scripts Directly
 
