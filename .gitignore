@@ -210,3 +210,4 @@ BLOG*.md
 
 # Enriched card dumps from `ingest.py --dump-json` (regenerable from the XLSX)
 data/data-files/**/*.json
+!data/data-files/**/claimed-cards.json
