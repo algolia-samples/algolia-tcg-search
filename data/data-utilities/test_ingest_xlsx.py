@@ -55,6 +55,50 @@ class ProcessXlsxFile(unittest.TestCase):
         self.assertIs(complete, True)
         self.assertEqual(len(records), 1)
 
+    def test_card_sheet_missing_required_columns_is_incomplete(self):
+        # Its cards would be silently omitted from a merge.
+        path = self.dir / "malformed.xlsx"
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Broken Set"
+        ws.append(["Pokemon Name", "Number", "# in Machine"])  # no Card Type / Estimated Value
+        ws.append(["Pikachu", "25", 2])
+        wb.save(path)
+        complete, records = self.run_file(path)
+        self.assertIs(complete, False)
+        self.assertEqual(records, [])
+
+    def test_workbook_with_no_card_sheet_is_incomplete(self):
+        path = self.dir / "no-cards.xlsx"
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Site URL"
+        ws.append(["https://example.com"])
+        wb.save(path)
+        complete, _ = self.run_file(path)
+        self.assertIs(complete, False)
+
+    def test_extra_non_card_sheet_is_not_a_failure(self):
+        path = self.dir / "mixed.xlsx"
+        write_workbook(path, [["Pikachu", "25", "Rare", 2, 1.5]])
+        wb = openpyxl.load_workbook(path)
+        wb.create_sheet("Site URL").append(["https://example.com"])
+        wb.save(path)
+        complete, records = self.run_file(path)
+        self.assertIs(complete, True)
+        self.assertEqual(len(records), 1)
+
+    def test_hidden_sheets_do_not_count_as_card_sheets(self):
+        path = self.dir / "hidden-only.xlsx"
+        write_workbook(path, [["Pikachu", "25", "Rare", 2, 1.5]])
+        wb = openpyxl.load_workbook(path)
+        wb["Test Set"].sheet_state = "hidden"
+        wb.create_sheet("Notes").append(["nothing here"])
+        wb.save(path)
+        complete, records = self.run_file(path)
+        self.assertIs(complete, False)
+        self.assertEqual(records, [])
+
 
 if __name__ == "__main__":
     unittest.main()

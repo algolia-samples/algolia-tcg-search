@@ -531,11 +531,13 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
     Hyperlinks on column A (Pokemon Name) are extracted to override TCGdex images.
     When dump is a list, records are appended to it instead of being uploaded.
 
-    Returns False if the workbook, a sheet, or a row could not be read. A normal ingest
-    just logs that, but --merge needs the complete inventory and stops on it.
+    Returns False if the workbook, a sheet, or a row could not be read, a card sheet is
+    missing required columns, or no card sheet was found at all. A normal ingest just
+    logs that, but --merge needs the complete inventory and stops on it.
     """
     print(f"\nProcessing XLSX: {file_path.name}")
     complete = True
+    card_sheets = 0
 
     try:
         wb = openpyxl.load_workbook(file_path)  # for hyperlinks
@@ -591,8 +593,15 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
         required_columns = {'Pokemon Name', 'Number', '# in Machine', 'Card Type', 'Estimated Value'}
         if not required_columns.issubset(set(df.columns)):
             print(f"  Skipping sheet '{sheet_name}' — not a card set (missing expected columns)")
+            # A sheet that has some card columns but not all is a card sheet that did not
+            # parse, not an unrelated tab; its cards would be missing from the inventory.
+            if {'Pokemon Name', '# in Machine'} & set(df.columns):
+                print(f"  ✗ '{sheet_name}' looks like a card sheet but is missing: "
+                      f"{', '.join(sorted(required_columns - set(df.columns)))}")
+                complete = False
             continue
 
+        card_sheets += 1
         print(f"  Sheet records: {len(df)}")
 
         # Get set info from TCGdex
@@ -761,6 +770,10 @@ def process_xlsx_file(file_path: Path, client: Optional[SearchClientSync], index
         print(f"\n  ⚠ {len(check_findings)} row(s) disagree with TCGdex — check the sheet (still ingested):")
         for sheet_name, row_number, name, message in check_findings:
             print(f"      {sheet_name} row {row_number}  {name}: {message}")
+
+    if card_sheets == 0:
+        print(f"  ✗ No card sheet found in {file_path.name} (hidden and non-card tabs are skipped)")
+        complete = False
 
     return complete
 
